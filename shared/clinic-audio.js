@@ -7,7 +7,7 @@
   var bufferPromise = null;
 
   function playWithContext(context) {
-    if (!context || context.state !== "running" || typeof fetch !== "function" || typeof context.decodeAudioData !== "function") return false;
+    if (!context || context.state !== "running" || typeof fetch !== "function" || typeof context.decodeAudioData !== "function") return Promise.resolve(false);
     if (!bufferPromise) {
       bufferPromise = fetch(source).then(function (response) {
         if (!response.ok) throw new Error("audio_fetch_failed");
@@ -16,7 +16,7 @@
         return context.decodeAudioData(data);
       });
     }
-    bufferPromise.then(function (buffer) {
+    return bufferPromise.then(function (buffer) {
       var node = context.createBufferSource();
       var gain = context.createGain();
       node.buffer = buffer;
@@ -25,7 +25,21 @@
       gain.connect(context.destination);
       node.start(0);
       node.onended = function () { node.disconnect(); gain.disconnect(); };
-    }).catch(function () {});
+      return true;
+    }).catch(function () { return false; });
+  }
+
+  function playWithElement() {
+    if (!player) {
+      player = new root.Audio(source);
+      player.preload = "auto";
+      player.volume = 0.72;
+    }
+    player.currentTime = 0;
+    var playback = player.play();
+    if (playback && typeof playback.then === "function") {
+      return playback.then(function () { return true; }).catch(function () { return false; });
+    }
     return true;
   }
 
@@ -34,16 +48,12 @@
     activePatientKey = patientKey;
 
     try {
-      if (playWithContext(context)) return true;
-      if (!player) {
-        player = new root.Audio(source);
-        player.preload = "auto";
-        player.volume = 0.72;
+      if (context) {
+        return playWithContext(context).then(function (played) {
+          return played ? true : playWithElement();
+        });
       }
-      player.currentTime = 0;
-      var playback = player.play();
-      if (playback && typeof playback.catch === "function") playback.catch(function () {});
-      return true;
+      return playWithElement();
     } catch (error) {
       // The browser may block autoplay. The patient transition itself remains usable.
       return false;
