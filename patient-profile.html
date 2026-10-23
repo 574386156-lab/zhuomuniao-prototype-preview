@@ -3886,6 +3886,11 @@ lucide/dist/esm/lucide.js:
      while removing the patient app's own phone/profile chrome. */
   html[data-patient-partial="timeline"] { overflow:hidden; background:#f5f7fa; }
   html[data-patient-partial="timeline"] body { overflow:hidden; background:#f5f7fa; }
+  /* The source page still has its patient-side phone app mounted in #root.
+     Embedded archive mode owns the viewport, so keep that app out of layout;
+     otherwise its green login/device screen can appear below the archive tabs. */
+  html[data-patient-partial="timeline"] #root,
+  html[data-patient-partial="timeline"] #patient-upload-version { display:none!important; }
   html[data-patient-partial="timeline"] #root,
   html[data-patient-partial="timeline"] #root .phone-scale-box,
   html[data-patient-partial="timeline"] #root .phone-device,
