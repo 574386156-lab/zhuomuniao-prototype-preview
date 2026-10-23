@@ -45,8 +45,16 @@
     var selectedTab=availableTabs().filter(function(tab){return tab.id===key;})[0];
     if(!selectedTab){history.replaceState(null,'','#chat/'+current.id);showChat();return;}
     pageHost.querySelectorAll('.wc-external-page').forEach(function(link){link.remove();});
+    pageHost.querySelectorAll('.wc-patient-back').forEach(function(button){button.remove();});
     currentPage=key;app.innerHTML=header(selectedTab.name,'chat');pageHost.hidden=false;
     if(phoneScreen)phoneScreen.classList.toggle('wc-source-patient',key==='patient-profile');
+    if(key==='patient-profile'){
+      var patientBack=document.createElement('button');
+      patientBack.type='button';patientBack.className='wc-patient-back';patientBack.textContent='‹ 返回会话';
+      patientBack.setAttribute('aria-label','返回会话');
+      patientBack.addEventListener('click',function(){navigate('#chat/'+current.id);});
+      pageHost.appendChild(patientBack);
+    }
     Object.keys(frames).forEach(function(k){frames[k].hidden=k!==key;});
     if(!frames[key]){
       var url=window.SidebarConfig.urlFor(selectedTab,window.SidebarConfig.environment(),configContext());

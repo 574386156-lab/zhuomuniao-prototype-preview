@@ -36,3 +36,4 @@
 .phone-screen.wc-source-patient #wecom-app{display:none}
 .phone-screen.wc-source-patient #plugin-pages{position:absolute;inset:0;display:block;overflow:hidden;background:#f5f7fa}
 .phone-screen.wc-source-patient #plugin-pages iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.wc-patient-back{position:absolute;z-index:5;top:10px;left:12px;min-height:30px;padding:0 7px;border:0;border-radius:15px;background:rgba(255,255,255,.9);color:#24567f;font-size:12px;box-shadow:0 1px 4px rgba(18,56,95,.12)}
