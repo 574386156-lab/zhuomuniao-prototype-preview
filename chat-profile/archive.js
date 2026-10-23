@@ -70,24 +70,41 @@
   }
   function empty(title,hint) { return '<div class="cp-empty"><strong>'+esc(title)+'</strong><p>'+esc(hint || '')+'</p></div>'; }
   function unfiledEmpty() { return '<div class="cp-empty cp-empty-unfiled" data-empty-state="unfiled" role="status"><span class="cp-empty-icon" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 5h15l7 7v29H14z"/><path d="M29 5v8h7M20 23h10M20 30h10M20 37h6"/><path d="m8 14 4 4m0-4-4 4"/></svg></span><strong>当前患者暂未完成建档</strong><p>暂无法展示患者档案内容。</p></div>'; }
-  function renderTimelineDetail(event,actionPrefix){
+  function eventAction(prefix,name,index,fileIndex){
+    var attrs='data-action="'+esc(prefix+'-'+name)+'"';
+    if(index!==undefined&&index!==null)attrs+=' data-event-index="'+esc(index)+'"';
+    if(fileIndex!==undefined&&fileIndex!==null)attrs+=' data-file-index="'+esc(fileIndex)+'"';
+    return attrs;
+  }
+  function renderTimelineDetail(event,actionPrefix,eventIndex){
     if(!event)return empty('暂无病历详情');
     actionPrefix=actionPrefix||'chat-archive';
     var type=event.type||event.kind||'记录',text=event.text||event.body||'';
     var status=event.status?'<span class="cp-event-status" data-tone="'+esc(event.statusTone||'neutral')+'">'+esc(event.status)+'</span>':'';
-    var readingStatus=event.readingStatus?'<span class="cp-event-status" data-tone="'+(event.readingStatus==='failed'?'failed':'loading')+'">'+(event.readingStatus==='failed'?'报告解读失败':'报告解读中')+'</span>':'';
+    var readingStatus=event.readingStatus?'<span class="cp-event-status" data-tone="'+(event.readingStatus==='failed'?'failed':'loading')+'">'+esc(event.readingStatus==='failed'?'报告解读失败':'报告解读中')+'</span>':'';
     var timestamps=(event.createdAt||event.updatedAt)?'<dl class="cp-event-timestamps">'+(event.createdAt?'<div><dt>创建时间</dt><dd>'+esc(event.createdAt)+'</dd></div>':'')+(event.updatedAt?'<div><dt>更新时间</dt><dd>'+esc(event.updatedAt)+'</dd></div>':'')+'</dl>':'';
     var report=event.report?'<section class="cp-timeline-detail-card ai-event-card"><div class="cp-event-section-heading"><h3>报告解读</h3></div><p>'+esc(event.report)+'</p></section>':'';
-    var files=Array.isArray(event.files)&&event.files.length?'<section class="cp-timeline-detail-card ai-event-card"><div class="cp-event-section-heading"><h3>文件原件</h3></div><div class="cp-event-files ai-event-files">'+event.files.map(function(file){return '<div class="cp-event-file-row ai-event-file"><span class="cp-file-icon" aria-hidden="true">▧</span><span><b>'+esc(file.name)+'</b><small>'+esc(file.type||'文件')+'</small></span></div>';}).join('')+'</div></section>':'';
-    var actions=event.statusTone==='failed'?'<button type="button" class="cp-timeline-detail-action ai-event-text-button">重新总结</button>':event.readingStatus==='failed'?'<button type="button" class="cp-timeline-detail-action ai-event-text-button">重新解读报告</button>':'';
-    actions+='<button type="button" class="cp-timeline-detail-action ai-event-text-button">编辑</button>';
+    var files=Array.isArray(event.files)&&event.files.length?'<section class="cp-timeline-detail-card ai-event-card"><div class="cp-event-section-heading"><h3>文件原件</h3></div><div class="cp-event-files ai-event-files">'+event.files.map(function(file,fileIndex){return '<button type="button" class="cp-event-file-row ai-event-file" '+eventAction(actionPrefix,'file-original',eventIndex,fileIndex)+'><span class="cp-file-icon" aria-hidden="true">▧</span><span><b>'+esc(file.name)+'</b><small>'+esc(file.type||'文件')+'</small></span><span class="cp-event-file-arrow" aria-hidden="true">›</span></button>';}).join('')+'</div></section>':'';
+    var actions=event.statusTone==='failed'?'<button type="button" class="cp-timeline-detail-action ai-event-text-button" '+eventAction(actionPrefix,'resummarize',eventIndex)+'>重新总结</button>':event.readingStatus==='failed'?'<button type="button" class="cp-timeline-detail-action ai-event-text-button" '+eventAction(actionPrefix,'reread',eventIndex)+'>重新解读报告</button>':'';
+    actions+='<button type="button" class="cp-timeline-detail-action ai-event-text-button" '+eventAction(actionPrefix,'edit',eventIndex)+'>编辑</button>';
     var recordBody=event.statusTone==='failed'?'<p>'+esc(text)+'</p>':'<dl class="cp-event-detail-fields"><div><dt>病历时间</dt><dd>'+esc(event.date||'')+'</dd></div><div><dt>病历内容</dt><dd>'+esc(text)+'</dd></div></dl>';
     var detailMeta=event.statusTone==='failed'?'':'<time>'+esc(event.date||'')+'</time><span class="cp-event-type">'+esc(type)+'</span>';
-    return '<section class="cp-timeline-detail ai-event-detail-layer" aria-label="病历详情"><header class="cp-timeline-detail-heading ai-record-detail-header"><button type="button" class="cp-timeline-back ai-profile-back" data-action="'+actionPrefix+'-timeline-back"><span aria-hidden="true">‹</span><span>返回病例时间轴</span></button><h2>病历详情</h2><span aria-hidden="true"></span></header><main class="cp-timeline-detail-main ai-event-detail-main"><div class="cp-timeline-detail-meta ai-event-timeline-status">'+detailMeta+status+readingStatus+'</div>'+timestamps+'<section class="cp-timeline-detail-card cp-timeline-record-card ai-event-card"><div class="cp-event-section-heading"><h3>病历记录</h3><div class="cp-timeline-detail-actions">'+actions+'</div></div>'+recordBody+'</section>'+report+files+'</main></section>';
+    return '<section class="cp-timeline-detail ai-event-detail-layer" aria-label="病历详情"><header class="cp-timeline-detail-heading ai-record-detail-header"><button type="button" class="cp-timeline-back ai-profile-back" '+eventAction(actionPrefix,'timeline-back')+'><span aria-hidden="true">‹</span><span>返回</span></button><h2>病历详情</h2><span aria-hidden="true"></span></header><main class="cp-timeline-detail-main ai-event-detail-main"><div class="cp-timeline-detail-meta ai-event-timeline-status">'+detailMeta+status+readingStatus+'</div>'+timestamps+'<section class="cp-timeline-detail-card cp-timeline-record-card ai-event-card"><div class="cp-event-section-heading"><h3>病历记录</h3><div class="cp-timeline-detail-actions">'+actions+'</div></div>'+recordBody+'</section>'+report+files+'</main></section>';
+  }
+  function renderTimelineEdit(event,eventIndex,actionPrefix){
+    if(!event)return empty('暂无病历详情');
+    actionPrefix=actionPrefix||'chat-archive';
+    return '<section class="cp-timeline-detail ai-event-detail-layer" aria-label="编辑病历"><header class="cp-timeline-detail-heading ai-record-detail-header"><button type="button" class="cp-timeline-back ai-profile-back" '+eventAction(actionPrefix,'timeline-back')+'><span aria-hidden="true">‹</span><span>返回</span></button><h2>编辑病历</h2><span aria-hidden="true"></span></header><main class="cp-timeline-detail-main ai-event-detail-main"><form class="cp-event-edit cp-timeline-detail-card" '+eventAction(actionPrefix,'edit-save',eventIndex)+'><div class="cp-event-section-heading"><h3>病历记录</h3></div><label><span>病历时间</span><input type="date" name="visitDate" value="'+esc(event.date||'')+'"></label><label><span>病历内容</span><textarea name="visitContent" rows="6">'+esc(event.text||event.body||'')+'</textarea></label><div class="cp-event-edit-actions"><button type="button" class="cp-event-edit-cancel" '+eventAction(actionPrefix,'edit-cancel',eventIndex)+'>取消</button><button type="button" class="cp-event-edit-save">保存</button></div></form></main></section>';
+  }
+  function renderFileOriginal(event,file,eventIndex,fileIndex,actionPrefix){
+    if(!event||!file)return empty('暂无文件原件');
+    actionPrefix=actionPrefix||'chat-archive';
+    var preview=file.src?'<img class="cp-event-original-image" src="'+esc(file.src)+'" alt="'+esc(file.name)+'">':'<div class="cp-event-original-placeholder"><span class="cp-file-icon" aria-hidden="true">▧</span><strong>'+esc(file.name)+'</strong><small>原始文件预览</small></div>';
+    return '<section class="cp-timeline-detail ai-event-detail-layer" aria-label="文件原件"><header class="cp-timeline-detail-heading ai-record-detail-header"><button type="button" class="cp-timeline-back ai-profile-back" '+eventAction(actionPrefix,'file-original-back',eventIndex,fileIndex)+'><span aria-hidden="true">‹</span><span>返回</span></button><h2>文件原件</h2><span aria-hidden="true"></span></header><main class="cp-timeline-detail-main ai-event-detail-main"><section class="cp-event-original cp-timeline-detail-card"><div class="cp-event-section-heading"><div><h3>'+esc(file.name)+'</h3><small>'+esc(file.type||'文件')+'</small></div></div>'+preview+'</section></main></section>';
   }
   function renderTimeline(events,detailIndex,actionPrefix){
     events=Array.isArray(events)?events:[];
-    if(detailIndex!==undefined&&detailIndex!==null&&String(detailIndex)!==''&&events[Number(detailIndex)])return renderTimelineDetail(events[Number(detailIndex)],actionPrefix);
+    if(detailIndex!==undefined&&detailIndex!==null&&String(detailIndex)!==''&&events[Number(detailIndex)])return renderTimelineDetail(events[Number(detailIndex)],actionPrefix,Number(detailIndex));
     if(!events.length)return empty('暂无病历记录');
     actionPrefix=actionPrefix||'chat-archive';
     return '<section class="cp-timeline-view" aria-label="病例时间轴"><header class="cp-timeline-heading"><strong>病例时间轴</strong><span>共 '+esc(events.length)+' 条</span></header><ol class="cp-timeline cp-timeline-cards">'+events.map(function(event,index){
@@ -95,8 +112,19 @@
       var status=event.status?'<span class="cp-event-status" data-tone="'+esc(event.statusTone||'neutral')+'">'+esc(event.status)+'</span>':'';
       var originalCount=event.originalCount?'<span class="cp-event-meta">'+esc(event.originalCount)+' 份原始文件</span>':'';
       var dateMarkup=event.statusTone==='failed'?'':'<time>'+esc(event.date)+'</time>';
-      return '<li><span class="cp-event-marker" data-tone="'+tone+'" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 14h6M12 11v6"/></svg></span><article class="cp-event-card"><header>'+dateMarkup+'<button type="button" class="cp-event-detail-link" data-action="'+actionPrefix+'-timeline-detail" data-event-index="'+index+'" aria-label="查看'+esc(event.date)+'的'+esc(type)+'详情">查看详情<span aria-hidden="true">›</span></button></header>'+ (event.statusTone==='failed'?'':'<span class="cp-event-type" data-tone="'+tone+'">'+esc(type)+'</span><p class="cp-event-body">'+esc(text)+'</p>') +'<footer class="cp-event-footer">'+status+originalCount+(event.hasReport?'<span class="cp-event-meta cp-event-report-meta">含报告解读</span>':'')+'</footer></article></li>';
+      var failure=event.statusTone==='failed'?'<div class="cp-event-failure"><p>'+esc(text||'报告原件已保存，您可以重新总结，或手动补充就诊信息。')+'</p></div>':'<span class="cp-event-type" data-tone="'+tone+'">'+esc(type)+'</span><p class="cp-event-body">'+esc(text)+'</p>';
+      return '<li><span class="cp-event-marker" data-tone="'+tone+'" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 14h6M12 11v6"/></svg></span><article class="cp-event-card"><header>'+dateMarkup+'<button type="button" class="cp-event-detail-link" data-action="'+actionPrefix+'-timeline-detail" data-event-index="'+index+'" aria-label="查看'+esc(event.date||'病历')+'的'+esc(type)+'详情">查看详情<span aria-hidden="true">›</span></button></header>'+failure+'<footer class="cp-event-footer">'+status+originalCount+(event.hasReport?'<span class="cp-event-meta cp-event-report-meta">含报告解读</span>':'')+'</footer></article></li>';
     }).join('')+'</ol></section>';
+  }
+  function findTimelineEvent(ctx,index){
+    var found=resolve(ctx),timeline=found.record&&Array.isArray(found.record.timeline)?found.record.timeline:[];
+    return timeline[Number(index)]||null;
+  }
+  function updateTimelineEvent(ctx,index,changes){
+    var event=findTimelineEvent(ctx,index);
+    if(!event)return null;
+    Object.keys(changes||{}).forEach(function(key){event[key]=changes[key];});
+    return event;
   }
   // User-provided screenshot fixture only; dates/status are displayed as supplied.
   function renderMedication(plan){
@@ -228,5 +256,5 @@
     }
   }
   if(root.document)root.document.addEventListener('scroll',function(e){if(e.target.classList&&e.target.classList.contains('cp-tabs'))updateScrollHints(e.target.parentElement.parentElement);},true);
-  root.ChatPatientArchive = {context:context,resolve:resolve,render:render,renderTimeline:renderTimeline,renderMedication:renderMedication,renderExclusive:renderExclusive,tabsFor:tabsFor,tabs:tabs,centerActiveTabs:centerActiveTabs,updateScrollHints:updateScrollHints,mountScrollHints:mountScrollHints};
+  root.ChatPatientArchive = {context:context,resolve:resolve,render:render,renderTimeline:renderTimeline,renderTimelineDetail:renderTimelineDetail,renderTimelineEdit:renderTimelineEdit,renderFileOriginal:renderFileOriginal,findTimelineEvent:findTimelineEvent,updateTimelineEvent:updateTimelineEvent,renderMedication:renderMedication,renderExclusive:renderExclusive,tabsFor:tabsFor,tabs:tabs,centerActiveTabs:centerActiveTabs,updateScrollHints:updateScrollHints,mountScrollHints:mountScrollHints};
 })(typeof window !== 'undefined' ? window : globalThis);

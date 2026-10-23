@@ -591,3 +591,25 @@ html.ops-ai-summary-standalone .ops-workspace { grid-template-rows:minmax(0,1fr)
   .cp-timeline-detail-card { padding:14px; }
   .cp-timeline-detail-actions { gap:12px; }
 }
+
+/* Detail interactions mirror the patient-side record flow. */
+.cp-event-failure { margin-top:10px; padding:10px 12px; border-radius:6px; background:#f8fbfe; color:#315c83; }
+.cp-event-failure p { margin:0; color:#315c83; font-size:14px; line-height:1.6; }
+.cp-event-file-row { width:100%; text-align:left; font:inherit; color:inherit; cursor:pointer; }
+.cp-event-file-arrow { margin-left:auto; color:#0d65b7; font-size:20px; line-height:1; }
+.cp-event-edit { display:grid; gap:14px; }
+.cp-event-edit > label { display:grid; gap:6px; color:#607b95; font-size:14px; }
+.cp-event-edit input,.cp-event-edit textarea { width:100%; min-width:0; padding:10px 12px; border:1px solid #d7e2ed; border-radius:6px; background:#fff; color:#173c61; font:inherit; font-size:15px; }
+.cp-event-edit textarea { resize:vertical; line-height:1.6; }
+.cp-event-edit-actions { display:flex; justify-content:flex-end; gap:10px; padding-top:4px; }
+.cp-event-edit-actions button { min-height:38px; padding:0 14px; border:1px solid #c8ddec; border-radius:6px; background:#fff; color:#0d65b7; }
+.cp-event-edit-actions .cp-event-edit-save { border-color:#0d65b7; background:#0d65b7; color:#fff; }
+.cp-event-original-placeholder { display:grid; justify-items:center; gap:8px; min-height:220px; align-content:center; padding:28px 16px; border:1px dashed #cbddea; border-radius:8px; background:#f8fbfe; color:#315c83; text-align:center; }
+.cp-event-original-placeholder .cp-file-icon { display:grid; place-items:center; width:48px; height:58px; border-radius:6px; background:#eaf4fb; color:#52799d; font-size:22px; }
+.cp-event-original-placeholder strong { font-size:15px; font-weight:500; overflow-wrap:anywhere; }
+.cp-event-original-placeholder small { color:#718ba4; font-size:12px; }
+.cp-event-original-image { display:block; max-width:100%; max-height:440px; margin:0 auto; border:1px solid #dce4ec; border-radius:6px; object-fit:contain; }
+.cp-event-detail-fields { display:grid; gap:12px; margin:0; }
+.cp-event-detail-fields > div { display:grid; grid-template-columns:72px minmax(0,1fr); gap:10px; }
+.cp-event-detail-fields dt { color:#607b95; font-size:14px; }
+.cp-event-detail-fields dd { min-width:0; margin:0; color:#315c83; font-size:15px; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; }
