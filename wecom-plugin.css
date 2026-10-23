@@ -60,5 +60,5 @@
 .wc-patient-archive .cp-tabs button{min-height:38px;padding:6px 8px;font-size:12px;}
 .wc-patient-archive .cp-tabs-more{min-height:38px;font-size:12px;}
 .wc-patient-archive .cp-content{min-height:0;}
-.wc-patient-timeline-source{display:block;width:100%;height:590px;min-height:520px;border:0;background:#f5f7fa;}
+.wc-patient-timeline-source{display:block;position:relative!important;inset:auto!important;width:100%;height:590px;min-height:520px;border:0;background:#f5f7fa;}
 .wc-patient-archive .cp-content:has(.wc-patient-timeline-source){margin:0 -4px;}
