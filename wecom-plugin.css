@@ -48,7 +48,7 @@
 .wc-patient-archive .cp-basic-name{font-size:17px;}
 .wc-patient-archive .cp-basic-gender{font-size:13px;}
 .wc-patient-archive .cp-basic-phone strong{font-size:15px;}
-.wc-patient-archive .cp-info-grid{grid-template-columns:1fr;}
+.wc-patient-archive .cp-info-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
 .wc-patient-archive .cp-context-section{padding:8px 0;gap:6px;}
 .wc-patient-archive .cp-scene-picker,.wc-patient-archive .cp-tag-row{grid-template-columns:34px minmax(0,1fr);gap:6px;}
 .wc-patient-archive .cp-field-label{min-height:38px;font-size:12px;}
