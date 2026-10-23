@@ -5,7 +5,7 @@
   var receiver=null,seen=Object.create(null),audioContext=null,activeRun=null,sequence=0;
   function validId(value){return typeof value==='string'&&/^sim-[a-z0-9-]{1,100}$/.test(value);}
   function isChatReady(){var standalone=new URLSearchParams(location.search).get('standalone');return (!standalone||standalone==='aggregate-chat')&&location.hash==='#aggregate-chat'&&!!document.querySelector('.ops-chat-layout');}
-  function showTransfer(id){
+  function showTransfer(id,options){
     if(!validId(id)||!isChatReady())return false;
     if(seen[id])return true;
     seen[id]=true;
@@ -13,6 +13,7 @@
     var card=document.createElement('section');card.id='prototype-transfer-notice';card.className='prototype-transfer-notice';card.setAttribute('role','alert');card.setAttribute('aria-live','assertive');card.setAttribute('aria-atomic','true');
     card.innerHTML='<span class="simulation-notice-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 17h14l-2-3V9a5 5 0 0 0-10 0v5zM10 21h4"/></svg></span><div><strong>新患者接待提醒</strong><p>您有一个新的待接待患者</p></div><button type="button" aria-label="关闭待接待患者提醒">×</button>';
     card.querySelector('button').addEventListener('click',function(){card.remove();});document.body.appendChild(card);
+    if((!options||!options.silent)&&window.ClinicAudio)window.ClinicAudio.playNewPatientEntry(id);
     return true;
   }
   function setStatus(text,state){var status=document.getElementById('transfer-simulation-status');if(status){status.textContent=text;status.setAttribute('data-audio-state',state||'idle');}}
@@ -47,12 +48,17 @@
       if(activeRun!==run)return;
       if(receiver.closed){finishRun(run);setStatus('聚合聊天窗口已关闭，尚未完成模拟。','failed');return;}
       var shown=false;
-      try{if(receiver.location.origin===location.origin&&receiver.PrototypeTransferSimulation)shown=receiver.PrototypeTransferSimulation.show(run.id);}catch(error){}
+      try{if(receiver.location.origin===location.origin&&receiver.PrototypeTransferSimulation)shown=receiver.PrototypeTransferSimulation.show(run.id,{silent:true});}catch(error){}
       if(!shown){if(Date.now()-run.started>12000){finishRun(run);setStatus('聚合聊天尚未就绪，请重试。','failed');return;}run.timer=setTimeout(deliver,100);return;}
       run.audio.then(function(result){
         if(activeRun!==run)return;
         if(result.error){finishRun(run);setStatus('提醒已显示，浏览器未允许播放提示音。','blocked');var replay=document.querySelector('[data-replay-transfer-sound]');if(replay)replay.hidden=false;return;}
-        try{playChime(result.context);setStatus('提醒已显示，正在播放约 1.5 秒提示音。','playing');run.timer=setTimeout(function(){setStatus('转接模拟已完成。','complete');finishRun(run);},1500);}catch(error){finishRun(run);setStatus('提醒已显示，提示音播放失败，可点击重播。','blocked');var replay=document.querySelector('[data-replay-transfer-sound]');if(replay)replay.hidden=false;}
+        try{
+          var played=window.ClinicAudio&&window.ClinicAudio.playNewPatientEntry(run.id,result.context);
+          if(!played)playChime(result.context);
+          setStatus('提醒已显示，正在播放约 1.5 秒提示音。','playing');
+          run.timer=setTimeout(function(){setStatus('转接模拟已完成。','complete');finishRun(run);},1500);
+        }catch(error){finishRun(run);setStatus('提醒已显示，提示音播放失败，可点击重播。','blocked');var replay=document.querySelector('[data-replay-transfer-sound]');if(replay)replay.hidden=false;}
       });
     }
     deliver();
