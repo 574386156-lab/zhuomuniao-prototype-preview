@@ -526,3 +526,27 @@ html.ops-ai-summary-standalone .ops-workspace { grid-template-rows:minmax(0,1fr)
   .cp-ai-structured-fact-head { display:grid; gap:4px; }
   .cp-ai-structured-fact-meta { justify-content:flex-start; }
 }
+
+/* Patient-side parity: shared timeline data rendered as compact blue cards in the
+   sidebar and WeCom plugin. The patient app owns its green theme separately. */
+.cp-timeline-view { min-width:0; }
+.cp-timeline-heading { color:#173c61; }
+.cp-timeline { border-left-color:#c5def3; }
+.cp-event-marker,
+.cp-event-marker[data-tone="amber"],
+.cp-event-marker[data-tone="green"] { background:#e8f3ff; color:#0d65b7; }
+.cp-event-card { padding:14px 12px 12px; border-radius:8px; box-shadow:0 2px 8px rgba(18,56,95,.08); }
+.cp-event-card .cp-event-type,
+.cp-event-card .cp-event-type[data-tone="amber"],
+.cp-event-card .cp-event-type[data-tone="green"] { display:inline-flex; align-items:center; gap:4px; margin:8px 0 0; padding:0; border:0; border-radius:0; background:transparent; color:#1474bd; font-size:12px; line-height:18px; }
+.cp-event-card .cp-event-type::before { width:5px; height:5px; border-radius:50%; background:#1474bd; content:""; }
+.cp-event-body { margin:10px 0 0; color:#244e73; font-size:14px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
+.cp-event-status[data-tone="success"] { color:#1474bd; background:#eaf4ff; }
+.cp-event-meta { color:#2674ae; background:#eaf4ff; }
+.cp-event-meta.cp-event-report-meta { color:#2674ae; background:#eaf4ff; }
+.cp-event-detail-link,
+.cp-event-detail-link:hover,
+.cp-event-detail-link:focus-visible,
+.cp-timeline-detail-action,
+.cp-timeline-detail-action:hover,
+.cp-timeline-detail-action:focus-visible { color:#0d65b7; }
