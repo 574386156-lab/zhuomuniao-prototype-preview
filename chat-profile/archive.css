@@ -550,3 +550,40 @@ html.ops-ai-summary-standalone .ops-workspace { grid-template-rows:minmax(0,1fr)
 .cp-timeline-detail-action,
 .cp-timeline-detail-action:hover,
 .cp-timeline-detail-action:focus-visible { color:#0d65b7; }
+
+/* Keep the shared detail view aligned with the patient-side event detail
+   pattern. The same markup is used by the desktop sidebar and the WeCom
+   embedded page; only the product shell changes the accent color. */
+.cp-timeline-detail { display:grid; grid-template-rows:auto minmax(0,1fr); gap:0; min-width:0; color:#173c61; }
+.cp-timeline-detail-heading { min-height:58px; padding:0 0 12px; }
+.cp-timeline-detail-heading h2 { font-size:18px; line-height:26px; font-weight:600; }
+.cp-timeline-back { min-height:40px; color:#0d65b7; font-size:14px; }
+.cp-timeline-detail-main { min-height:0; padding:0 0 24px; overflow:auto; scrollbar-width:none; }
+.cp-timeline-detail-main::-webkit-scrollbar { display:none; }
+.cp-timeline-detail-meta { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin:0; padding:16px 0; color:#607b95; font-size:14px; line-height:22px; }
+.cp-timeline-detail-meta time { color:#173c61; font-weight:500; }
+.cp-timeline-detail-meta .cp-event-type { margin:0; padding:2px 8px; border:1px solid #b9d9f4; border-radius:4px; background:#f4f9fe; color:#0d65b7; font-size:13px; line-height:20px; }
+.cp-timeline-detail-meta .cp-event-status { margin:0; padding:2px 8px; border-radius:4px; background:#eaf4ff; color:#0d65b7; font-size:12px; line-height:20px; }
+.cp-timeline-detail .cp-event-timestamps { margin:0 0 16px; padding:12px 0; border-top:1px solid #e2eaf2; border-bottom:1px solid #e2eaf2; }
+.cp-timeline-detail-card { margin:0 0 16px; padding:16px; border:1px solid #dce4ec; border-radius:8px; background:#fff; box-shadow:0 1px 8px rgba(15,47,79,.06); }
+.cp-timeline-detail-card header,
+.cp-timeline-detail-card .cp-event-section-heading { margin:0 0 16px; padding:0 0 12px; border-bottom:1px solid #e2eaf2; }
+.cp-timeline-detail-card .cp-event-section-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.cp-timeline-detail-card h3 { margin:0; color:#173c61; font-size:18px; line-height:26px; font-weight:500; }
+.cp-timeline-detail-card h4 { margin:12px 0 0; color:#173c61; font-size:16px; line-height:24px; }
+.cp-timeline-detail-card p { margin:0; color:#315c83; font-size:14px; line-height:24px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.cp-timeline-detail-card p + p { margin-top:10px; }
+.cp-timeline-detail-card .cp-event-source { color:#718ba4; font-size:13px; }
+.cp-timeline-detail-actions { display:flex; align-items:center; gap:16px; white-space:nowrap; }
+.cp-timeline-detail-action { min-height:28px; padding:0; border:0; background:transparent; color:#0d65b7; font-size:13px; }
+.cp-timeline-detail-card .cp-event-files { display:grid; gap:12px; margin:0; padding:0; border:0; }
+.cp-timeline-detail-card .cp-event-file-row { display:flex; align-items:center; gap:12px; min-height:68px; padding:12px; border:1px solid #dce4ec; border-radius:8px; background:#f8fafb; }
+.cp-timeline-detail-card .cp-event-file-row > span:last-child { display:grid; gap:4px; min-width:0; }
+.cp-timeline-detail-card .cp-event-file-row b { color:#244e73; font-size:14px; font-weight:500; overflow-wrap:anywhere; }
+.cp-timeline-detail-card .cp-event-file-row small { color:#718ba4; font-size:12px; }
+.cp-timeline-detail-card .cp-file-icon { flex:0 0 42px; width:42px; height:54px; border-radius:4px; background:#eaf4fb; color:#52799d; }
+@media (max-width:760px) {
+  .cp-timeline-detail-heading { min-height:52px; }
+  .cp-timeline-detail-card { padding:14px; }
+  .cp-timeline-detail-actions { gap:12px; }
+}
