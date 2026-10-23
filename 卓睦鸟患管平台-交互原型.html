@@ -3043,6 +3043,7 @@
           url.searchParams.set("view", "medical-record");
           url.searchParams.set("theme", "blue");
           url.searchParams.set("partial", "timeline");
+          url.searchParams.set("v", "20261023-archive-sync");
           if (conversation && conversation.name) url.searchParams.set("patient", conversation.name);
           if (state.chatDoctorSelected) url.searchParams.set("doctor", state.chatDoctorSelected);
           if (state.chatArchiveScene) url.searchParams.set("scene", state.chatArchiveScene);

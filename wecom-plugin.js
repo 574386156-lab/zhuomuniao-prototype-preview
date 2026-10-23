@@ -9,6 +9,7 @@
   var pages={'quick-replies':{title:'快捷回复',file:'quick-replies.html'},'patient-followups':{title:'患者跟进',file:'patient-followups.html'},'patient-profile':{title:'患者档案',file:'patient-profile.html'}};
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages'),phoneScreen=document.querySelector('.phone-screen');
   var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
+  var previewVersion='20261023-archive-sync';
   var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null);
   var archiveTab='病例时间轴',archiveTabsExpanded=false;
   function fitPhone(){
@@ -71,7 +72,7 @@
   function archiveSourceUrl(){
     var url=new URL('patient-profile.html',location.href);
     url.searchParams.set('embedded','1');url.searchParams.set('host','wecom-preview');
-    url.searchParams.set('view','medical-record');url.searchParams.set('theme','blue');url.searchParams.set('partial','timeline');
+    url.searchParams.set('view','medical-record');url.searchParams.set('theme','blue');url.searchParams.set('partial','timeline');url.searchParams.set('v',previewVersion);
     if(current){url.searchParams.set('patient',current.name);url.searchParams.set('doctor',current.doctor);url.searchParams.set('scene',current.scene);}
     return url;
   }
