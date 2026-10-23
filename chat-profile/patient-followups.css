@@ -1,0 +1,9 @@
+html.ops-patient-followups-standalone #root,html.ops-patient-followups-standalone .prototype-index-fab,html.ops-patient-followups-standalone #ops-shell>.ops-sidebar,html.ops-patient-followups-standalone #ops-shell .ops-tabs{display:none!important}
+html.ops-patient-followups-standalone #ops-shell{inset:0;grid-template-columns:minmax(0,1fr);font-size:16px}
+html.ops-patient-followups-standalone #ops-shell>.ops-workspace{grid-template-rows:minmax(0,1fr)}
+.ops-patient-followups-page{height:100%;min-height:0;overflow:auto;background:#fff;color:#173c61}
+.ops-patient-followups-page .ops-followup-panel{padding:14px;min-height:100%}
+#ops-shell .ops-patient-followups-page .ops-followup-card{max-width:720px;width:100%;margin:0 auto}
+#ops-shell .ops-patient-followups-page button{min-height:44px}
+.ops-patient-followups-page .ops-followup-content-wrap textarea{min-height:170px}
+@media(max-width:480px){.ops-patient-followups-page .ops-followup-form{display:grid;grid-template-columns:minmax(0,1fr)}.ops-patient-followups-page .ops-followup-save{width:100%}}

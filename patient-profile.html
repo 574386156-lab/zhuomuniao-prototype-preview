@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>患者档案</title>
+</head>
+<body>
+  <p><a id="archive-entry" href="卓睦鸟患管平台-交互原型.html?standalone=patient-profile#aggregate-chat">打开患者档案</a></p>
+  <script>
+    // Keep the old entry URL; rendering, state and interactions use the chat controller.
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var target = new URL('卓睦鸟患管平台-交互原型.html', location.href);
+      target.searchParams.set('standalone', 'patient-profile');
+      ['patient', 'doctor', 'scene', 'embedded', 'host', 'sidebarEnv'].forEach(function (key) {
+        if (params.has(key)) target.searchParams.set(key, params.get(key));
+      });
+      target.hash = 'aggregate-chat';
+      document.getElementById('archive-entry').href = target.href;
+      location.replace(target.href);
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+/* Consistent in-page dropdowns; native select values remain the event source. */
+select[data-ui-select-source] { display:none !important; }
+.ui-select { display:inline-flex; min-width:0; width:100%; max-width:100%; vertical-align:middle; }
+.ui-select .ui-select-trigger,#ops-shell .ui-select-trigger { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-width:0; min-height:40px; height:auto; padding:8px 12px; border:1px solid #d7e2ed; border-radius:6px; background:#fff; color:#173c61; font:inherit; font-size:14px; line-height:1.5; text-align:left; cursor:pointer; }
+.ui-select .ui-select-trigger:hover:not(:disabled),.ui-select .ui-select-trigger[aria-expanded="true"] { border-color:#0365bf; }
+.ui-select .ui-select-trigger:focus-visible { outline:2px solid #0365bf; outline-offset:2px; }
+.ui-select .ui-select-trigger:disabled,#ops-shell .ui-select-trigger:disabled { color:#64768a; background:#f0f3f6; opacity:1; cursor:not-allowed; }
+.ui-select-value { min-width:0; flex:1; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.ui-select-chevron { flex:0 0 auto; color:#66819b; font-size:16px; }
+.ui-select-popup { position:fixed; z-index:2147483647; overflow:auto; overscroll-behavior:contain; box-sizing:border-box; padding:4px; border:1px solid #d7e2ed; border-radius:8px; background:#fff; color:#173c61; box-shadow:0 6px 20px #173c6126; font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+.ui-select-popup .ui-select-option { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:44px; padding:10px 12px; border:0; border-radius:4px; background:#fff; color:inherit; font:inherit; text-align:left; cursor:pointer; overflow-wrap:anywhere; }
+.ui-select-popup .ui-select-option[aria-selected="true"] { color:#0365bf; background:#eef7ff; }
+.ui-select-popup .ui-select-option.is-highlighted { outline:2px solid #8dbdeb; outline-offset:-2px; background:#eaf3fc; }
+.ui-select-popup .ui-select-option:disabled { color:#97a9ba; cursor:not-allowed; background:#f6f8fa; }
+.ui-select-check { flex:0 0 16px; }
+.ui-select-group { padding:8px 12px 4px; color:#607c96; font-size:12px; }
+.cp-scene-picker > .ui-select { width:100%; }
+#ops-shell .cp-scene-picker .ui-select-trigger { min-height:44px; font-size:16px; }
+.ops-material-search-row > .ui-select { flex:0 0 116px; width:116px; }
+#ops-shell .ops-material-search-row .ui-select-trigger { min-height:44px; padding:8px 6px; }
+.ops-patient-tag-scopes > .ui-select { width:100%; min-width:0; }
+.ops-chat-history-filters > .ui-select { flex:1; width:0; }
+.ops-pagination > .ui-select { flex:0 0 112px; width:112px; }
+.ops-chat-history-filters .ui-select-trigger { padding:6px 8px; }
+@media(max-width:600px) { .ui-select .ui-select-trigger,#ops-shell .ui-select-trigger,.ui-select-popup .ui-select-option { min-height:44px; font-size:16px; } }

@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "id": "icd10-clinical-v2-user-file",
+  "version": "ICD-10 国家临床版2.0（用户提供）",
+  "label": "国家临床版2.0",
+  "sourceFile": "ICD10国临2.0.xls",
+  "sourceSheet": "国家临床版2.0诊断编码（ICD-10）",
+  "sourceRange": "A1:B35863",
+  "sourceSha256": "ec35297d459e6e101b8b4158f11f1102660d27decdc0ba5719c6821bed5591e5",
+  "sourceBytes": 3027456,
+  "generatedOn": "2026-10-19",
+  "entryCount": 35862,
+  "sourceDataRowCount": 35862,
+  "emptyCodeOrNameCount": 0,
+  "duplicateNormalizedCodeCount": 0,
+  "codeNameConflictCount": 0,
+  "edgeWhitespaceCodeCount": 1,
+  "edgeWhitespaceNameCount": 22,
+  "normalizations": [
+    {
+      "row": 1565,
+      "originalCode": "B03.x00",
+      "originalName": "天花 ",
+      "code": "B03.x00",
+      "name": "天花"
+    },
+    {
+      "row": 1594,
+      "originalCode": "B06.801+J17.1* ",
+      "originalName": "风疹性肺炎",
+      "code": "B06.801+J17.1*",
+      "name": "风疹性肺炎"
+    },
+    {
+      "row": 1652,
+      "originalCode": "B16.201",
+      "originalName": "急性乙型病毒性肝炎伴肝昏迷 ",
+      "code": "B16.201",
+      "name": "急性乙型病毒性肝炎伴肝昏迷"
+    },
+    {
+      "row": 12539,
+      "originalCode": "I21.100x002",
+      "originalName": "急性下壁心肌梗死  ",
+      "code": "I21.100x002",
+      "name": "急性下壁心肌梗死"
+    },
+    {
+      "row": 12543,
+      "originalCode": "I21.105",
+      "originalName": "急性下侧壁心肌梗死 ",
+      "code": "I21.105",
+      "name": "急性下侧壁心肌梗死"
+    },
+    {
+      "row": 12570,
+      "originalCode": "I21.205",
+      "originalName": "急性正后壁心肌梗死 ",
+      "code": "I21.205",
+      "name": "急性正后壁心肌梗死"
+    },
+    {
+      "row": 12571,
+      "originalCode": "I21.206",
+      "originalName": "急性右室心肌梗死 ",
+      "code": "I21.206",
+      "name": "急性右室心肌梗死"
+    },
+    {
+      "row": 13653,
+      "originalCode": "I67.800x011",
+      "originalName": "可逆性缺血性神经功能缺损  ",
+      "code": "I67.800x011",
+      "name": "可逆性缺血性神经功能缺损"
+    },
+    {
+      "row": 16742,
+      "originalCode": "K55.100x011",
+      "originalName": "出血性小肠结膜炎  ",
+      "code": "K55.100x011",
+      "name": "出血性小肠结膜炎"
+    },
+    {
+      "row": 23561,
+      "originalCode": "O69.200x006",
+      "originalName": "脐带狭窄 ",
+      "code": "O69.200x006",
+      "name": "脐带狭窄"
+    },
+    {
+      "row": 23585,
+      "originalCode": "O69.800x004",
+      "originalName": "脐带水肿 ",
+      "code": "O69.800x004",
+      "name": "脐带水肿"
+    },
+    {
+      "row": 23602,
+      "originalCode": "O70.100x005",
+      "originalName": "会阴-阴道复杂裂伤  ",
+      "code": "O70.100x005",
+      "name": "会阴-阴道复杂裂伤"
+    },
+    {
+      "row": 23604,
+      "originalCode": "O70.200x001",
+      "originalName": "会阴裂伤累及阴道直肠隔 ",
+      "code": "O70.200x001",
+      "name": "会阴裂伤累及阴道直肠隔"
+    },
+    {
+      "row": 23607,
+      "originalCode": "O70.300x001",
+      "originalName": "会阴裂伤累及肛门粘膜 ",
+      "code": "O70.300x001",
+      "name": "会阴裂伤累及肛门粘膜"
+    },
+    {
+      "row": 23694,
+      "originalCode": "O75.300x002",
+      "originalName": "分娩期宫内感染 ",
+      "code": "O75.300x002",
+      "name": "分娩期宫内感染"
+    },
+    {
+      "row": 23710,
+      "originalCode": "O80.900",
+      "originalName": "单胎顺产 ",
+      "code": "O80.900",
+      "name": "单胎顺产"
+    },
+    {
+      "row": 23804,
+      "originalCode": "O89.000x001",
+      "originalName": "产褥期麻醉相关的吸入性肺炎 ",
+      "code": "O89.000x001",
+      "name": "产褥期麻醉相关的吸入性肺炎"
+    },
+    {
+      "row": 24344,
+      "originalCode": "P05.900",
+      "originalName": "胎儿生长缓慢 ",
+      "code": "P05.900",
+      "name": "胎儿生长缓慢"
+    },
+    {
+      "row": 26521,
+      "originalCode": "Q80.900",
+      "originalName": "先天性鱼鳞病 ",
+      "code": "Q80.900",
+      "name": "先天性鱼鳞病"
+    },
+    {
+      "row": 26775,
+      "originalCode": "Q90.900",
+      "originalName": "唐氏综合征\\[先天愚型\\] ",
+      "code": "Q90.900",
+      "name": "唐氏综合征\\[先天愚型\\]"
+    },
+    {
+      "row": 26779,
+      "originalCode": "Q91.300",
+      "originalName": "爱德华兹综合征 ",
+      "code": "Q91.300",
+      "name": "爱德华兹综合征"
+    },
+    {
+      "row": 29288,
+      "originalCode": "S53.100",
+      "originalName": "肘关节脱位 ",
+      "code": "S53.100",
+      "name": "肘关节脱位"
+    },
+    {
+      "row": 33087,
+      "originalCode": "U04.900",
+      "originalName": "严重急性呼吸道综合征 ",
+      "code": "U04.900",
+      "name": "严重急性呼吸道综合征"
+    }
+  ],
+  "rowColumns": [
+    "sourceCode",
+    "sourceName",
+    "pinyin",
+    "initials",
+    "sourceRow"
+  ],
+  "reader": "xlrd 2.0.1",
+  "transliterator": "pypinyin 0.51.0 (normal/first-letter; phrase defaults)",
+  "note": "User-supplied source; publisher/release authenticity not independently verified. Pinyin is a generated search aid, not a diagnosis mapping."
+}

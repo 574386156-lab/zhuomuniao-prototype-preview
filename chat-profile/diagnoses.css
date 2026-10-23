@@ -1,0 +1,49 @@
+/* Patient self-reports and explicitly selected standard diagnoses have distinct colors. */
+.dx-editor { min-width:0; color:#173c61; font:400 16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+.dx-editor * { box-sizing:border-box; }
+#ops-shell .dx-editor button { min-width:44px; min-height:44px; font:inherit; font-size:14px; cursor:pointer; }
+.dx-editor button:focus-visible,.dx-editor input:focus-visible,.dx-editor textarea:focus-visible { outline:2px solid #0365bf; outline-offset:2px; }
+.dx-selected { display:none; }
+.dx-chip { display:inline-flex; align-items:stretch; max-width:100%; min-width:0; border:1px solid #ecd6a8; border-radius:6px; background:#fff8ea; color:#895d1f; }
+.dx-chip.is-raw { color:#895d1f; }
+.dx-chip.is-standard { border-color:#bcd8f0; background:#eef6ff; color:#0365bf; }
+#ops-shell .dx-chip > button { min-width:0; min-height:44px; padding:6px 8px; border:0; background:transparent; color:inherit; text-align:left; }
+#ops-shell .dx-chip > .dx-remove { flex:0 0 44px; min-width:44px; padding:0; text-align:center; font-size:20px; }
+.dx-chip strong,.cp-basic-info .cp-diagnosis .dx-chip strong { display:block; color:inherit; font-size:16px; line-height:1.4; font-weight:500; overflow-wrap:anywhere; }
+.dx-chip small { display:block; margin-top:2px; font-size:12px; }
+.dx-chip .dx-chip-content { display:block; min-width:0; padding:6px 8px; color:inherit; }
+.dx-chip .dx-source-badge { display:inline-block; padding:1px 5px; border:1px solid #e6c899; border-radius:3px; color:#895d1f; background:#fff0d4; font-size:12px; line-height:18px; }
+.dx-empty { color:#607b95; font-size:14px; }
+.dx-search { position:relative; border:1px solid #d7e2ed; border-radius:6px; background:#fff; }
+#ops-shell .dx-search input,#ops-shell .dx-search textarea { width:100%; min-width:0; min-height:44px; height:auto; padding:8px 48px 8px 10px; border:0; border-radius:6px; background:transparent; color:#173c61; font:inherit; font-size:16px; box-shadow:none; resize:none; overflow:hidden; white-space:pre-wrap; overflow-wrap:anywhere; }
+#ops-shell .dx-search > .dx-clear { position:absolute; top:0; right:0; width:44px; min-width:44px; height:44px; min-height:44px; padding:0; border:0; background:transparent; color:#35678f; font-size:22px; line-height:44px; }
+.dx-menu { margin-top:6px; overflow:hidden; border:1px solid #d7e2ed; border-radius:6px; background:#fff; box-shadow:0 3px 12px #173c6114; }
+.dx-menu[hidden] { display:none; }
+.dx-dictionary { padding:8px 10px; color:#607b95; background:#f5f8fb; font-size:12px; }
+.dx-menu [role="listbox"] { max-height:250px; overflow-y:auto; overscroll-behavior:contain; }
+#ops-shell .dx-option { display:block; width:100%; min-height:52px; padding:8px 10px; border:0; border-bottom:1px solid #edf2f7; background:#fff; color:#173c61; text-align:left; }
+#ops-shell .dx-option.is-active,#ops-shell .dx-option:hover { background:#edf6ff; }
+.dx-option strong { display:block; color:#173c61; font-size:16px; font-weight:500; overflow-wrap:anywhere; }
+.dx-option small { display:block; color:#607b95; font-size:12px; overflow-wrap:anywhere; }
+#ops-shell .dx-keep-raw { display:block; width:100%; padding:8px 10px; border:0; border-top:1px solid #d7e2ed; background:#f8fafc; color:#607b95; text-align:left; overflow-wrap:anywhere; }
+.dx-context { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; color:#607b95; font-size:14px; }
+#ops-shell .dx-context button { flex:0 0 auto; border:0; background:transparent; color:#0365bf; }
+.dx-confirm { display:grid; gap:6px; margin-top:8px; padding:10px; border:1px solid #bcd8f0; border-radius:6px; background:#f4f9ff; }
+.dx-confirm p { margin:0; font-size:14px; overflow-wrap:anywhere; }
+.dx-confirm small { color:#607b95; font-size:12px; }
+.dx-confirm > div { display:flex; gap:8px; }
+#ops-shell .dx-confirm button { padding:8px 10px; border:1px solid #d7e2ed; border-radius:5px; background:#fff; color:#526d87; }
+#ops-shell .dx-confirm .dx-primary { border-color:#0365bf; background:#0365bf; color:#fff; }
+.dx-notice { margin:4px 0; color:#607b95; font-size:12px; }
+.dx-notice:empty { display:none; }
+
+.dx-option .dx-option-code { margin-top:2px; color:#0365bf; font-size:14px; overflow-wrap:anywhere; }
+.dx-load-hint { margin:0; padding:8px 10px; border-top:1px solid #d7e2ed; color:#607b95; font-size:12px; line-height:1.5; text-align:center; }
+
+/* Product Design unified clinical workspace polish: one calm, editable diagnosis field. */
+.dx-editor { display:grid; gap:8px; }
+.dx-search { border:1.5px solid #bdd7ee; border-radius:10px; box-shadow:0 1px 0 rgba(23,60,97,.03); }
+#ops-shell .dx-search input,#ops-shell .dx-search textarea { min-height:42px; padding:8px 44px 8px 10px; border-radius:6px; }
+#ops-shell .dx-search > .dx-clear { width:42px; min-width:42px; height:42px; min-height:42px; line-height:42px; color:#173c61; font-size:22px; }
+.dx-menu { margin-top:8px; border-radius:12px; box-shadow:0 12px 28px rgba(23,60,97,.12); }
+#ops-shell .dx-option { min-height:56px; padding:10px 14px; }
