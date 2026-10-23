@@ -6,6 +6,7 @@
     <link rel="icon" href="data:," />
     <title>卓睦鸟患管平台 · 交互原型</title>
     <script src="./shared/select-control.js"></script>
+    <script src="./shared/clinic-audio.js"></script>
     <script>
       var standaloneArchiveEntry = new URLSearchParams(window.location.search).get("standalone") === "patient-profile";
       var standaloneAiSummaryEntry = new URLSearchParams(window.location.search).get("standalone") === "ai-summary";
@@ -4661,7 +4662,10 @@
             render();
             window.setTimeout(function () { toast("跟进记录已保存"); }, 10);
           } else if (action === "chat-select") {
-            selectArchivePatient(actionTarget.getAttribute("data-name"));
+            var selectedPatientName = actionTarget.getAttribute("data-name");
+            var patientChanged = state.chatSelected !== selectedPatientName;
+            selectArchivePatient(selectedPatientName);
+            if (patientChanged && window.ClinicAudio) window.ClinicAudio.playNewPatientEntry(selectedPatientName);
             state.chatArchiveTab = "病例时间轴";
             state.chatArchiveMetric = 0;
             state.chatArchiveScene = "慢病随访";

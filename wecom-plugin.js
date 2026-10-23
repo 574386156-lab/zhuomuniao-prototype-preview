@@ -48,7 +48,7 @@
   function navigate(hash){if(location.hash===hash)route();else location.hash=hash;}
   function route(){
     var parts=location.hash.replace(/^#/,'').split('/'),person=people.filter(function(p){return p.id===parts[1];})[0];
-    if((parts[0]==='chat'||parts[0]==='page')&&person){if(current!==person){clearFrames();current=person;}person.unread=0;if(parts[0]==='page'&&parts[2])openPage(parts[2]);else showChat();}
+    if((parts[0]==='chat'||parts[0]==='page')&&person){if(current!==person){clearFrames();current=person;if(window.ClinicAudio)window.ClinicAudio.playNewPatientEntry(person.id);}person.unread=0;if(parts[0]==='page'&&parts[2])openPage(parts[2]);else showChat();}
     else{showMessages();}
   }
   app.addEventListener('click',function(event){var person=event.target.closest('[data-wc-person]'),page=event.target.closest('[data-wc-page]'),action=event.target.closest('[data-wc-action]');if(person)navigate('#chat/'+person.getAttribute('data-wc-person'));else if(page&&current)navigate('#page/'+current.id+'/'+page.getAttribute('data-wc-page'));else if(action)navigate(action.getAttribute('data-wc-action')==='chat'&&current?'#chat/'+current.id:'#messages');});
