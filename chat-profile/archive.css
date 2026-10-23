@@ -331,6 +331,10 @@
 .cp-timeline-detail-card h3 { margin:0; color:#173c61; font-size:17px; }
 .cp-timeline-detail-card h4 { margin:12px 0 0; color:#173c61; font-size:16px; }
 .cp-timeline-detail-card p { margin:12px 0 0; color:#315c83; font-size:15px; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; }
+.cp-event-detail-fields { display:grid; gap:16px; margin:0; }
+.cp-event-detail-fields > div { display:grid; gap:6px; }
+.cp-event-detail-fields dt { color:#526d87; font-size:13px; }
+.cp-event-detail-fields dd { margin:0; color:#315c83; font-size:14px; line-height:24px; white-space:pre-wrap; overflow-wrap:anywhere; }
 .cp-timeline-detail-card .cp-event-source { color:#607b95; font-size:13px; }
 .cp-timeline-detail-actions { display:flex; align-items:center; gap:8px; }
 .cp-timeline-detail-action { min-height:32px; padding:0 8px; border:0; background:transparent; color:#168b82; font:inherit; font-size:13px; cursor:pointer; }
