@@ -76,6 +76,8 @@
   }
   function renderPatientArchive(){
     if(!current||!window.ChatPatientArchive){pageHost.innerHTML='<p class="wc-loading">患者档案加载中…</p>';return;}
+    Object.keys(frames).forEach(function(key){if(frames[key]&&frames[key].remove)frames[key].remove();});
+    frames=Object.create(null);
     var ctx=window.ChatPatientArchive.context(archiveConversation(),current.doctor,current.scene);
     var basic={name:current.name,gender:'男',phone:current.name==='王德华'?'138****5605':'139****8821',birthDate:'',height:'',diagnosis:'2型糖尿病'};
     var source='<iframe class="wc-patient-timeline-source" title="病例时间轴" src="'+esc(archiveSourceUrl().href)+'" referrerpolicy="same-origin"></iframe>';
