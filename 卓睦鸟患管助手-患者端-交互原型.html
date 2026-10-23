@@ -1078,7 +1078,202 @@ Error generating stack: `+e.message+`
       .patient-history-event:last-child .patient-history-dot:after { display:none; }
       .patient-history-event strong { display:block; font-size:13px; }
       .patient-history-event p { margin:4px 0 0; color:#55789a; font-size:12px; line-height:1.5; }
+      /* Screenshot-matched medical history timeline: blue theme. */
+      #patient-history-layer {
+        grid-template-rows: 112px minmax(0, 1fr);
+        background: #f5f8fc;
+        color: #12385f;
+      }
+      .patient-history-header {
+        position: relative;
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        align-items: start;
+        gap: 8px;
+        height: 112px;
+        padding: 48px 12px 0;
+        border: 0;
+        background: linear-gradient(180deg, #e7f3ff 0%, #edf7ff 70%, #f5f8fc 100%);
+      }
+      .patient-history-header button {
+        display: grid;
+        place-items: center;
+        width: 32px;
+        height: 32px;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: transparent;
+        color: #0d65b7;
+      }
+      .patient-history-header > button img { width: 20px; height: 20px; object-fit: contain; }
+      .patient-history-header h2 {
+        justify-self: center;
+        min-width: 176px;
+        margin: 0;
+        padding: 2px 12px;
+        border: 1.5px solid #0d65b7;
+        border-radius: 3px;
+        color: #0d65b7;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 24px;
+        text-align: center;
+      }
+      .patient-history-count {
+        align-self: center;
+        margin-top: 5px;
+        color: #6c87a2;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .patient-history-host-actions {
+        position: absolute;
+        top: 48px;
+        right: 12px;
+        display: grid;
+        width: 106px;
+        height: 38px;
+      }
+      .patient-history-main { overflow: auto; padding: 0 12px 20px; }
+      .patient-history-feed {
+        position: relative;
+        padding: 0 0 12px 34px;
+      }
+      .patient-history-feed::before {
+        position: absolute;
+        top: 0;
+        bottom: 28px;
+        left: 14px;
+        width: 1px;
+        background: #c5def3;
+        content: "";
+      }
+      .patient-history-event {
+        position: relative;
+        display: block;
+        min-height: 0;
+        margin: 0 0 12px;
+      }
+      .patient-history-event:last-child { margin-bottom: 0; }
+      .patient-history-marker {
+        position: absolute;
+        z-index: 1;
+        top: 0;
+        left: -34px;
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 3px solid #f5f8fc;
+        border-radius: 9px;
+        background: #e8f3ff;
+        color: #0d65b7;
+      }
+      .patient-history-marker img { width: 16px; height: 16px; object-fit: contain; }
+      .patient-history-event-card {
+        min-width: 0;
+        padding: 14px 12px 12px;
+        border: 1px solid #e2eaf2;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(18, 56, 95, .08);
+      }
+      .patient-history-event-card header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        min-height: 24px;
+      }
+      .patient-history-event-card time { color: #12385f; font-size: 16px; font-weight: 500; line-height: 24px; }
+      .patient-history-detail {
+        min-height: 28px;
+        padding: 0 0 0 4px;
+        border: 0;
+        background: transparent;
+        color: #0d65b7;
+        font-size: 12px;
+        line-height: 24px;
+        white-space: nowrap;
+      }
+      .patient-history-event-type {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 8px;
+        color: #1474bd;
+        font-size: 12px;
+        line-height: 18px;
+      }
+      .patient-history-event-type::before {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #1474bd;
+        content: "";
+      }
+      .patient-history-event-type.is-report { color: #687f98; }
+      .patient-history-event-type.is-report::before { background: #8ba0b4; }
+      .patient-history-event-card p {
+        margin: 10px 0 0;
+        color: #244e73;
+        font-size: 13px;
+        line-height: 1.6;
+      }
+      .patient-history-event-footer {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 6px;
+        margin-top: 10px;
+      }
+      .patient-history-status,
+      .patient-history-files {
+        display: inline-flex;
+        align-items: center;
+        min-height: 22px;
+        padding: 0 7px;
+        border-radius: 4px;
+        background: #eaf4ff;
+        color: #2674ae;
+        font-size: 11px;
+        line-height: 22px;
+      }
+      .patient-history-status.is-failed { background: #fff2df; color: #a5681e; }
+      .patient-history-status.is-complete { background: #eaf4ff; color: #1474bd; }
+      .patient-history-files { padding: 0; background: transparent; color: #8aa2b8; }
+      @media (max-width: 360px) {
+        .patient-history-header { padding-right: 10px; padding-left: 10px; }
+        .patient-history-header h2 { min-width: 166px; font-size: 15px; }
+        .patient-history-main { padding-right: 10px; padding-left: 10px; }
+        .patient-history-event-card { padding-right: 11px; padding-left: 11px; }
+      }
+      .patient-history-detail-layer {
+        position: absolute;
+        inset: 0;
+        z-index: 4;
+        display: grid;
+        grid-template-rows: 112px minmax(0, 1fr);
+        overflow: hidden;
+        background: #f5f8fc;
+        color: #12385f;
+      }
+      .patient-history-detail-layer .patient-history-main { padding-top: 14px; }
+      .patient-history-detail-card {
+        padding: 14px 12px;
+        border: 1px solid #e2eaf2;
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(18, 56, 95, .08);
+      }
+      .patient-history-detail-card + .patient-history-detail-card { margin-top: 12px; }
+      .patient-history-detail-card h3 { margin: 0; padding-bottom: 10px; border-bottom: 1px solid #e5edf4; color: #12385f; font-size: 16px; }
+      .patient-history-detail-card p { margin: 12px 0 0; color: #315c83; font-size: 13px; line-height: 1.65; }
+      .patient-history-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #6c87a2; font-size: 12px; }
+      .patient-history-detail-meta time { color: #12385f; font-weight: 500; }
     </style>
+
     <script id="ai-profile-page-script">
       (() => {
         const profileAssets = {
@@ -1107,18 +1302,118 @@ Error generating stack: `+e.message+`
           history.id = 'patient-history-layer';
           history.setAttribute('aria-label', '我的病历');
           history.innerHTML = `
-            <header class="patient-history-header"><button type="button" aria-label="返回我的">‹</button><h2>我的病历</h2></header>
+            <header class="patient-history-header">
+              <button type="button" aria-label="返回我的"><img src="${profileAssets.back}" alt="" aria-hidden="true" /></button>
+              <h2>病历时间轴</h2>
+              <span class="patient-history-count">共 7 条</span>
+            </header>
             <main class="patient-history-main">
-              <section class="patient-history-hero"><strong>刘德华 · 高血压随访</strong><p>这里展示与患管后台相同的合成病历时间轴。记录来源、同步状态和随访任务均可追溯。</p><div class="patient-history-sync">同步标识：PT-PA-0001 · 已同步至患管后台</div></section>
-              <section class="patient-history-card"><h3>病历时间轴</h3>
-                <article class="patient-history-event"><time>08-24 09:18</time><span class="patient-history-dot"></span><div><strong>每日血压记录</strong><p>晨间 135/85 mmHg，备注：偶尔头晕。</p></div></article>
-                <article class="patient-history-event"><time>08-24 09:16</time><span class="patient-history-dot"></span><div><strong>随访问答已转人工</strong><p>助手记录不适，不提供用药调整结论，等待医助复核。</p></div></article>
-                <article class="patient-history-event"><time>08-23 16:40</time><span class="patient-history-dot"></span><div><strong>随访任务完成</strong><p>连续记录命中规则，已自动创建并发送“记录确认”任务。</p></div></article>
-                <article class="patient-history-event"><time>08-22 10:05</time><span class="patient-history-dot"></span><div><strong>上传检查摘要</strong><p>2026-08-21 血压记录.pdf 已同步到后台患者档案。</p></div></article>
-                <article class="patient-history-event"><time>08-18 14:22</time><span class="patient-history-dot"></span><div><strong>完成基础建档</strong><p>加入广德慢病项目，绑定张医生。</p></div></article>
+              <section class="patient-history-feed" aria-label="病历时间轴">
+                <article class="patient-history-event">
+                  <span class="patient-history-marker" aria-hidden="true"><img src="${profileAssets.medicalRecord}" alt="" /></span>
+                  <div class="patient-history-event-card">
+                    <header><time>2026-10-20</time><button class="patient-history-detail" type="button" data-history-event="treatment">查看详情</button></header>
+                    <span class="patient-history-event-type">治疗</span>
+                    <p>腹腔镜膜十二指肠切除术。术后 6 次辅助化疗（FOLFOX，家属口述小剂量，具体未知）。</p>
+                    <footer class="patient-history-event-footer"><span class="patient-history-status is-complete">已完成</span><span class="patient-history-files">3 份原始文件</span></footer>
+                  </div>
+                </article>
+                <article class="patient-history-event">
+                  <span class="patient-history-marker" aria-hidden="true"><img src="${profileAssets.medicalRecord}" alt="" /></span>
+                  <div class="patient-history-event-card">
+                    <header><time>2026-10-19</time><button class="patient-history-detail" type="button" data-history-event="petct">查看详情</button></header>
+                    <span class="patient-history-event-type">检查</span>
+                    <p>PET-CT：右肺上叶 80mm 肿块（SUVmax 14.6）；L3 椎体溶骨性破坏+病理性骨折（SUVmax 9.1）。</p>
+                    <footer class="patient-history-event-footer"><span class="patient-history-status is-complete">已完成</span><span class="patient-history-status is-complete">含报告解读</span><span class="patient-history-files">1 份原始文件</span></footer>
+                  </div>
+                </article>
+                <article class="patient-history-event">
+                  <span class="patient-history-marker" aria-hidden="true"><img src="${profileAssets.medicalRecord}" alt="" /></span>
+                  <div class="patient-history-event-card">
+                    <header><time>2026-10-19</time><button class="patient-history-detail" type="button" data-history-event="assessment">查看详情</button></header>
+                    <span class="patient-history-event-type">病情评估</span>
+                    <p>打球扭到腰后，反复腰痛，2 月体重下降 10 斤。</p>
+                    <footer class="patient-history-event-footer"><span class="patient-history-status is-complete">已完成</span><span class="patient-history-status is-complete">含报告解读</span><span class="patient-history-files">3 份原始文件</span></footer>
+                  </div>
+                </article>
+                <article class="patient-history-event">
+                  <span class="patient-history-marker" aria-hidden="true"><img src="${profileAssets.medicalRecord}" alt="" /></span>
+                  <div class="patient-history-event-card">
+                    <header><time>2026-10-12</time><button class="patient-history-detail" type="button" data-history-event="review">查看详情</button></header>
+                    <span class="patient-history-event-type">检查</span>
+                    <p>复查资料已上传，等待医生查看。</p>
+                    <footer class="patient-history-event-footer"><span class="patient-history-status is-complete">已完成</span><span class="patient-history-files">1 份原始文件</span></footer>
+                  </div>
+                </article>
+                <article class="patient-history-event">
+                  <span class="patient-history-marker" aria-hidden="true"><img src="${profileAssets.medicalRecord}" alt="" /></span>
+                  <div class="patient-history-event-card">
+                    <header><time>2026-09-28</time><button class="patient-history-detail" type="button" data-history-event="mri">查看详情</button></header>
+                    <span class="patient-history-event-type">检查</span>
+                    <p>脊柱 MR：L3 椎旁肿块，L3/4 左侧神经根受压。</p>
+                    <footer class="patient-history-event-footer"><span class="patient-history-status is-complete">已完成</span><span class="patient-history-status is-complete">含报告解读</span><span class="patient-history-files">1 份原始文件</span></footer>
+                  </div>
+                </article>
+                <article class="patient-history-event">
+                  <span class="patient-history-marker" aria-hidden="true"><img src="${profileAssets.medicalRecord}" alt="" /></span>
+                  <div class="patient-history-event-card">
+                    <header><time>2026-09-28</time><button class="patient-history-detail" type="button" data-history-event="ablation">查看详情</button></header>
+                    <span class="patient-history-event-type">治疗</span>
+                    <p>经皮 L3 椎体活检+微波消融术。术前检验未见明显异常。</p>
+                    <footer class="patient-history-event-footer"><span class="patient-history-status is-complete">已完成</span><span class="patient-history-status is-complete">含报告解读</span><span class="patient-history-files">1 份原始文件</span></footer>
+                  </div>
+                </article>
+                <article class="patient-history-event">
+                  <span class="patient-history-marker" aria-hidden="true"><img src="${profileAssets.medicalRecord}" alt="" /></span>
+                  <div class="patient-history-event-card">
+                    <header><time>2026-09-28</time><button class="patient-history-detail" type="button" data-history-event="labs">查看详情</button></header>
+                    <span class="patient-history-event-type">检查、检验</span>
+                    <p>WBC 28.31↑，HGB 124↓，LDH 303↑。肺功能：中重度混合性通气障碍，弥散功能中度下降。心脏超声：EF 69%，结构功能正常。</p>
+                    <footer class="patient-history-event-footer"><span class="patient-history-status is-complete">已完成</span><span class="patient-history-status is-complete">含报告解读</span><span class="patient-history-files">1 份原始文件</span></footer>
+                  </div>
+                </article>
               </section>
             </main>`;
           history.querySelector('button').addEventListener('click', () => history.remove());
+          const historyHeader = history.querySelector('.patient-history-header');
+          const historyHostActions = profileLayer.querySelector('.ai-profile-header .ai-assistant-host-actions')?.cloneNode(true);
+          if (historyHostActions) {
+            historyHostActions.classList.add('patient-history-host-actions');
+            historyHostActions.setAttribute('aria-label', '宿主操作控件');
+            historyHostActions.querySelector('.ai-assistant-host-button:last-child')?.addEventListener('click', () => history.remove());
+            historyHeader.appendChild(historyHostActions);
+          }
+          const eventDetails = {
+            treatment: { date: '2026-10-20', type: '治疗', status: '已完成', text: '腹腔镜膜十二指肠切除术。术后 6 次辅助化疗（FOLFOX，家属口述小剂量，具体未知）。', report: '暂无可展示的解读内容。', file: '治疗记录原件.png' },
+            petct: { date: '2026-10-19', type: '检查', status: '已完成', text: 'PET-CT：右肺上叶 80mm 肿块（SUVmax 14.6）；L3 椎体溶骨性破坏+病理性骨折（SUVmax 9.1）。', report: '含报告解读，内容已同步至患者档案。', file: 'PET-CT报告.png' },
+            assessment: { date: '2026-10-19', type: '病情评估', status: '已完成', text: '打球扭到腰后，反复腰痛，2 月体重下降 10 斤。', report: '含报告解读，内容已同步至患者档案。', file: '病情评估记录.png' },
+            review: { date: '2026-10-12', type: '检查', status: '已完成', text: '复查资料已上传，等待医生查看。', report: '暂无可展示的解读内容。', file: '复查资料.png' },
+            mri: { date: '2026-09-28', type: '检查', status: '已完成', text: '脊柱 MR：L3 椎旁肿块，L3/4 左侧神经根受压。', report: '含报告解读，内容已同步至患者档案。', file: '脊柱 MR.png' },
+            ablation: { date: '2026-09-28', type: '治疗', status: '已完成', text: '经皮 L3 椎体活检+微波消融术。术前检验未见明显异常。', report: '含报告解读，内容已同步至患者档案。', file: '治疗记录原件.png' },
+            labs: { date: '2026-09-28', type: '检查、检验', status: '已完成', text: 'WBC 28.31↑，HGB 124↓，LDH 303↑。肺功能：中重度混合性通气障碍，弥散功能中度下降。心脏超声：EF 69%，结构功能正常。', report: '含报告解读，内容已同步至患者档案。', file: '检查检验报告.png' },
+          };
+          history.querySelectorAll('.patient-history-detail').forEach((button) => {
+            button.addEventListener('click', () => {
+              const item = eventDetails[button.dataset.historyEvent] || eventDetails.report;
+              const detail = document.createElement('section');
+              detail.className = 'patient-history-detail-layer';
+              detail.setAttribute('aria-label', '病历详情');
+              detail.innerHTML = `
+                <header class="patient-history-header">
+                  <button type="button" aria-label="返回病例时间轴"><img src="${profileAssets.back}" alt="" aria-hidden="true" /></button>
+                  <h2>病历详情</h2>
+                  <span class="patient-history-count">${item.date}</span>
+                </header>
+                <main class="patient-history-main">
+                  <div class="patient-history-detail-meta"><time>${item.date}</time><span>${item.type}</span><span class="patient-history-status ${item.status === '处理失败' ? 'is-failed' : 'is-complete'}">${item.status}</span></div>
+                  <section class="patient-history-detail-card"><h3>病历记录</h3><p>${item.text}</p></section>
+                  <section class="patient-history-detail-card"><h3>报告解读</h3><p>${item.report}</p></section>
+                  <section class="patient-history-detail-card"><h3>文件原件</h3><p>${item.file}<br><span class="patient-history-files">图片</span></p></section>
+                </main>`;
+              detail.querySelector('button').addEventListener('click', () => detail.remove());
+              history.appendChild(detail);
+            });
+          });
           profileLayer.appendChild(history);
         };
 
