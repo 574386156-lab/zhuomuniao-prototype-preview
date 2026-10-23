@@ -8,7 +8,17 @@
   ];
   var pages={'quick-replies':{title:'快捷回复',file:'quick-replies.html'},'patient-followups':{title:'患者跟进',file:'patient-followups.html'},'patient-profile':{title:'患者档案',file:'patient-profile.html'}};
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages');
+  var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
   var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null);
+  function fitPhone(){
+    if(!phoneScaleBox||!phoneDevice)return;
+    var scale=Math.max(.42,Math.min((window.innerWidth-48)/511,(window.innerHeight-128)/968,1));
+    phoneScaleBox.style.width=(511*scale)+'px';
+    phoneScaleBox.style.height=(968*scale)+'px';
+    phoneDevice.style.transform='scale('+scale+')';
+  }
+  fitPhone();
+  window.addEventListener('resize',fitPhone);
   function esc(value){return String(value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function header(title,back){
     var left=back==='messages'?'<button type="button" data-wc-action="messages" aria-label="返回消息列表">‹ 返回</button>':'<span aria-hidden="true"></span>';

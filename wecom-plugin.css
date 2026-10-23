@@ -12,3 +12,9 @@
 .phone-home>span{height:5px;width:134px;border-radius:5px;background:#101820}
 #plugin-pages{inset:46px 0 34px}
 @media(max-width:480px){.phone-device{width:min(511px,calc(100vw - 16px))}.phone-screen{border-radius:10.69% / 4.93%}.phone-status{padding-inline:25px}.phone-home>span{width:34.1%;height:4px}}
+
+/* Match the patient prototype's responsive phone scale. The reference uses a
+   511 x 968 iPhone canvas and scales it against both viewport dimensions. */
+.phone-scale-box{position:relative;width:511px;height:968px;flex:0 0 auto}
+.phone-scale-box .phone-device{position:absolute!important;inset:0;width:511px!important;height:968px!important;min-height:0!important;max-width:none!important;transform-origin:top left}
+@media(max-width:480px){.phone-scale-box{max-width:calc(100vw - 24px);max-height:calc(100dvh - 92px)}.phone-scale-box .phone-device{width:511px!important;height:968px!important}}
