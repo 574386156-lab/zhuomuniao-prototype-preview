@@ -103,10 +103,6 @@
 .cp-metric-picker button { padding:8px 12px; border:1px solid #dce6f0; border-radius:6px; background:#fff; color:#526d87; }
 .cp-metric-picker button.is-active { border-color:#8dbdeb; background:#eaf4fd; color:#0365bf; }
 
-/* The source timeline is the patient-side implementation mounted inside the
-   archive tab. The surrounding archive shell keeps the web/WeCom blue theme. */
-.chat-patient-record-source-frame { display:block; width:100%; height:680px; min-height:560px; border:0; background:#f5f7fa; }
-
 .cp-badge { display:inline-block; width:fit-content; padding:2px 8px; border-radius:4px; background:#eaf6ff; color:#0365bf; font-size:14px; }
 .cp-badge.is-muted { background:#f0f3f6; color:#657d95; }
 .cp-meta { color:#526d87; font-size:14px; margin:6px 0 12px; }

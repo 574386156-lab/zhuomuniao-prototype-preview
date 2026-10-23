@@ -9,7 +9,7 @@
   var pages={'quick-replies':{title:'快捷回复',file:'quick-replies.html'},'patient-followups':{title:'患者跟进',file:'patient-followups.html'},'patient-profile':{title:'患者档案',file:'patient-profile.html'}};
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages'),phoneScreen=document.querySelector('.phone-screen');
   var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
-  var previewVersion='20261023-archive-no-login';
+  var previewVersion='20261023-archive-direct-timeline';
   var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null);
   var archiveTab='病例时间轴',archiveTabsExpanded=false;
   function fitPhone(){
@@ -69,21 +69,13 @@
   function archiveConversation(){
     return Object.assign({},current,{type:'私聊',gender:'男',age:'58',date:'2026-10-23',tags:['慢病随访']});
   }
-  function archiveSourceUrl(){
-    var url=new URL('patient-profile.html',location.href);
-    url.searchParams.set('embedded','1');url.searchParams.set('host','wecom-preview');
-    url.searchParams.set('view','medical-record');url.searchParams.set('theme','blue');url.searchParams.set('partial','timeline');url.searchParams.set('v',previewVersion);
-    if(current){url.searchParams.set('patient',current.name);url.searchParams.set('doctor',current.doctor);url.searchParams.set('scene',current.scene);}
-    return url;
-  }
   function renderPatientArchive(){
     if(!current||!window.ChatPatientArchive){pageHost.innerHTML='<p class="wc-loading">患者档案加载中…</p>';return;}
     Object.keys(frames).forEach(function(key){if(frames[key]&&frames[key].remove)frames[key].remove();});
     frames=Object.create(null);
     var ctx=window.ChatPatientArchive.context(archiveConversation(),current.doctor,current.scene);
     var basic={name:current.name,gender:'男',phone:current.name==='王德华'?'138****5605':'139****8821',birthDate:'',height:'',diagnosis:'2型糖尿病'};
-    var source='<iframe class="wc-patient-timeline-source" title="病例时间轴" src="'+esc(archiveSourceUrl().href)+'" referrerpolicy="same-origin"></iframe>';
-    var panel=window.ChatPatientArchive.render(ctx,archiveTab,0, true,archiveTabsExpanded,false,basic,null,'wecom-archive',archiveTab==='病例时间轴'?source:undefined);
+    var panel=window.ChatPatientArchive.render(ctx,archiveTab,0, true,archiveTabsExpanded,false,basic,null,'wecom-archive');
     pageHost.innerHTML='<div class="wc-patient-archive" aria-label="患者档案">'+panel+'</div>';
     var container=pageHost.querySelector('.wc-patient-archive');
     if(window.ChatPatientArchive.mountScrollHints)window.ChatPatientArchive.mountScrollHints(container);

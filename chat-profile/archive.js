@@ -16,7 +16,7 @@
   var records = [
     { id: 'archive-demo-1', tenantId: 'tenant-demo', projectId: 'project-demo-1', doctorId: 'doctor-demo-1', patientId: 'patient-demo-1', label: '慢病健康档案', outpatientNumber:'MZ-DEMO-001', updated: '2026-10-22 15:37',
       timeline: [
-        {date:'2026-10-20',type:'治疗',status:'已完成',statusTone:'success',text:'腹腔镜膜十二指肠切除术。术后 6 次辅助化疗（FOLFOX，家属口述小剂量，具体未知）。',source:'患者端·我的病历',summary:[{label:'病历内容',value:'腹腔镜膜十二指肠切除术；术后 6 次辅助化疗（FOLFOX）'}],originalCount:3,files:[{name:'治疗记录原件.png',type:'图片'}]},
+        {date:'2026-10-20',type:'治疗',status:'已完成',statusTone:'success',text:'腹腔镜胰十二指肠切除术。术后 6 次辅助化疗（FOLFOX，家属口述小剂量，具体未知）。',source:'患者端·我的病历',summary:[{label:'病历内容',value:'腹腔镜胰十二指肠切除术；术后 6 次辅助化疗（FOLFOX）'}],originalCount:3,files:[{name:'治疗记录原件.png',type:'图片'}]},
         {date:'2026-10-19',type:'检查',status:'已完成',statusTone:'success',text:'PET-CT：右肺上叶 80mm 肿块（SUVmax 14.6）；L3 椎体溶骨性破坏+病理性骨折（SUVmax 9.1）。',source:'患者端·我的病历',summary:[{label:'检查结果',value:'PET-CT：右肺上叶 80mm 肿块（SUVmax 14.6）；L3 椎体溶骨性破坏+病理性骨折（SUVmax 9.1）'}],report:'含报告解读',originalCount:1,files:[{name:'PET-CT报告.png',type:'图片'}]},
         {date:'2026-10-19',type:'病情评估',status:'已完成',statusTone:'success',text:'打球扭到腰后，反复腰痛，2 月体重下降 10 斤。',source:'患者对话',summary:[{label:'病情描述',value:'扭伤后反复腰痛，2 月体重下降 10 斤'}],report:'含报告解读',originalCount:3,files:[{name:'病情评估记录.png',type:'图片'}]},
         {date:'2026-10-12',type:'检查',status:'已完成',statusTone:'success',text:'复查资料已上传，等待医生查看。',source:'患者端·我的病历',summary:[{label:'资料状态',value:'复查资料已上传，等待医生查看'}],originalCount:1,files:[{name:'复查资料.png',type:'图片'}]},
