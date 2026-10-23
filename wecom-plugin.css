@@ -27,3 +27,12 @@
 #plugin-pages{position:relative;inset:auto;flex:1 1 auto;min-height:0;background:#fff;overflow:hidden}
 .phone-screen:has(#plugin-pages:not([hidden])) #wecom-app{flex:0 0 auto;min-height:0}
 #plugin-pages iframe{position:absolute;inset:0}
+
+/* Patient archive pages reuse the patient-side prototype inside the existing
+   WeCom iPhone frame. Hide the host-only chrome so the embedded timeline owns
+   the full screen area while retaining the outer bezel. */
+.phone-screen.wc-source-patient .phone-status,
+.phone-screen.wc-source-patient .phone-home,
+.phone-screen.wc-source-patient #wecom-app{display:none}
+.phone-screen.wc-source-patient #plugin-pages{position:absolute;inset:0;display:block;overflow:hidden;background:#f5f7fa}
+.phone-screen.wc-source-patient #plugin-pages iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
