@@ -31,38 +31,38 @@
 .cp-info-grid strong { color:#173c61; font-size:16px; font-weight:400; overflow-wrap:anywhere; }
 .cp-basic-facts { grid-column:1 / -1; }
 .cp-inline-field { display:grid; align-content:start; gap:4px; min-width:0; }
-#ops-shell .cp-inline-field input { width:100%; min-width:0; max-width:100%; min-height:44px; padding:8px 10px; border:1px solid #d7e2ed; border-radius:6px; background:#fff; color:#173c61; font:inherit; font-size:16px; }
+.cp-panel .cp-inline-field input { width:100%; min-width:0; max-width:100%; min-height:44px; padding:8px 10px; border:1px solid #d7e2ed; border-radius:6px; background:#fff; color:#173c61; font:inherit; font-size:16px; }
 .cp-height-input { display:flex; align-items:center; gap:6px; min-width:0; }
 .cp-height-input > span { flex:0 0 auto; }
 .cp-inline-field .cp-inline-error { color:#b3473f; font-size:12px; }
 .cp-inline-error:empty { display:none; }
-#ops-shell .cp-inline-field input[aria-invalid="true"] { border-color:#b3473f; }
-#ops-shell .cp-basic-facts .cp-inline-field > input,
-#ops-shell .cp-basic-facts .cp-height-input > input { box-sizing:border-box; height:44px; min-height:44px; }
-#ops-shell .cp-basic-facts .ui-date-trigger { box-sizing:border-box; height:44px; min-height:44px; padding:8px 10px; line-height:1.6; }
-#ops-shell .cp-basic-info .dx-search { height:44px; min-height:44px; border:1px solid #d7e2ed; border-radius:6px; box-shadow:none; }
-#ops-shell .cp-basic-info .dx-search textarea { height:42px; min-height:42px; }
-#ops-shell .cp-basic-info .dx-search textarea:focus-visible { outline-offset:-2px; }
+.cp-panel .cp-inline-field input[aria-invalid="true"] { border-color:#b3473f; }
+.cp-panel .cp-basic-facts .cp-inline-field > input,
+.cp-panel .cp-basic-facts .cp-height-input > input { box-sizing:border-box; height:44px; min-height:44px; }
+.cp-panel .cp-basic-facts .ui-date-trigger { box-sizing:border-box; height:44px; min-height:44px; padding:8px 10px; line-height:1.6; }
+.cp-panel .cp-basic-info .dx-search { height:44px; min-height:44px; border:1px solid #d7e2ed; border-radius:6px; box-shadow:none; }
+.cp-panel .cp-basic-info .dx-search textarea { height:42px; min-height:42px; }
+.cp-panel .cp-basic-info .dx-search textarea:focus-visible { outline-offset:-2px; }
 .cp-basic-facts .cp-height-input { height:44px; align-items:center; }
 .cp-basic-facts > span { min-height:24px; }
 .cp-basic-facts > span:not(.cp-diagnosis) strong { color:#526d87; font-size:14px; }
 .cp-basic-info .cp-diagnosis { display:grid; grid-template-columns:1fr; align-items:start; gap:4px; grid-column:1 / -1; min-width:0; }
 .cp-basic-info .cp-diagnosis-label { padding-top:0; color:#526d87; font-size:14px; line-height:1.5; white-space:nowrap; }
 .cp-basic-info .cp-diagnosis strong { min-width:0; overflow-wrap:anywhere; font-weight:500; }
-#ops-shell .cp-basic-info .dx-search { height:auto; min-height:54px; border:1px solid #d7e2ed; border-radius:6px; box-shadow:none; }
-#ops-shell .cp-basic-info .dx-search textarea { height:auto; min-height:52px; padding:12px 10px; border-radius:6px; }
-#ops-shell .cp-basic-info .dx-clear,
-#ops-shell .cp-basic-info .dx-menu-slot,
-#ops-shell .cp-basic-info .dx-context-slot,
-#ops-shell .cp-basic-info .dx-confirm-slot,
-#ops-shell .cp-basic-info .dx-notice { display:none; }
+.cp-panel .cp-basic-info .dx-search { height:auto; min-height:54px; border:1px solid #d7e2ed; border-radius:6px; box-shadow:none; }
+.cp-panel .cp-basic-info .dx-search textarea { height:auto; min-height:52px; padding:12px 10px; border-radius:6px; }
+.cp-panel .cp-basic-info .dx-clear,
+.cp-panel .cp-basic-info .dx-menu-slot,
+.cp-panel .cp-basic-info .dx-context-slot,
+.cp-panel .cp-basic-info .dx-confirm-slot,
+.cp-panel .cp-basic-info .dx-notice { display:none; }
 
 @container (min-width:600px) {
   .cp-basic-info .cp-diagnosis { grid-template-columns:1fr; gap:4px; }
   .cp-basic-info .cp-diagnosis-label { padding-top:0; }
-  #ops-shell .cp-basic-info .dx-search { min-height:56px; border-radius:10px; }
-  #ops-shell .cp-basic-info .dx-search textarea { min-height:54px; padding:12px 52px 12px 14px; }
-  #ops-shell .cp-basic-info .dx-clear { display:grid; }
+  .cp-panel .cp-basic-info .dx-search { min-height:56px; border-radius:10px; }
+  .cp-panel .cp-basic-info .dx-search textarea { min-height:54px; padding:12px 52px 12px 14px; }
+  .cp-panel .cp-basic-info .dx-clear { display:grid; }
 }
 
 /* Both rows use the same label column and content left edge. */

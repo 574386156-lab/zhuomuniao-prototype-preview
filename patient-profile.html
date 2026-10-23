@@ -3925,6 +3925,53 @@ lucide/dist/esm/lucide.js:
   if (params.get('theme') === 'blue') document.documentElement.dataset.patientTheme = 'blue';
   document.title = '患者档案 · 病历时间轴';
 
+  /* The archive host needs the same v1.8 timeline implementation as the
+     patient-side "我的病历" page. Mount it directly in a shadow host so the
+     surrounding archive shell can keep its own blue controls without loading
+     the patient app's v1.7 scene or phone chrome. */
+  if (partialTimeline) {
+    let embeddedTimelineTries = 0;
+    const mountEmbeddedTimeline = () => {
+      embeddedTimelineTries += 1;
+      if (typeof window.openPatientEventTimeline !== 'function') {
+        if (embeddedTimelineTries < 160) window.setTimeout(mountEmbeddedTimeline, 50);
+        return;
+      }
+      document.getElementById('root')?.setAttribute('hidden', '');
+      document.getElementById('patient-upload-version')?.setAttribute('hidden', '');
+      const host = document.getElementById('embedded-patient-timeline-host') || document.createElement('section');
+      host.id = 'embedded-patient-timeline-host';
+      host.setAttribute('aria-label', '病例时间轴');
+      host.style.cssText = 'position:relative;width:100%;height:100%;min-height:100%;display:block;overflow:hidden;background:#f5f7fa;';
+      if (!host.parentNode) document.body.appendChild(host);
+      if (!host.shadowRoot) window.openPatientEventTimeline(host);
+      const shadow = host.shadowRoot;
+      if (!shadow) {
+        if (embeddedTimelineTries < 160) window.setTimeout(mountEmbeddedTimeline, 50);
+        return;
+      }
+      if (!shadow.getElementById('embedded-timeline-layout-overrides')) {
+        const style = document.createElement('style');
+        style.id = 'embedded-timeline-layout-overrides';
+        style.textContent = `
+          :host { position:relative!important; inset:auto!important; width:100%!important; height:100%!important; min-height:100%!important; display:block!important; overflow:hidden!important; background:#f5f7fa!important; }
+          #ai-assistant-layer, #ai-profile-layer, #ai-timeline-layer { position:relative!important; inset:auto!important; width:100%!important; height:100%!important; min-height:100%!important; max-width:none!important; transform:none!important; padding:0!important; overflow:hidden!important; background:#f5f7fa!important; }
+          #ai-profile-layer > *:not(#ai-timeline-layer) { display:none!important; }
+          #ai-timeline-layer { display:block!important; }
+          #ai-timeline-layer .ai-timeline-header { display:none!important; }
+          #ai-timeline-layer .ai-timeline-main { position:absolute!important; inset:0!important; height:100%!important; min-height:0!important; overflow-y:auto!important; padding:12px 16px 24px!important; background:#f5f7fa!important; }
+          #ai-profile-layer { --profile-color-surface:#fff; --profile-color-background-page:#f5f7fa; --profile-color-background-soft:#f5f7fa; --project-action:#0365bf; --project-action-hover:#0058aa; --project-ink:#173c61; --project-muted:#5d7894; --project-border:#dce7f1; --project-info:#eef6ff; --timeline-line:#c5def3; --timeline-tag-ink:#1261a0; --timeline-tag-surface:#eef7ff; --timeline-tag-border:#b9d8f2; }
+          #ai-timeline-layer .ai-timeline-card { box-shadow:0 1px 8px rgba(15,47,79,.08)!important; }
+          #ai-event-detail-layer, #ai-event-original-layer { position:absolute!important; inset:0!important; }
+        `;
+        shadow.appendChild(style);
+      }
+      document.documentElement.dataset.patientPartialReady = '1';
+    };
+    window.setTimeout(mountEmbeddedTimeline, 0);
+    return;
+  }
+
   let sceneRequested = false;
   const showV17 = () => {
     const root = document.getElementById('root');
