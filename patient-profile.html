@@ -3856,8 +3856,7 @@ lucide/dist/esm/lucide.js:
 (() => {
   const params = new URLSearchParams(location.search);
   const embedded = params.get('embedded') === '1' || params.get('host') === 'wecom-preview' || params.get('sidebarEnv');
-  if (!embedded) return;
-  document.documentElement.dataset.patientEmbedded = '1';
+  if (embedded) document.documentElement.dataset.patientEmbedded = '1';
   document.title = '患者档案 · 病历时间轴';
 
   let sceneRequested = false;
