@@ -18,3 +18,12 @@
 .phone-scale-box{position:relative;width:511px;height:968px;flex:0 0 auto}
 .phone-scale-box .phone-device{position:absolute!important;inset:0;width:511px!important;height:968px!important;min-height:0!important;max-width:none!important;transform-origin:top left}
 @media(max-width:480px){.phone-scale-box{max-width:calc(100vw - 24px);max-height:calc(100dvh - 92px)}.phone-scale-box .phone-device{width:511px!important;height:968px!important}}
+
+/* Keep the outer navigation visible and let embedded pages sit below their
+   in-phone header instead of covering it with the iframe. */
+.preview-stage{min-height:100dvh;align-content:start}
+.preview-heading{position:relative;z-index:20;min-height:40px;display:flex!important;visibility:visible!important}
+.preview-heading a{display:inline-flex!important;align-items:center;min-height:40px;position:relative;z-index:21}
+#plugin-pages{position:relative;inset:auto;flex:1 1 auto;min-height:0;background:#fff;overflow:hidden}
+.phone-screen:has(#plugin-pages:not([hidden])) #wecom-app{flex:0 0 auto;min-height:0}
+#plugin-pages iframe{position:absolute;inset:0}

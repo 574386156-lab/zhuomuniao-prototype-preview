@@ -21,8 +21,8 @@
   window.addEventListener('resize',fitPhone);
   function esc(value){return String(value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
   function header(title,back){
-    var left=back==='messages'?'<button type="button" data-wc-action="messages" aria-label="返回消息列表">‹ 返回</button>':'<span aria-hidden="true"></span>';
-    var right=back==='chat'?'<button type="button" data-wc-action="chat" aria-label="关闭插件页面">关闭</button>':'<span aria-hidden="true"></span>';
+    var left=back==='messages'?'<button type="button" data-wc-action="messages" aria-label="返回消息列表">‹ 返回</button>':back==='chat'?'<button type="button" data-wc-action="chat" aria-label="返回会话">‹ 返回</button>':'<span aria-hidden="true"></span>';
+    var right='<span aria-hidden="true"></span>';
     return '<header class="wc-header">'+left+'<h2>'+esc(title)+'</h2>'+right+'</header>';
   }
   function clearFrames(){Object.keys(frames).forEach(function(key){frames[key].remove();});frames=Object.create(null);}
