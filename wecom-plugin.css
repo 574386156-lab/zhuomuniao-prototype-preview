@@ -37,3 +37,28 @@
 .phone-screen.wc-source-patient #plugin-pages{position:absolute;inset:0;display:block;overflow:hidden;background:#f5f7fa}
 .phone-screen.wc-source-patient #plugin-pages iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .wc-patient-back{position:absolute;z-index:5;top:10px;left:12px;min-height:30px;padding:0 7px;border:0;border-radius:15px;background:rgba(255,255,255,.9);color:#24567f;font-size:12px;box-shadow:0 1px 4px rgba(18,56,95,.12)}
+
+/* The patient archive remains a WeCom tab. Only its timeline content is
+   sourced from the patient-side implementation. */
+.wc-patient-archive{height:100%;overflow:auto;background:#f5f7fa;color:#173c61;}
+.wc-patient-archive .cp-panel{min-height:100%;padding:10px 12px 18px;font-size:13px;}
+.wc-patient-archive .cp-basic-layout{grid-template-columns:46px minmax(0,1fr);column-gap:10px;}
+.wc-patient-archive .cp-basic-avatar{width:46px;height:46px;font-size:20px;}
+.wc-patient-archive .cp-basic-body{grid-column:2;grid-template-rows:24px 24px;height:48px;}
+.wc-patient-archive .cp-basic-name{font-size:17px;}
+.wc-patient-archive .cp-basic-gender{font-size:13px;}
+.wc-patient-archive .cp-basic-phone strong{font-size:15px;}
+.wc-patient-archive .cp-info-grid{grid-template-columns:1fr;}
+.wc-patient-archive .cp-context-section{padding:8px 0;gap:6px;}
+.wc-patient-archive .cp-scene-picker,.wc-patient-archive .cp-tag-row{grid-template-columns:34px minmax(0,1fr);gap:6px;}
+.wc-patient-archive .cp-field-label{min-height:38px;font-size:12px;}
+.wc-patient-archive .cp-scene-picker select{min-height:38px;font-size:14px;padding:6px 9px;}
+.wc-patient-archive .cp-tag-list{min-height:38px;}
+.wc-patient-archive .cp-tag-chip{font-size:12px;line-height:20px;padding:1px 6px;}
+.wc-patient-archive .cp-tabs-wrap{top:0;margin:8px 0 10px;padding:4px 0;grid-template-columns:minmax(0,1fr) 48px;}
+.wc-patient-archive .cp-tabs{padding:0 6px;gap:2px;}
+.wc-patient-archive .cp-tabs button{min-height:38px;padding:6px 8px;font-size:12px;}
+.wc-patient-archive .cp-tabs-more{min-height:38px;font-size:12px;}
+.wc-patient-archive .cp-content{min-height:0;}
+.wc-patient-timeline-source{display:block;width:100%;height:590px;min-height:520px;border:0;background:#f5f7fa;}
+.wc-patient-archive .cp-content:has(.wc-patient-timeline-source){margin:0 -4px;}

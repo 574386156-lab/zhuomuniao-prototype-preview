@@ -10,6 +10,7 @@
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages'),phoneScreen=document.querySelector('.phone-screen');
   var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
   var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null);
+  var archiveTab='病例时间轴',archiveTabsExpanded=false;
   function fitPhone(){
     if(!phoneScaleBox||!phoneDevice)return;
     var scale=Math.max(.42,Math.min((window.innerWidth-48)/511,(window.innerHeight-128)/968,1));
@@ -25,7 +26,7 @@
     var right='<span aria-hidden="true"></span>';
     return '<header class="wc-header">'+left+'<h2>'+esc(title)+'</h2>'+right+'</header>';
   }
-  function clearFrames(){Object.keys(frames).forEach(function(key){frames[key].remove();});frames=Object.create(null);}
+  function clearFrames(){Object.keys(frames).forEach(function(key){frames[key].remove();});frames=Object.create(null);archiveTab='病例时间轴';archiveTabsExpanded=false;}
   function showMessages(){
     currentPage='';pageHost.hidden=true;if(phoneScreen)phoneScreen.classList.remove('wc-source-patient');
     app.innerHTML=header('消息')+'<label class="wc-search"><span aria-hidden="true">⌕</span><input type="search" id="wc-search" placeholder="搜索消息" aria-label="搜索消息" value="'+esc(search)+'"></label><section class="wc-messages" aria-label="消息列表">'+people.map(function(person){return '<button class="wc-conversation" type="button" data-wc-person="'+person.id+'"><span class="wc-avatar">'+esc(person.name[0])+(person.unread?'<i>'+person.unread+'</i>':'')+'</span><span class="wc-row-copy"><span class="wc-row-heading"><strong>'+esc(person.name)+'</strong><time>'+esc(person.time)+'</time></span><p>'+esc(person.messages[person.messages.length-1].text)+'</p></span></button>';}).join('')+'<p class="wc-empty" hidden>暂无匹配消息</p></section><footer class="wc-list-footer">消息</footer>';
@@ -47,23 +48,41 @@
     pageHost.querySelectorAll('.wc-external-page').forEach(function(link){link.remove();});
     pageHost.querySelectorAll('.wc-patient-back').forEach(function(button){button.remove();});
     currentPage=key;app.innerHTML=header(selectedTab.name,'chat');pageHost.hidden=false;
-    if(phoneScreen)phoneScreen.classList.toggle('wc-source-patient',key==='patient-profile');
-    if(key==='patient-profile'){
-      var patientBack=document.createElement('button');
-      patientBack.type='button';patientBack.className='wc-patient-back';patientBack.textContent='‹ 返回会话';
-      patientBack.setAttribute('aria-label','返回会话');
-      patientBack.addEventListener('click',function(){navigate('#chat/'+current.id);});
-      pageHost.appendChild(patientBack);
-    }
+    if(phoneScreen)phoneScreen.classList.remove('wc-source-patient');
+    if(key==='patient-profile'){renderPatientArchive();return;}
     Object.keys(frames).forEach(function(k){frames[k].hidden=k!==key;});
     if(!frames[key]){
       var url=window.SidebarConfig.urlFor(selectedTab,window.SidebarConfig.environment(),configContext());
       if(!url||url.origin!==location.origin){var external=document.createElement('a');external.textContent='打开页面';if(url){external.href=url.href;external.target='_blank';external.rel='noopener noreferrer';}external.className='wc-external-page';pageHost.appendChild(external);return;}
       url.searchParams.set('embedded','1');url.searchParams.set('host','wecom-preview');
-      if(key==='patient-profile')url.searchParams.set('view','medical-record');
+      if(key==='patient-profile'){
+        url.searchParams.set('view','medical-record');
+        url.searchParams.set('theme','blue');
+        url.searchParams.set('partial','timeline');
+      }
       var frame=document.createElement('iframe');frame.title=selectedTab.name+' · '+current.name;frame.src=url.href;frame.setAttribute('data-wc-frame',key);frame.setAttribute('referrerpolicy','same-origin');pageHost.appendChild(frame);frames[key]=frame;
     }
     document.title=selectedTab.name+' · 企微插件手机预览';
+  }
+  function archiveConversation(){
+    return Object.assign({},current,{type:'私聊',gender:'男',age:'58',date:'2026-10-23',tags:['慢病随访']});
+  }
+  function archiveSourceUrl(){
+    var url=new URL('patient-profile.html',location.href);
+    url.searchParams.set('embedded','1');url.searchParams.set('host','wecom-preview');
+    url.searchParams.set('view','medical-record');url.searchParams.set('theme','blue');url.searchParams.set('partial','timeline');
+    if(current){url.searchParams.set('patient',current.name);url.searchParams.set('doctor',current.doctor);url.searchParams.set('scene',current.scene);}
+    return url;
+  }
+  function renderPatientArchive(){
+    if(!current||!window.ChatPatientArchive){pageHost.innerHTML='<p class="wc-loading">患者档案加载中…</p>';return;}
+    var ctx=window.ChatPatientArchive.context(archiveConversation(),current.doctor,current.scene);
+    var basic={name:current.name,gender:'男',phone:current.name==='王德华'?'138****5605':'139****8821',birthDate:'',height:'',diagnosis:'2型糖尿病'};
+    var source='<iframe class="wc-patient-timeline-source" title="病例时间轴" src="'+esc(archiveSourceUrl().href)+'" referrerpolicy="same-origin"></iframe>';
+    var panel=window.ChatPatientArchive.render(ctx,archiveTab,0, true,archiveTabsExpanded,false,basic,null,'wecom-archive',archiveTab==='病例时间轴'?source:undefined);
+    pageHost.innerHTML='<div class="wc-patient-archive" aria-label="患者档案">'+panel+'</div>';
+    var container=pageHost.querySelector('.wc-patient-archive');
+    if(window.ChatPatientArchive.mountScrollHints)window.ChatPatientArchive.mountScrollHints(container);
   }
   function navigate(hash){if(location.hash===hash)route();else location.hash=hash;}
   function route(){
@@ -72,6 +91,15 @@
     else{showMessages();}
   }
   app.addEventListener('click',function(event){var person=event.target.closest('[data-wc-person]'),page=event.target.closest('[data-wc-page]'),action=event.target.closest('[data-wc-action]');if(person)navigate('#chat/'+person.getAttribute('data-wc-person'));else if(page&&current)navigate('#page/'+current.id+'/'+page.getAttribute('data-wc-page'));else if(action)navigate(action.getAttribute('data-wc-action')==='chat'&&current?'#chat/'+current.id:'#messages');});
+  pageHost.addEventListener('click',function(event){
+    if(currentPage!=='patient-profile')return;
+    var target=event.target.closest&&event.target.closest('[data-action]');if(!target)return;
+    var action=target.getAttribute('data-action');
+    if(action==='chat-archive-tab'){archiveTab=target.getAttribute('data-value')||'病例时间轴';archiveTabsExpanded=false;renderPatientArchive();}
+    else if(action==='chat-archive-tabs-toggle'){archiveTabsExpanded=!archiveTabsExpanded;renderPatientArchive();}
+    else if(action==='chat-workbench-panel-toggle'){navigate('#chat/'+current.id);}
+    else if(action==='chat-patient-phone-toggle'){renderPatientArchive();}
+  });
   app.addEventListener('input',function(event){if(event.target.id==='wc-search'){search=event.target.value;filterMessages();}else if(event.target.matches('.wc-composer textarea')&&current){drafts[current.id]=event.target.value;app.querySelector('.wc-composer button').disabled=!event.target.value.trim();}});
   app.addEventListener('submit',function(event){if(!event.target.matches('.wc-composer')||!current)return;event.preventDefault();var text=(drafts[current.id]||'').trim();if(!text||text.length>500)return;current.messages.push({text:text,self:true});drafts[current.id]='';current.time='刚刚';showChat();app.querySelector('textarea').focus();});
   window.addEventListener('message',function(event){

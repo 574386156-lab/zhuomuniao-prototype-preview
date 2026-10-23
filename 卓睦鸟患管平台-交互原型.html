@@ -3036,6 +3036,19 @@
           return '<div class="ops-material-preview" data-preview-kind="' + escapeHtml(type) + '">' + heading + preview + editor + '</div>';
         }
 
+        function renderPatientTimelineSource(conversation) {
+          var url = new URL("patient-profile.html", window.location.href);
+          url.searchParams.set("embedded", "1");
+          url.searchParams.set("host", "sidebar-preview");
+          url.searchParams.set("view", "medical-record");
+          url.searchParams.set("theme", "blue");
+          url.searchParams.set("partial", "timeline");
+          if (conversation && conversation.name) url.searchParams.set("patient", conversation.name);
+          if (state.chatDoctorSelected) url.searchParams.set("doctor", state.chatDoctorSelected);
+          if (state.chatArchiveScene) url.searchParams.set("scene", state.chatArchiveScene);
+          return '<iframe class="chat-patient-record-source-frame" title="病例时间轴" src="' + escapeHtml(url.href) + '" referrerpolicy="same-origin"></iframe>';
+        }
+
         // Both hosts mount this complete page; only the embedded host omits navigation.
         function renderPatientArchivePage(conversation, embedded) {
           var ctx = window.ChatPatientArchive.context(conversation, state.chatDoctorSelected, state.chatArchiveScene);
@@ -3044,7 +3057,8 @@
           var spacer = '<span class="cp-navigation-spacer" aria-hidden="true"></span>';
           var navigation = embedded ? '' : '<nav class="cp-page-navigation" aria-label="患者档案页面导航">' + spacer + '<strong>患者档案</strong><button type="button" data-action="chat-archive-page-close" aria-label="关闭患者档案页面">关闭 ×</button></nav>';
           var hint = !embedded && archiveNavigationHint ? '<p class="cp-navigation-hint" role="status">' + escapeHtml(archiveNavigationHint) + '</p>' : '';
-          return '<section class="ops-profile-page' + (embedded ? ' is-embedded' : '') + '">' + navigation + hint + window.ChatPatientArchive.render(ctx, state.chatArchiveTab, state.chatArchiveMetric, true, state.chatArchiveTabsExpanded, state.chatPatientPhoneVisible, state.chatPatientBasic, state.chatArchiveTimelineDetail, 'chat-archive') + '</section>';
+          var timelineSource = state.chatArchiveTab === "病例时间轴" ? renderPatientTimelineSource(conversation) : undefined;
+          return '<section class="ops-profile-page' + (embedded ? ' is-embedded' : '') + '">' + navigation + hint + window.ChatPatientArchive.render(ctx, state.chatArchiveTab, state.chatArchiveMetric, true, state.chatArchiveTabsExpanded, state.chatPatientPhoneVisible, state.chatPatientBasic, state.chatArchiveTimelineDetail, 'chat-archive', timelineSource) + '</section>';
         }
         function renderWorkbenchStandaloneTabs(activeTarget) {
           return '<nav class="qr-workbench-tabs" aria-label="会话工作台导航">' + [

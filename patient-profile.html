@@ -2333,7 +2333,7 @@ Error generating stack: `+e.message+`
         };
 
         const mountMedicalTimeline = (profileLayer, trigger) => {
-          if (profileLayer.closest('[data-profile-standalone]')) return mountEventTimeline(profileLayer,trigger);
+          if (profileLayer.closest('[data-profile-standalone]') || window.__patientEmbeddedRecord === true) return mountEventTimeline(profileLayer,trigger);
           if (profileLayer.querySelector('#ai-timeline-layer')) return;
           const toast = profileLayer.querySelector('.ai-project-toast');
           if (toast) toast.textContent = '';
@@ -3851,12 +3851,76 @@ lucide/dist/esm/lucide.js:
   html[data-patient-embedded="1"] #root .phone-device { position:relative!important; width:100%!important; height:100%!important; transform:none!important; }
   html[data-patient-embedded="1"] #root .phone-bezel { display:none!important; }
   html[data-patient-embedded="1"] #root .device-screen { position:absolute!important; inset:0!important; width:100%!important; height:100%!important; border-radius:0!important; }
+  html[data-patient-theme="blue"] #ai-assistant-layer {
+    --ai-color-background-top:#edf6ff;
+    --ai-color-background-mid:#f6faff;
+    --ai-color-background-page:#f5f7fa;
+    --color-brand-deep:#0365bf;
+    --color-action-start:#1675ce;
+    --color-page-bottom:#eaf4ff;
+  }
+  html[data-patient-theme="blue"] #ai-profile-layer {
+    --profile-color-accent:#1675ce;
+    --profile-color-tag:#1675ce;
+    --profile-color-background-top:#edf6ff;
+    --profile-color-background-right:#d7eaff;
+    --profile-color-background-page:#f5f7fa;
+    --profile-color-background-soft:rgba(245,247,250,.94);
+    --color-brand-deep:#0365bf;
+    --color-action-start:#1675ce;
+    --color-page-bottom:#eaf4ff;
+  }
+  html[data-patient-theme="blue"] #ai-timeline-layer {
+    --timeline-line:#c5def3;
+    --timeline-tag-ink:#1261a0;
+    --timeline-tag-surface:#eef7ff;
+    --timeline-tag-border:#b9d8f2;
+  }
+  html[data-patient-theme="blue"] #ai-record-detail-layer,
+  html[data-patient-theme="blue"] #ai-event-detail-layer { --detail-active:#0365bf; --detail-active-hover:#0058aa; }
+  html[data-patient-theme="blue"] .ai-timeline-details-button,
+  html[data-patient-theme="blue"] .ai-event-text-button,
+  html[data-patient-theme="blue"] .ai-event-more { color:#0365bf; }
+  /* Partial mode is used when the patient timeline is a tab inside another
+     patient-archive shell. Keep the patient implementation and interactions,
+     while removing the patient app's own phone/profile chrome. */
+  html[data-patient-partial="timeline"] { overflow:hidden; background:#f5f7fa; }
+  html[data-patient-partial="timeline"] body { overflow:hidden; background:#f5f7fa; }
+  html[data-patient-partial="timeline"] #root,
+  html[data-patient-partial="timeline"] #root .phone-scale-box,
+  html[data-patient-partial="timeline"] #root .phone-device,
+  html[data-patient-partial="timeline"] #root .device-screen,
+  html[data-patient-partial="timeline"] #ai-assistant-layer { position:relative!important; inset:auto!important; width:100%!important; height:100%!important; min-height:100%!important; max-width:none!important; transform:none!important; }
+  html[data-patient-partial="timeline"] #root .phone-bezel,
+  html[data-patient-partial="timeline"] #root .phone-status,
+  html[data-patient-partial="timeline"] #root .phone-home { display:none!important; }
+  html[data-patient-partial="timeline"] #ai-assistant-layer { background:#f5f7fa!important; }
+  html[data-patient-partial="timeline"]:not([data-patient-partial-ready="1"]) #root { visibility:hidden!important; }
+  html[data-patient-partial="timeline"][data-patient-partial-ready="1"] #root { visibility:visible!important; }
+  html[data-patient-partial="timeline"] #ai-profile-layer > *:not(#ai-timeline-layer),
+  html[data-patient-partial="timeline"] #ai-profile-layer[data-partial-view="timeline"] > *:not(#ai-timeline-layer),
+  html[data-patient-partial="timeline"] #ai-profile-layer[data-partial-view="detail"] > *:not(#ai-event-detail-layer):not(#ai-event-original-layer) { display:none!important; }
+  html[data-patient-partial="timeline"] #ai-timeline-layer,
+  html[data-patient-partial="timeline"] #ai-event-detail-layer,
+  html[data-patient-partial="timeline"] #ai-event-original-layer { position:absolute!important; inset:0!important; padding-top:0!important; }
+  html[data-patient-partial="timeline"] #ai-timeline-layer .ai-timeline-header,
+  html[data-patient-partial="timeline"] #ai-event-detail-layer .ai-record-detail-header,
+  html[data-patient-partial="timeline"] #ai-event-original-layer .ai-timeline-header { display:none!important; }
 </style>
 <script id="embedded-patient-record-script">
 (() => {
   const params = new URLSearchParams(location.search);
   const embedded = params.get('embedded') === '1' || params.get('host') === 'wecom-preview' || params.get('sidebarEnv');
-  if (embedded) document.documentElement.dataset.patientEmbedded = '1';
+  const partialTimeline = params.get('partial') === 'timeline';
+  if (embedded) {
+    document.documentElement.dataset.patientEmbedded = '1';
+    window.__patientEmbeddedRecord = true;
+  }
+  if (partialTimeline) {
+    document.documentElement.dataset.patientPartial = 'timeline';
+    window.__patientPartialTimeline = true;
+  }
+  if (params.get('theme') === 'blue') document.documentElement.dataset.patientTheme = 'blue';
   document.title = '患者档案 · 病历时间轴';
 
   let sceneRequested = false;
@@ -3896,7 +3960,13 @@ lucide/dist/esm/lucide.js:
       if (tries < 160) window.setTimeout(openTimeline, 50);
       return;
     }
-    if (profile.querySelector('#ai-timeline-layer')) return;
+    if (profile.querySelector('#ai-timeline-layer')) {
+      if (partialTimeline) {
+        profile.dataset.partialView = profile.querySelector('#ai-event-detail-layer, #ai-event-original-layer') ? 'detail' : 'timeline';
+        document.documentElement.dataset.patientPartialReady = '1';
+      }
+      return;
+    }
     const projectLayer = profile.querySelector('#ai-project-detail-layer');
     if (!projectLayer) {
       const project = profile.querySelector('.ai-service-project-card');
@@ -3908,6 +3978,15 @@ lucide/dist/esm/lucide.js:
     if (medical) medical.click();
     if (!profile.querySelector('#ai-timeline-layer') && tries < 160) window.setTimeout(openTimeline, 50);
   };
+  if (partialTimeline) {
+    const partialObserver = new MutationObserver(() => {
+      const profile = document.getElementById('ai-profile-layer');
+      if (!profile) return;
+      profile.dataset.partialView = profile.querySelector('#ai-event-detail-layer, #ai-event-original-layer') ? 'detail' : 'timeline';
+      if (profile.querySelector('#ai-timeline-layer')) document.documentElement.dataset.patientPartialReady = '1';
+    });
+    partialObserver.observe(document.documentElement, { childList: true, subtree: true });
+  }
   window.setTimeout(openTimeline, 0);
 })();
 </script>
