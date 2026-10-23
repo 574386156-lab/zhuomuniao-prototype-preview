@@ -47,6 +47,7 @@
     if(!selectedTab){history.replaceState(null,'','#chat/'+current.id);showChat();return;}
     pageHost.querySelectorAll('.wc-external-page').forEach(function(link){link.remove();});
     pageHost.querySelectorAll('.wc-patient-back').forEach(function(button){button.remove();});
+    pageHost.querySelectorAll('.wc-patient-archive').forEach(function(panel){panel.remove();});
     currentPage=key;app.innerHTML=header(selectedTab.name,'chat');pageHost.hidden=false;
     if(phoneScreen)phoneScreen.classList.remove('wc-source-patient');
     if(key==='patient-profile'){renderPatientArchive();return;}
