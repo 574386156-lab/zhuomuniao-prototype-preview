@@ -141,10 +141,13 @@
 .cp-ai-compact-page { display:grid; gap:12px; min-width:0; color:#173c61; }
 .cp-ai-compact-patient { display:grid; gap:12px; padding:16px; border:1px solid #cfe2f4; border-radius:12px; background:#eef7ff; }
 .cp-ai-compact-patient-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.cp-ai-compact-patient-identity { min-width:0; }
+.cp-ai-compact-name-line { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
 .cp-ai-compact-kicker { display:block; margin-bottom:3px; color:#0365bf; font-size:13px; }
 .cp-ai-compact-patient h2 { margin:0; color:#173c61; font-size:20px; line-height:1.35; }
-.cp-ai-compact-patient-meta { display:flex; flex-wrap:wrap; justify-content:flex-end; gap:6px; }
+.cp-ai-compact-patient-meta { display:flex; flex-wrap:wrap; justify-content:flex-start; gap:6px; }
 .cp-ai-compact-patient-meta span,.cp-ai-compact-chips span { display:inline-flex; align-items:center; min-height:26px; padding:2px 9px; border:1px solid #c7def2; border-radius:999px; background:#fff; color:#315c83; font-size:13px; white-space:nowrap; }
+.cp-ai-compact-patient-action { flex:0 0 auto; }
 .cp-ai-compact-facts { display:grid; gap:8px; }
 .cp-ai-compact-fact-row { display:grid; grid-template-columns:42px minmax(0,1fr); align-items:start; gap:10px; padding-top:9px; border-top:1px solid #dbe9f6; }
 .cp-ai-compact-fact-label { color:#607b95; font-size:13px; line-height:1.7; }
@@ -291,9 +294,9 @@
   .cp-ai-summary-header-controls { justify-content:stretch; }
   .cp-ai-summary-scene { flex:1 1 100%; }
   .cp-ai-summary-scene select { flex:1 1 auto; min-width:0; }
-  .cp-ai-summary-header-controls .cp-ai-summary-action { flex:1 1 100%; width:100%; }
-  .cp-ai-compact-patient-head { display:grid; gap:8px; }
-  .cp-ai-compact-patient-meta { justify-content:flex-start; }
+  .cp-ai-compact-patient-head { display:grid; gap:10px; }
+  .cp-ai-compact-patient-action,
+  .cp-ai-compact-patient-action .cp-ai-summary-action { width:100%; }
   .cp-ai-summary-profile-grid { grid-template-columns:1fr; }
   .cp-ai-summary-pending-item { align-items:flex-start; }
   .cp-ai-summary-pending-item .cp-ai-summary-link { padding-inline:2px; }

@@ -965,7 +965,7 @@
     return '<section class="cp-ai-compact-section ' + className + '"><header><div><h3>' + esc(title) + '</h3>' + (hint ? '<small>' + esc(hint) + '</small>' : '') + '</div><span>' + items.length + ' 条</span></header>' + renderCompactList(items) + '</section>';
   }
 
-  function renderCompactPatient(output) {
+  function renderCompactPatient(output, actionMarkup) {
     var patient = output.patient || {};
     var tags = Array.isArray(patient.tags) ? patient.tags.filter(Boolean) : [];
     var diagnoses = Array.isArray(patient.diagnoses) ? patient.diagnoses.filter(Boolean) : [];
@@ -975,16 +975,16 @@
     var factRows = '';
     if (tags.length) factRows += '<div class="cp-ai-compact-fact-row"><span class="cp-ai-compact-fact-label">标签</span><div class="cp-ai-compact-chips" aria-label="患者标签">' + tags.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div></div>';
     if (diagnoses.length) factRows += '<div class="cp-ai-compact-fact-row"><span class="cp-ai-compact-fact-label">诊断</span><p class="cp-ai-compact-diagnosis">' + esc(diagnoses.join('、')) + '</p></div>';
-    return '<section class="cp-ai-compact-patient"><div class="cp-ai-compact-patient-head"><div><span class="cp-ai-compact-kicker">患者信息</span><h2>' + esc(patient.name || '未命名患者') + '</h2></div>' + (meta.length ? '<div class="cp-ai-compact-patient-meta">' + meta.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div>' : '') + '</div>' + (factRows ? '<div class="cp-ai-compact-facts" aria-label="患者标签与诊断">' + factRows + '</div>' : '') + '</section>';
+    return '<section class="cp-ai-compact-patient"><div class="cp-ai-compact-patient-head"><div class="cp-ai-compact-patient-identity"><span class="cp-ai-compact-kicker">患者信息</span><div class="cp-ai-compact-name-line"><h2>' + esc(patient.name || '未命名患者') + '</h2>' + (meta.length ? '<div class="cp-ai-compact-patient-meta">' + meta.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div>' : '') + '</div></div>' + (actionMarkup ? '<div class="cp-ai-compact-patient-action">' + actionMarkup + '</div>' : '') + '</div>' + (factRows ? '<div class="cp-ai-compact-facts" aria-label="患者标签与诊断">' + factRows + '</div>' : '') + '</section>';
   }
 
-  function renderCompactData(output) {
-    return '<div class="cp-ai-compact-page" data-structured-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '">' + renderCompactPatient(output) + renderCompactSection('建议关注', output.attention, 'is-attention', '仅列出需要核实或补录的内容') + renderCompactSection('健康现状', output.status, 'is-status', '按档案与对话中已记录内容整理') + renderCompactSection('患者画像', output.portrait, 'is-portrait', '只保留对话中有依据的沟通与支持线索') + '</div>';
+  function renderCompactData(output, actionMarkup) {
+    return '<div class="cp-ai-compact-page" data-structured-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '">' + renderCompactPatient(output, actionMarkup) + renderCompactSection('建议关注', output.attention, 'is-attention', '仅列出需要核实或补录的内容') + renderCompactSection('健康现状', output.status, 'is-status', '按档案与对话中已记录内容整理') + renderCompactSection('患者画像', output.portrait, 'is-portrait', '只保留对话中有依据的沟通与支持线索') + '</div>';
   }
 
-  function renderData(data) {
+  function renderData(data, actionMarkup) {
     var output = data.agentOutput || {};
-    if (validateAgentOutput(output)) return renderCompactData(output);
+    if (validateAgentOutput(output)) return renderCompactData(output, actionMarkup);
     var profileMarkup = renderStructuredProfile(output);
     return '<div class="cp-ai-structured-page" data-structured-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '">' + (output.extraction_notes ? '<p class="cp-ai-structured-notes"><strong>提取说明</strong><span>' + esc(output.extraction_notes) + '</span></p>' : '') + (profileMarkup || '<div class="cp-ai-structured-empty">本批对话未提取到结构化健康档案事实。</div>') + renderAskedUnanswered(output.asked_unanswered) + renderNeedReview(output.need_review) + '</div>';
   }
@@ -997,17 +997,18 @@
     var sceneOptions = SCENE_OPTIONS.slice();
     if (ctx && ctx.sceneName && !sceneOptions.some(function (scene) { return scene.name === ctx.sceneName; })) sceneOptions.push({ name: ctx.sceneName, code: ctx.sceneCode || ctx.sceneName });
     var sceneSelect = '<label class="cp-ai-summary-scene"><span>场景码</span><select data-change-action="chat-ai-summary-scene" aria-label="切换场景码">' + sceneOptions.map(function (scene) { return '<option value="' + esc(scene.name) + '" ' + (ctx && ctx.sceneName === scene.name ? 'selected' : '') + '>' + esc(scene.name) + '（' + esc(scene.code) + '）</option>'; }).join('') + '</select></label>';
+    var actionMarkup = button(actionLabel, state.status === 'loading', 'chat-ai-summary-generate');
     var content = '';
     if (state.status === 'loading') {
       content = '<div class="cp-ai-summary-skeleton" aria-label="AI小结生成中" aria-busy="true"><span></span><span></span><span></span><span></span></div>';
     } else if (state.status === 'error') {
-      content = '<div class="cp-ai-summary-error" role="alert"><strong>' + esc(state.error || '智能体调用失败，请稍后重试。') + '</strong>' + button('重试', false, 'chat-ai-summary-generate') + '</div>' + (state.data ? renderData(state.data) : '<div class="cp-ai-summary-empty"><strong>暂无小结</strong><p>点击右上角调用智能体。</p></div>');
+      content = '<div class="cp-ai-summary-error" role="alert"><strong>' + esc(state.error || '智能体调用失败，请稍后重试。') + '</strong>' + button('重试', false, 'chat-ai-summary-generate') + '</div>' + (state.data ? renderData(state.data, actionMarkup) : '<div class="cp-ai-summary-empty"><strong>暂无小结</strong><p>点击下方按钮调用智能体。</p>' + actionMarkup + '</div>');
     } else if (state.data) {
-      content = renderData(state.data);
+      content = renderData(state.data, actionMarkup);
     } else {
-      content = '<div class="cp-ai-summary-empty"><strong>暂无结构化健康档案事实，点击右上角调用智能体</strong><p>将按静态健康档案提取规则读取近50条对话和当前场景档案，输出可核对的患者事实。</p>' + button('调用智能体', false, 'chat-ai-summary-generate') + '</div>';
+      content = '<div class="cp-ai-summary-empty"><strong>暂无结构化健康档案事实</strong><p>将按静态健康档案提取规则读取近50条对话和当前场景档案，输出可核对的患者事实。</p>' + actionMarkup + '</div>';
     }
-    return '<section class="cp-ai-summary" data-ai-summary-status="' + esc(state.status) + '" data-agent-id="' + esc(AGENT_ID) + '" data-agent-name="' + esc(AGENT_NAME) + '" data-agent-prompt-version="' + esc(AGENT_PROMPT_VERSION) + '" data-agent-prompt-source="' + esc(AGENT_PROMPT_SOURCE) + '" data-agent-output-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '" data-last-trigger="' + esc(state.lastTrigger || '') + '" data-rate-remaining="' + rateRemaining + '" aria-live="polite"><header class="cp-ai-summary-header"><div class="cp-ai-summary-header-controls">' + sceneSelect + button(actionLabel, state.status === 'loading', 'chat-ai-summary-generate') + '</div></header>' + (state.status === 'error' && state.data ? '<p class="cp-ai-summary-error-inline" role="alert">' + esc(state.error) + '</p>' : '') + '<div class="cp-ai-summary-body">' + content + '</div><footer class="cp-ai-summary-disclaimer">' + esc((state.data && state.data.declaration) || '智能体仅按提示词提取静态健康档案事实；页面展示仅供医生参考，需结合原始记录人工核对，不构成医疗结论。') + '</footer></section>';
+    return '<section class="cp-ai-summary" data-ai-summary-status="' + esc(state.status) + '" data-agent-id="' + esc(AGENT_ID) + '" data-agent-name="' + esc(AGENT_NAME) + '" data-agent-prompt-version="' + esc(AGENT_PROMPT_VERSION) + '" data-agent-prompt-source="' + esc(AGENT_PROMPT_SOURCE) + '" data-agent-output-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '" data-last-trigger="' + esc(state.lastTrigger || '') + '" data-rate-remaining="' + rateRemaining + '" aria-live="polite"><header class="cp-ai-summary-header"><div class="cp-ai-summary-header-controls">' + sceneSelect + '</div></header>' + (state.status === 'error' && state.data ? '<p class="cp-ai-summary-error-inline" role="alert">' + esc(state.error) + '</p>' : '') + '<div class="cp-ai-summary-body">' + content + '</div><footer class="cp-ai-summary-disclaimer">' + esc((state.data && state.data.declaration) || '智能体仅按提示词提取静态健康档案事实；页面展示仅供医生参考，需结合原始记录人工核对，不构成医疗结论。') + '</footer></section>';
   }
 
   root.PatientAiSummary = { key: STORAGE_KEY, windowMs: WINDOW_MS, minIntervalMs: MIN_INTERVAL_MS, agentId: AGENT_ID, agentName: AGENT_NAME, promptVersion: AGENT_PROMPT_VERSION, promptSource: AGENT_PROMPT_SOURCE, outputSchema: AGENT_OUTPUT_SCHEMA, contextKey: contextKey, sourceSnapshot: sourceSnapshot, requestPayload: requestPayload, validateOutput: validateAgentOutput, invoke: invokeExternal, remainingMs: remainingMs, get: get, start: start, complete: complete, fail: fail, render: render };
