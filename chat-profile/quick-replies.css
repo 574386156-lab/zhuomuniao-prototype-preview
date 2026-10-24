@@ -856,3 +856,48 @@ html.ops-quick-replies-standalone .ops-quick-reply-page .qr-navigation-hint { di
   .ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr) 120px !important; }
   .ops-quick-reply-page .ops-material-search-row .ui-select { width:120px !important; }
 }
+
+/* Modal geometry fix: the base dialog uses fixed 64/68px grid tracks. The
+   material sheet has a taller header/footer, so let those tracks size to their
+   content instead of letting the first input slide under the header. */
+#ops-shell .ops-modal:has(.qr-material-editor) {
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  max-height:min(820px,calc(100dvh - 24px));
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header {
+  min-height:68px !important;
+  height:auto !important;
+  box-sizing:border-box;
+  flex:none;
+  overflow:visible;
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-body {
+  min-height:0 !important;
+  height:auto !important;
+  overflow:auto !important;
+  box-sizing:border-box;
+  padding:18px 20px !important;
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer {
+  min-height:68px !important;
+  height:auto !important;
+  box-sizing:border-box;
+  flex:none;
+}
+@media(max-width:760px) {
+  #ops-shell .ops-modal:has(.qr-material-editor) {
+    grid-template-rows:auto minmax(0,1fr) auto !important;
+    max-height:calc(100dvh - 12px);
+  }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header {
+    min-height:62px !important;
+    padding-inline:16px !important;
+  }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-body {
+    padding:16px !important;
+  }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer {
+    min-height:68px !important;
+    padding-inline:16px !important;
+  }
+}
