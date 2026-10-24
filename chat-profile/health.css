@@ -125,6 +125,49 @@
 .hm-form select { transition:border-color .16s ease, box-shadow .16s ease, background-color .16s ease; }
 .hm-form input::placeholder { color:#a5b5c5; }
 .hm-form-error { border:1px solid #f0b8bd; border-radius:8px; background:#fff4f5; }
+.hm-entry { display:grid; gap:18px; color:#173c61; font:400 16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+.hm-entry * { box-sizing:border-box; }
+.hm-entry-date { display:grid; gap:7px; }
+.hm-entry-date label,.hm-entry-section-heading span,.hm-entry-subtitle,.hm-entry-field > span,.hm-entry-note { color:#607b95; font-size:14px; }
+.hm-entry-date label { font-weight:600; }
+.hm-required,.hm-entry-field > span::after { color:#d64242; }
+.hm-required { margin-left:4px; }
+.hm-entry-date input,.hm-entry-field input { width:100%; min-width:0; min-height:48px; padding:10px 12px; border:1px solid #cbdceb; border-radius:9px; background:#fff; color:#173c61; font:inherit; font-size:16px; }
+.hm-entry-date input:focus,.hm-entry-field input:focus { border-color:#0365bf; box-shadow:0 0 0 3px rgba(3,101,191,.12); outline:0; }
+.hm-entry-section { display:grid; gap:10px; }
+.hm-entry-section-heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+.hm-entry-section-heading h3 { margin:0; color:#173c61; font-size:18px; line-height:1.35; }
+.hm-entry-section-heading span { white-space:nowrap; }
+.hm-entry-metrics,.hm-entry-choice-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
+.hm-entry-metric,.hm-entry-choice { display:flex; align-items:center; justify-content:center; gap:5px; min-width:0; min-height:48px; padding:8px 10px; border:1.5px solid #69b9ae; border-radius:10px; background:#eef9fb; color:#3f9d92; font:inherit; font-weight:600; cursor:pointer; }
+.hm-entry-metric.is-selected,.hm-entry-choice.is-selected { border-color:#42a99c; background:#dff6f0; color:#319889; }
+.hm-entry-metric b,.hm-entry-choice b { font-size:16px; }
+.hm-entry-results { display:grid; gap:12px; }
+.hm-entry-card { display:grid; grid-template-columns:76px minmax(0,1fr); gap:14px; min-width:0; padding:14px; border:1px solid #e2ebf1; border-radius:13px; background:#fff; }
+.hm-entry-card-badge { display:grid; place-items:center; min-height:106px; border-radius:10px; background:#eef9fb; color:#3f9d92; font-size:17px; font-weight:600; text-align:center; }
+.hm-entry-card-body { display:grid; align-content:start; gap:10px; min-width:0; }
+.hm-entry-fields,.hm-entry-field-grid { display:grid; gap:10px; min-width:0; }
+.hm-entry-field-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.hm-entry-field { display:grid; gap:6px; min-width:0; }
+.hm-entry-field > span { font-weight:500; }
+.hm-entry-input { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:8px; min-width:0; }
+.hm-entry-input small { color:#607b95; font-size:14px; white-space:nowrap; }
+.hm-entry-choice-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.hm-entry-choice { min-height:42px; padding:7px 8px; font-size:14px; font-weight:500; }
+.hm-entry-empty { padding:12px; border:1px dashed #cbdceb; border-radius:8px; background:#f8fbfe; color:#8193a6; font-size:14px; text-align:center; }
+.hm-entry-note { margin:0; line-height:1.45; }
+.hm-entry-error { margin:0; padding:9px 10px; border:1px solid #f0b8bd; border-radius:8px; background:#fff4f5; color:#b43d51; font-size:14px; }
+.hm-entry-error[hidden] { display:none; }
+@media (max-width:460px) {
+  .hm-entry-metrics { grid-template-columns:repeat(3,minmax(0,1fr)); gap:7px; }
+  .hm-entry-metric { min-height:44px; padding:7px 5px; font-size:14px; }
+  .hm-entry-card { grid-template-columns:64px minmax(0,1fr); gap:10px; padding:11px; }
+  .hm-entry-card-badge { min-height:92px; font-size:15px; }
+  .hm-entry-field-grid { grid-template-columns:minmax(0,1fr); }
+}
+@media (max-width:360px) {
+  .hm-entry-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
 
 
 /* Health metric tabs: keep the strip visible at the content edge and center the active metric. */

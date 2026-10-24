@@ -658,6 +658,17 @@ html.ops-ai-summary-standalone .ops-workspace { grid-template-rows:minmax(0,1fr)
 .ops-health-modal .hm-form,
 .ops-health-modal .hm-form-values,
 .ops-health-modal .hm-form-values > label { min-width:0; }
+.cp-tabs-wrap { z-index:20; }
+.cp-content .hm-nav { top:var(--hm-sticky-offset, var(--cp-tabs-height,60px)); z-index:10; }
+.cp-content .hm-nav.is-expanded { z-index:10; }
+.ops-health-modal .hm-entry { min-width:0; }
+.ops-health-modal .hm-entry-card { background:#fff; }
+.ops-health-modal .hm-entry-date input,
+.ops-health-modal .hm-entry-field input { min-height:48px; }
+.ops-health-modal .ops-modal-body { overflow:auto; overscroll-behavior:contain; }
+.ops-health-modal .ops-modal-footer { display:flex; align-items:center; gap:10px; }
+.ops-health-modal .ops-health-modal-progress { margin-right:auto; color:#607b95; font-size:13px; white-space:nowrap; }
+.ops-health-modal .ops-button:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
 .ops-health-modal .hm-form-values { grid-template-columns:repeat(2,minmax(0,1fr)); }
 .ops-health-modal .hm-form-values:has(> label:only-child) { grid-template-columns:minmax(0,1fr); }
 .ops-health-modal .hm-form input,

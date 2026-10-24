@@ -38,17 +38,17 @@
   function records(key,id,period){return seed(key).records[id].filter(function(r){return !period||(r.date.slice(0,10)>=period.start&&r.date.slice(0,10)<=period.end);}).slice().sort(function(a,b){return a.date.localeCompare(b.date)||a.id.localeCompare(b.id);});}
   function visibleRows(key,d,period){var list=records(key,d.id,period),v=view(key);return d.id==='glucose'&&v.filter!=='全部'?list.filter(function(r){return r.type===v.filter;}):list;}
   function displayDate(date){return date.replace('T',' ');}
-  function valueText(d,r){return d.fields.map(function(f,i){return (d.fields.length>1?f+' ':'')+r.values[i]+' '+d.unit;}).join(' / ')+(r.type?' · '+r.type:'');}
+  function valueText(d,r){return d.fields.map(function(f,i){var value=r.values[i];return value==null||value===''?null:(d.fields.length>1?f+' ':'')+value+' '+d.unit;}).filter(Boolean).join(' / ')+(r.type?' · '+r.type:'');}
   function series(d,rows){
     if(d.id==='glucose')return glucoseTypes.filter(function(type){return rows.some(function(r){return r.type===type;});}).map(function(type,i){return {name:type,color:colors[glucoseTypes.indexOf(type)%colors.length],points:rows.filter(function(r){return r.type===type;}).map(function(r){return {date:r.date,value:r.values[0]};})};});
-    return d.fields.map(function(f,i){return {name:(d.labels||d.fields)[i],color:colors[i],points:rows.map(function(r){return {date:r.date,value:r.values[i]};})};});
+    return d.fields.map(function(f,i){return {name:(d.labels||d.fields)[i],color:colors[i],points:rows.map(function(r){return {date:r.date,value:r.values[i]};}).filter(function(p){return Number.isFinite(Number(p.value));})};}).filter(function(s){return s.points.length;});
   }
   function chart(key,id,period,thumbnail){
     var d=definition(id),rows=period?records(key,id,period):visibleRows(key,d),seriesList=series(d,rows);
     if(!rows.length)return '<div class="hm-empty">暂无'+esc(d.name)+'记录</div>';
     var dates=Array.from(new Set(rows.map(function(r){return r.date;}))).sort(),numbers=[];
-    seriesList.forEach(function(s){s.points.forEach(function(p){numbers.push(p.value);});});
-    var highest=Math.max.apply(null,numbers),step=Math.pow(10,Math.floor(Math.log10(highest||1)))/2,top=Math.max(step,Math.ceil(highest*1.12/step)*step);
+    seriesList.forEach(function(s){s.points.forEach(function(p){if(Number.isFinite(Number(p.value)))numbers.push(Number(p.value));});});
+    var highest=Math.max.apply(null,numbers.length?numbers:[1]),step=Math.pow(10,Math.floor(Math.log10(highest||1)))/2,top=Math.max(step,Math.ceil(highest*1.12/step)*step);
     var first=Date.parse(dates[0]),last=Date.parse(dates[dates.length-1]);
     function x(date){return dates.length===1?50:3+(Date.parse(date)-first)/(last-first)*94;}
     function y(value){return 92-value/top*84;}
@@ -83,7 +83,7 @@
   function render(key,legacy){
     seed(key,legacy);var v=view(key),d=definition(v.metric),rows=records(key,d.id),latest=rows[rows.length-1];
     var nav=definitions.map(function(m,i){return '<button type="button" role="tab" class="'+(d.id===m.id?'is-active':'')+'" data-action="health-select" data-health-key="'+esc(key)+'" data-metric="'+m.id+'" data-index="'+i+'" aria-selected="'+(d.id===m.id)+'" aria-pressed="'+(d.id===m.id)+'"><span>'+esc(m.name)+(m.id==='pressure'?'（收缩压+舒张压）':m.id==='lipids'?'（血脂四项）':'（'+esc(m.unit)+'）')+'</span><b>'+records(key,m.id).length+'</b></button>';}).join('');
-    var latestBlock=latest?'<section class="hm-latest cp-latest"><span>最近'+(d.id==='lipids'?'检验':'测量')+'：'+esc(displayDate(latest.date))+'</span><div class="hm-latest-values">'+d.fields.map(function(f,i){return '<div>'+(d.fields.length>1?'<span>'+esc(f)+'</span>':'')+'<strong>'+esc(latest.values[i])+'</strong><small>'+esc(d.unit)+'</small></div>';}).join('')+'</div>'+(latest.type?'<span class="hm-type">'+esc(latest.type)+'</span>':'')+'</section>':'<div class="hm-empty">暂无'+esc(d.name)+'记录</div>';
+    var latestBlock=latest?'<section class="hm-latest cp-latest"><span>最近'+(d.id==='lipids'?'检验':'测量')+'：'+esc(displayDate(latest.date))+'</span><div class="hm-latest-values">'+d.fields.map(function(f,i){return '<div>'+(d.fields.length>1?'<span>'+esc(f)+'</span>':'')+'<strong>'+esc(latest.values[i]==null?'—':latest.values[i])+'</strong><small>'+esc(d.unit)+'</small></div>';}).join('')+'</div>'+(latest.type?'<span class="hm-type">'+esc(latest.type)+'</span>':'')+'</section>':'<div class="hm-empty">暂无'+esc(d.name)+'记录</div>';
     var filters=d.id==='glucose'?'<div class="hm-filters" aria-label="血糖类型筛选">'+['全部'].concat(glucoseTypes).map(function(type){return '<button type="button" class="'+(v.filter===type?'is-active':'')+'" data-action="health-filter" data-health-key="'+esc(key)+'" data-value="'+esc(type)+'" aria-pressed="'+(v.filter===type)+'">'+esc(type)+'</button>';}).join('')+'</div>':'';
     return '<section class="hm-panel" data-health-key="'+esc(key)+'"><aside class="hm-nav '+(v.expanded?'is-expanded':'')+'" aria-label="健康指标"><strong>健康指标</strong><div class="hm-nav-controls"><div class="hm-nav-list" role="tablist" aria-label="健康指标">'+nav+'</div><button type="button" class="hm-nav-more" data-action="health-nav-toggle" data-health-key="'+esc(key)+'" aria-label="'+(v.expanded?'收起健康指标':'展开全部健康指标')+'" aria-expanded="'+!!v.expanded+'">'+(v.expanded?'收起':'全部')+'<span aria-hidden="true">'+(v.expanded?'⌃':'⌄')+'</span></button></div></aside><div class="hm-main"><header class="hm-heading"><div><h3>'+esc(d.name)+(d.id==='lipids'?'（血脂四项）':d.id==='pressure'?'（收缩压+舒张压）':'（'+esc(d.unit)+'）')+'</h3><span>共 '+rows.length+' 条'+(latest?' · 最近 '+esc(latest.date.slice(0,10)):'')+'</span></div><button type="button" class="hm-primary" data-action="health-add" data-health-key="'+esc(key)+'" data-metric="'+d.id+'">＋ 新增记录</button></header>'+latestBlock+'<section class="hm-trend"><div class="hm-chart-heading"><strong>趋势汇总</strong></div>'+chart(key,d.id)+'</section>'+filters+(visibleRows(key,d).length?table(key,d):rows.length?'<div class="hm-empty">当前类型暂无记录</div>':'')+'</div></section>';
   }
@@ -93,6 +93,81 @@
     return '<ol class="hm-reports" data-health-key="'+esc(key)+'">'+periods.map(function(p){var metrics=definitions.filter(function(d){return records(key,d.id,p).length;});return '<li><div class="hm-report-date"><time>'+p.end+'</time><span>'+esc(p.kind)+'</span></div><article class="hm-report"><header>'+p.start+' ～ '+p.end+' · 共 '+metrics.length+' 项指标</header><div class="hm-report-charts">'+metrics.map(function(d){return '<button type="button" class="hm-report-thumb" data-action="health-chart" data-health-key="'+esc(key)+'" data-metric="'+d.id+'" data-period="'+p.id+'" aria-label="查看'+esc(d.name)+'趋势，'+p.start+'至'+p.end+'"><strong>'+esc(d.name)+'</strong>'+chart(key,d.id,p,true)+'<span>点击放大</span></button>';}).join('')+'</div></article></li>';}).join('')+'</ol>';
   }
   function form(id){var d=definition(id),label=function(text,required){return '<span class="hm-form-label">'+esc(text)+(required?'<i aria-hidden="true">*</i>':'')+'</span>';};return '<form class="hm-form" data-health-form novalidate><label data-health-field="date">'+label('测量日期',true)+'<input type="date" data-modal="health-date" aria-label="测量日期" required></label>'+(id==='glucose'?'<label data-health-field="type">'+label('血糖类型',true)+'<select data-modal="health-type" aria-label="血糖类型">'+glucoseTypes.map(function(t){return '<option value="'+esc(t)+'">'+esc(t)+'</option>';}).join('')+'</select></label>':'')+'<div class="hm-form-values">'+d.fields.map(function(f,i){return '<label data-health-field="value-'+i+'">'+label(f+'（'+d.unit+'）',true)+'<input type="number" step="any" min="0.01" required inputmode="decimal" data-modal="health-value-'+i+'" aria-label="'+esc(f+'（'+d.unit+'）')+'" placeholder="请输入'+esc(f)+'"></label>';}).join('')+'</div><p class="hm-form-error" role="alert" data-health-error hidden></p></form>';}
+  function shortGlucoseType(type){return ({'空腹血糖':'空腹','早餐后2小时血糖':'早餐后2h','午餐后2小时血糖':'午餐后2h','晚餐后2小时血糖':'晚餐后2h','睡前血糖':'睡前','随机血糖':'随机'})[type]||type;}
+  function entryValue(state,key){return state&&state.values&&state.values[key]!=null?state.values[key]:'';}
+  function entryInput(key,label,unit,placeholder,state){return '<label class="hm-entry-field" data-entry-field="'+esc(key)+'"><span>'+esc(label)+'</span><div class="hm-entry-input"><input type="number" step="any" min="0.01" inputmode="decimal" data-entry-value="'+esc(key)+'" aria-label="'+esc(label)+'" placeholder="'+esc(placeholder||'请输入数值')+'" value="'+esc(entryValue(state,key))+'"><small>'+esc(unit)+'</small></div></label>';}
+  function metricChoice(m,state){var active=(state.selected||[]).indexOf(m.id)>=0;return '<button type="button" class="hm-entry-metric'+(active?' is-selected':'')+'" data-entry-action="toggle-metric" data-entry-metric="'+esc(m.id)+'" aria-pressed="'+active+'"><span>'+esc(m.name)+'</span>'+(active?'<b aria-hidden="true">✓</b>':'')+'</button>';}
+  function subChoice(label,key,active,action,attr){return '<button type="button" class="hm-entry-choice'+(active?' is-selected':'')+'" data-entry-action="'+action+'" data-'+attr+'="'+esc(key)+'" aria-pressed="'+active+'">'+esc(label)+(active?'<b aria-hidden="true">✓</b>':'')+'</button>';}
+  function entryCard(id,state){
+    var d=definition(id),body='';
+    if(id==='glucose'){
+      var selectedTypes=state.glucoseTypes||[];
+      body='<div class="hm-entry-subtitle">本次测量类型（可多选）</div><div class="hm-entry-choice-grid">'+glucoseTypes.map(function(t){return subChoice(shortGlucoseType(t),t,selectedTypes.indexOf(t)>=0,'toggle-glucose-type','glucose-type');}).join('')+'</div>';
+      body+=selectedTypes.length?'<div class="hm-entry-fields">'+selectedTypes.map(function(t){return entryInput('glucose|'+t, t, d.unit, '请输入数值',state);}).join('')+'</div>':'<div class="hm-entry-empty">请先选择本次测量的血糖时间</div>';
+    }else if(id==='lipids'){
+      var selectedFields=state.lipidFields||[],labels={TC:'总胆固醇 TC',TG:'甘油三酯 TG','HDL-C':'高密度脂蛋白 HDL-C','LDL-C':'低密度脂蛋白 LDL-C'};
+      body='<div class="hm-entry-subtitle">本次测量项目（可多选）</div><div class="hm-entry-choice-grid">'+d.fields.map(function(f){return subChoice(labels[f]||f,f,selectedFields.indexOf(f)>=0,'toggle-lipid-field','lipid-field');}).join('')+'</div>';
+      body+=selectedFields.length?'<div class="hm-entry-fields">'+selectedFields.map(function(f){return entryInput('lipids|'+f,labels[f]||f,d.unit,'请输入数值',state);}).join('')+'</div>':'<div class="hm-entry-empty">请先选择本次测量的血脂项目</div>';
+    }else if(id==='pressure'){
+      body='<div class="hm-entry-field-grid">'+entryInput('pressure|0','收缩压（高压）',d.unit,'如 126',state)+entryInput('pressure|1','舒张压（低压）',d.unit,'如 76',state)+'</div><p class="hm-entry-note">请填写同一次测量的高压和低压</p>';
+    }else{
+      body='<div class="hm-entry-fields">'+entryInput(id+'|0',d.name,d.unit,'请输入数值',state)+'</div>';
+    }
+    return '<article class="hm-entry-card" data-entry-card="'+esc(id)+'"><div class="hm-entry-card-badge">'+esc(d.name)+'</div><div class="hm-entry-card-body">'+body+'</div></article>';
+  }
+  function entryState(initialMetric){return {selected:initialMetric?[initialMetric]:['weight'],glucoseTypes:[],lipidFields:[],values:Object.create(null),date:localDate(new Date())};}
+  function entryForm(state){
+    state=state||entryState('weight');
+    var selected=state.selected||[],cards=selected.map(function(id){return entryCard(id,state);}).join('');
+    return '<form class="hm-entry" data-health-entry novalidate><div class="hm-entry-date"><label>测量日期<span class="hm-required">*</span></label><input type="date" data-entry-date aria-label="测量日期" value="'+esc(state.date||localDate(new Date()))+'"></div><div class="hm-entry-section"><div class="hm-entry-section-heading"><h3>今天测了哪些指标？</h3><span>可多选</span></div><div class="hm-entry-metrics">'+definitions.map(function(m){return metricChoice(m,state);}).join('')+'</div></div><div class="hm-entry-section"><div class="hm-entry-section-heading"><h3>填写测量结果</h3><span data-entry-completed>已完成 0 条记录</span></div><div class="hm-entry-results">'+(cards||'<div class="hm-entry-empty">请选择需要记录的指标</div>')+'</div></div><p class="hm-entry-error" role="alert" data-health-error hidden></p></form>';
+  }
+  function captureEntryState(root,state){
+    if(!root||!state)return state;
+    state.values=Object.create(null);
+    var date=root.querySelector('[data-entry-date]');if(date)state.date=date.value;
+    state.selected=Array.prototype.map.call(root.querySelectorAll('[data-entry-metric][aria-pressed="true"]'),function(node){return node.getAttribute('data-entry-metric');});
+    state.glucoseTypes=Array.prototype.map.call(root.querySelectorAll('[data-glucose-type][aria-pressed="true"]'),function(node){return node.getAttribute('data-glucose-type');});
+    state.lipidFields=Array.prototype.map.call(root.querySelectorAll('[data-lipid-field][aria-pressed="true"]'),function(node){return node.getAttribute('data-lipid-field');});
+    Array.prototype.forEach.call(root.querySelectorAll('[data-entry-value]'),function(input){state.values[input.getAttribute('data-entry-value')]=input.value;});
+    return state;
+  }
+  function collectEntry(root){
+    if(!root)return {date:'',entries:[],completedCount:0,error:'请填写测量日期'};
+    var dateInput=root.querySelector('[data-entry-date]'),date=dateInput?dateInput.value:'',entries=[],error='',completedCount=0;
+    var value=function(key){var node=null;Array.prototype.some.call(root.querySelectorAll('[data-entry-value]'),function(input){if(input.getAttribute('data-entry-value')===key){node=input;return true;}return false;});return node?node.value:'';};
+    var selected=Array.prototype.map.call(root.querySelectorAll('[data-entry-metric][aria-pressed="true"]'),function(node){return node.getAttribute('data-entry-metric');});
+    selected.forEach(function(id){if(error)return;var d=definition(id);
+      if(id==='glucose'){
+        var types=Array.prototype.map.call(root.querySelectorAll('[data-glucose-type][aria-pressed="true"]'),function(node){return node.getAttribute('data-glucose-type');});
+        if(!types.length){error='请选择本次测量的血糖时间';return;}
+        types.forEach(function(type){var v=value('glucose|'+type);if(v===''||!Number.isFinite(Number(v))||Number(v)<=0)error=error||'请完整填写血糖数值';else{entries.push({metric:id,type:type,values:[v]});completedCount++;}});
+      }else if(id==='lipids'){
+        var fields=Array.prototype.map.call(root.querySelectorAll('[data-lipid-field][aria-pressed="true"]'),function(node){return node.getAttribute('data-lipid-field');});
+        if(!fields.length){error='请选择本次测量的血脂项目';return;}
+        var values=d.fields.map(function(f){return null;});fields.forEach(function(f){var v=value('lipids|'+f),index=d.fields.indexOf(f);if(v===''||!Number.isFinite(Number(v))||Number(v)<=0)error=error||'请完整填写血脂数值';else values[index]=v;});
+        if(!error){entries.push({metric:id,values:values,selectedFields:fields});completedCount++;}
+      }else{
+        var values=d.fields.map(function(f,index){return value(id+'|'+index);});
+        if(values.some(function(v){return v===''||!Number.isFinite(Number(v))||Number(v)<=0;}))error=error||'请完整填写'+d.name+'数值';else{entries.push({metric:id,values:values});completedCount++;}
+      }
+    });
+    if(!error&&!selected.length)error='请至少选择一个测量指标';
+    return {date:date,entries:entries,completedCount:completedCount,error:error};
+  }
+  function addBatch(key,date,entries){
+    var dayOnly=/^\d{4}-\d\d-\d\d$/.test(date),parsed=new Date(dayOnly?date+'T00:00':date),today=new Date();
+    if((!dayOnly&&!/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(date))||!Number.isFinite(parsed.getTime())||date.slice(0,10)!==localDate(parsed))return '请填写有效的测量日期';
+    if(dayOnly?date>localDate(today):parsed>today)return '测量日期不能晚于当前日期';
+    if(!entries||!entries.length)return '请至少完成一条测量记录';
+    for(var i=0;i<entries.length;i++){
+      var entry=entries[i],d=definition(entry.metric);
+      if(entry.metric==='lipids'){
+        if(!entry.selectedFields||!entry.selectedFields.length||entry.values.length!==d.fields.length||entry.selectedFields.some(function(f){var idx=d.fields.indexOf(f),v=entry.values[idx];return idx<0||v==null||!Number.isFinite(Number(v))||Number(v)<=0;}))return '请完整填写血脂数值';
+      }else if(entry.values.length!==d.fields.length||entry.values.some(function(v){return v===''||!Number.isFinite(Number(v))||Number(v)<=0;}))return '请完整填写大于 0 的数值';
+      if(entry.metric==='glucose'&&glucoseTypes.indexOf(entry.type)<0)return '请选择血糖类型';
+    }
+    entries.forEach(function(entry){seed(key).records[entry.metric].push({id:'local-'+(++sequence),date:date,values:entry.values.map(function(v){return v==null?null:Number(v);}),type:entry.metric==='glucose'?entry.type:'',source:'本地录入'});});return '';
+  }
   function add(key,id,date,values,type){
     var d=definition(id),dayOnly=/^\d{4}-\d\d-\d\d$/.test(date),parsed=new Date(dayOnly?date+'T00:00':date),today=new Date();
     if((!dayOnly&&!/^\d{4}-\d\d-\d\dT\d\d:\d\d$/.test(date))||!Number.isFinite(parsed.getTime())||date.slice(0,10)!==localDate(parsed))return '请填写有效的测量日期';
@@ -102,5 +177,5 @@
     seed(key).records[id].push({id:'local-'+(++sequence),date:date,values:values.map(Number),type:id==='glucose'?type:'',source:'本地录入'});return '';
   }
   function localDate(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
-  root.PatientHealth={definitions:definitions,glucoseTypes:glucoseTypes,seed:seed,view:view,records:records,render:render,renderReports:renderReports,chart:chart,preview:preview,report:report,form:form,add:add,definition:definition};
+  root.PatientHealth={definitions:definitions,glucoseTypes:glucoseTypes,seed:seed,view:view,records:records,render:render,renderReports:renderReports,chart:chart,preview:preview,report:report,form:form,add:add,addBatch:addBatch,definition:definition,entryState:entryState,entryForm:entryForm,captureEntryState:captureEntryState,collectEntry:collectEntry};
 })(typeof window!=='undefined'?window:globalThis);

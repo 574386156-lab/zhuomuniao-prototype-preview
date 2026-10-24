@@ -226,8 +226,22 @@
     },{passive:false});
   }
   var tabResizeObserver=null;
+  function updateStickyOffsets(container){
+    if(!container||!container.querySelectorAll)return;
+    container.querySelectorAll('.cp-panel').forEach(function(panel){
+      var tabs=panel.querySelector('.cp-tabs-wrap');
+      panel.style.setProperty('--cp-sticky-offset','0px');
+      if(tabs)panel.style.setProperty('--cp-tabs-height',tabs.getBoundingClientRect().height+'px');
+    });
+    container.querySelectorAll('.hm-panel').forEach(function(panel){
+      var archive=panel.closest('.cp-panel'),primary=archive&&archive.querySelector('.cp-tabs-wrap'),offset=archive?(parseFloat(archive.style.getPropertyValue('--cp-sticky-offset'))||0):0,nav=panel.querySelector('.hm-nav');
+      panel.style.setProperty('--hm-sticky-offset',(offset+(primary?primary.getBoundingClientRect().height:0))+'px');
+      if(nav)panel.style.setProperty('--hm-nav-height',nav.getBoundingClientRect().height+'px');
+    });
+  }
   function centerActiveTabs(container){
     if(!container || !container.querySelectorAll)return;
+    updateStickyOffsets(container);
     container.querySelectorAll('.cp-tabs,.hm-nav-list').forEach(function(strip){
       if(strip.closest('.is-expanded') || !strip.clientWidth)return;
       var active=strip.querySelector('[aria-selected="true"],[aria-pressed="true"]');
@@ -256,5 +270,5 @@
     }
   }
   if(root.document)root.document.addEventListener('scroll',function(e){if(e.target.classList&&e.target.classList.contains('cp-tabs'))updateScrollHints(e.target.parentElement.parentElement);},true);
-  root.ChatPatientArchive = {context:context,resolve:resolve,render:render,renderTimeline:renderTimeline,renderTimelineDetail:renderTimelineDetail,renderTimelineEdit:renderTimelineEdit,renderFileOriginal:renderFileOriginal,findTimelineEvent:findTimelineEvent,updateTimelineEvent:updateTimelineEvent,renderMedication:renderMedication,renderExclusive:renderExclusive,tabsFor:tabsFor,tabs:tabs,centerActiveTabs:centerActiveTabs,updateScrollHints:updateScrollHints,mountScrollHints:mountScrollHints};
+  root.ChatPatientArchive = {context:context,resolve:resolve,render:render,renderTimeline:renderTimeline,renderTimelineDetail:renderTimelineDetail,renderTimelineEdit:renderTimelineEdit,renderFileOriginal:renderFileOriginal,findTimelineEvent:findTimelineEvent,updateTimelineEvent:updateTimelineEvent,renderMedication:renderMedication,renderExclusive:renderExclusive,tabsFor:tabsFor,tabs:tabs,centerActiveTabs:centerActiveTabs,updateStickyOffsets:updateStickyOffsets,updateScrollHints:updateScrollHints,mountScrollHints:mountScrollHints};
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -9,7 +9,7 @@
   var pages={'quick-replies':{title:'快捷回复',file:'quick-replies.html'},'patient-followups':{title:'患者跟进',file:'patient-followups.html'},'patient-profile':{title:'患者档案',file:'patient-profile.html'}};
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages'),phoneScreen=document.querySelector('.phone-screen');
   var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
-  var previewVersion='20261024-health-nav-v1';
+  var previewVersion='20261024-health-entry-v1';
   var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null);
   var archiveTab='病例时间轴',archiveTabsExpanded=false,archiveTimelineDetail=null,archiveTimelineScroll=0,archiveFocusDetail=false,archiveEditMode=null,archiveFileOriginal=null,healthModal=null,healthReturnFocus=null;
   function fitPhone(){
@@ -73,14 +73,18 @@
   function closeHealthModal(){var restore=healthReturnFocus;healthModal=null;healthReturnFocus=null;renderPatientArchive();if(restore){window.setTimeout(function(){var buttons=pageHost.querySelectorAll('[data-action="health-add"]'),target=null;for(var i=0;i<buttons.length;i++){if(buttons[i].getAttribute('data-health-key')===restore.key&&buttons[i].getAttribute('data-metric')===restore.metric){target=buttons[i];break;}}if(target)target.focus();},0);}}
   function markHealthField(input,invalid){if(!input)return;var field=input.closest('[data-health-field]');if(field)field.classList.toggle('is-error',!!invalid);input.setAttribute('aria-invalid',invalid?'true':'false');}
   function clearHealthField(input){if(!input)return;markHealthField(input,false);var errorNode=pageHost.querySelector('.wc-health-modal [data-health-error]');if(errorNode)errorNode.hidden=true;}
+  function syncHealthEntry(){var root=pageHost.querySelector('.wc-health-modal [data-health-entry]');if(root&&healthModal&&window.PatientHealth.captureEntryState)window.PatientHealth.captureEntryState(root,healthModal);return root;}
+  function updateHealthEntryProgress(){var root=pageHost.querySelector('.wc-health-modal [data-health-entry]');if(!root||!window.PatientHealth.collectEntry)return;var result=window.PatientHealth.collectEntry(root),label=pageHost.querySelector('.wc-health-modal [data-entry-progress]'),save=pageHost.querySelector('.wc-health-modal-save');if(label)label.textContent='已完成 '+result.completedCount+' 条记录';if(save)save.disabled=result.completedCount<1;}
   function renderHealthModal(){
     if(!healthModal||!window.PatientHealth)return;
+    syncHealthEntry();
     pageHost.querySelectorAll('.wc-health-modal-backdrop').forEach(function(node){node.remove();});
-    var definition=window.PatientHealth.definition(healthModal.metric),title='新增'+definition.name+'记录';
-    pageHost.insertAdjacentHTML('beforeend','<div class="wc-health-modal-backdrop" role="presentation"><section class="wc-health-modal" role="dialog" aria-modal="true" aria-labelledby="wc-health-modal-title"><header class="wc-health-modal-header"><div><span class="wc-health-modal-kicker">基础健康指标</span><h2 id="wc-health-modal-title">'+esc(title)+'</h2><p>补充一次测量结果，保存后会立即更新趋势。</p></div><button type="button" class="wc-health-modal-close" data-wc-health-action="health-modal-close" aria-label="关闭新增记录">×</button></header><div class="wc-health-modal-body">'+window.PatientHealth.form(healthModal.metric)+'</div><footer class="wc-health-modal-footer"><button type="button" class="wc-health-modal-cancel" data-wc-health-action="health-modal-cancel">取消</button><button type="button" class="wc-health-modal-save" data-wc-health-action="health-modal-save">保存记录</button></footer></section></div>');
+    pageHost.insertAdjacentHTML('beforeend','<div class="wc-health-modal-backdrop" role="presentation"><section class="wc-health-modal" role="dialog" aria-modal="true" aria-labelledby="wc-health-modal-title"><header class="wc-health-modal-header"><div><span class="wc-health-modal-kicker">基础健康指标</span><h2 id="wc-health-modal-title">记录健康指标</h2><p>只填写今天测量过的项目，提交后将同步到健康档案。</p></div><button type="button" class="wc-health-modal-close" data-wc-health-action="health-modal-close" aria-label="关闭记录健康指标">×</button></header><div class="wc-health-modal-body">'+window.PatientHealth.entryForm(healthModal)+'</div><footer class="wc-health-modal-footer"><span class="wc-health-modal-progress" data-entry-progress>已完成 0 条记录</span><button type="button" class="wc-health-modal-cancel" data-wc-health-action="health-modal-cancel">暂不填写</button><button type="button" class="wc-health-modal-save" data-wc-health-action="health-modal-save">提交记录</button></footer></section></div>');
     var dateInput=pageHost.querySelector('.wc-health-modal [data-modal="health-date"]');
-    if(dateInput){dateInput.value=localDate();dateInput.max=localDate();}
-    var first=pageHost.querySelector('.wc-health-modal input');if(first)first.focus();
+    if(!dateInput)dateInput=pageHost.querySelector('.wc-health-modal [data-entry-date]');
+    if(dateInput){if(!dateInput.value)dateInput.value=healthModal.date||localDate();dateInput.max=localDate();}
+    updateHealthEntryProgress();
+    var first=pageHost.querySelector('.wc-health-modal [data-entry-metric]');if(first)first.focus();
   }
   function renderPatientArchive(){
     if(!current||!window.ChatPatientArchive){pageHost.innerHTML='<p class="wc-loading">患者档案加载中…</p>';return;}
@@ -136,18 +140,21 @@
     if(action==='health-modal-close'||action==='health-modal-cancel'){closeHealthModal();}
     else if(action==='health-modal-save'){
       if(!healthModal)return;
-      var form=pageHost.querySelector('.wc-health-modal [data-health-form]'),definition=window.PatientHealth.definition(healthModal.metric),dateInput=form&&form.querySelector('[data-modal="health-date"]'),typeInput=form&&form.querySelector('[data-modal="health-type"]'),valueInputs=definition.fields.map(function(field,index){return form&&form.querySelector('[data-modal="health-value-'+index+'"]');}),values=valueInputs.map(function(input){return input?input.value:'';}),error=window.PatientHealth.add(healthModal.key,healthModal.metric,dateInput?dateInput.value:'',values,typeInput?typeInput.value:'');
+      var form=syncHealthEntry(),result=window.PatientHealth.collectEntry(form),error=result.error||window.PatientHealth.addBatch(healthModal.key,result.date,result.entries);
       if(error){
-        markHealthField(dateInput,!dateInput||!dateInput.value||error.indexOf('日期')>=0);
-        markHealthField(typeInput,!!typeInput&&(!typeInput.value||error.indexOf('类型')>=0));
-        valueInputs.forEach(function(input){var value=input&&input.value;markHealthField(input,!input||value===''||!Number.isFinite(Number(value))||Number(value)<=0);});
         var errorNode=pageHost.querySelector('.wc-health-modal [data-health-error]');if(errorNode){errorNode.textContent=error;errorNode.hidden=false;}return;
       }
       closeHealthModal();
     }
     else if(action==='health-add'){
-      healthReturnFocus={key:target.getAttribute('data-health-key'),metric:target.getAttribute('data-metric')||'weight'};healthModal={key:target.getAttribute('data-health-key'),metric:target.getAttribute('data-metric')||'weight'};
+      var initialMetric=target.getAttribute('data-metric')||'weight';healthReturnFocus={key:target.getAttribute('data-health-key'),metric:initialMetric};healthModal=window.PatientHealth.entryState(initialMetric);healthModal.key=target.getAttribute('data-health-key');healthModal.metric=initialMetric;
       renderHealthModal();
+    }
+    else if(action==='toggle-metric'||action==='toggle-glucose-type'||action==='toggle-lipid-field'){
+      if(!healthModal)return;
+      syncHealthEntry();
+      var value=action==='toggle-metric'?target.getAttribute('data-entry-metric'):action==='toggle-glucose-type'?target.getAttribute('data-glucose-type'):target.getAttribute('data-lipid-field');
+      var list=action==='toggle-metric'?healthModal.selected:action==='toggle-glucose-type'?healthModal.glucoseTypes:healthModal.lipidFields,index=list.indexOf(value);if(index>=0)list.splice(index,1);else list.push(value);renderHealthModal();
     }
     else if(action==='health-select'){
       var healthView=window.PatientHealth.view(target.getAttribute('data-health-key'));healthView.metric=target.getAttribute('data-metric')||healthView.metric;healthView.point='';renderPatientArchive();
@@ -195,8 +202,8 @@
     else if(action==='chat-workbench-panel-toggle'){navigate('#chat/'+current.id);}
     else if(action==='chat-patient-phone-toggle'){renderPatientArchive();}
   });
-  pageHost.addEventListener('input',function(event){if(healthModal&&event.target.closest&&event.target.closest('.wc-health-modal'))clearHealthField(event.target);});
-  pageHost.addEventListener('change',function(event){if(healthModal&&event.target.closest&&event.target.closest('.wc-health-modal'))clearHealthField(event.target);});
+  pageHost.addEventListener('input',function(event){if(healthModal&&event.target.closest&&event.target.closest('.wc-health-modal')){clearHealthField(event.target);syncHealthEntry();updateHealthEntryProgress();}});
+  pageHost.addEventListener('change',function(event){if(healthModal&&event.target.closest&&event.target.closest('.wc-health-modal')){clearHealthField(event.target);syncHealthEntry();updateHealthEntryProgress();}});
   pageHost.addEventListener('keydown',function(event){if(event.key==='Escape'&&healthModal){event.preventDefault();closeHealthModal();}});
   app.addEventListener('input',function(event){if(event.target.id==='wc-search'){search=event.target.value;filterMessages();}else if(event.target.matches('.wc-composer textarea')&&current){drafts[current.id]=event.target.value;app.querySelector('.wc-composer button').disabled=!event.target.value.trim();}});
   app.addEventListener('submit',function(event){if(!event.target.matches('.wc-composer')||!current)return;event.preventDefault();var text=(drafts[current.id]||'').trim();if(!text||text.length>500)return;current.messages.push({text:text,self:true});drafts[current.id]='';current.time='刚刚';showChat();app.querySelector('textarea').focus();});
