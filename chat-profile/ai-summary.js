@@ -3,17 +3,18 @@
   'use strict';
 
   var STORAGE_KEY = 'zmn.prototype.ai-summary.v1';
-  var SUMMARY_VERSION = 6;
+  var SUMMARY_VERSION = 7;
   var WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+  var MAX_MESSAGE_COUNT = 50;
   var MIN_INTERVAL_MS = 60 * 1000;
   // The configured upstream agent is represented by a local adapter in this
   // prototype. The production boundary must replace the adapter with the
   // published agent call while keeping this payload and schema contract.
   var AGENT_ID = 'static-health-archive-extractor';
   var AGENT_NAME = '静态健康档案提取引擎';
-  var AGENT_PROMPT_VERSION = '2026-10-22';
+  var AGENT_PROMPT_VERSION = '2026-10-24';
   var AGENT_PROMPT_SOURCE = '已粘贴的文本.txt';
-  var AGENT_OUTPUT_SCHEMA = 'patient_profile_v1';
+  var AGENT_OUTPUT_SCHEMA = 'patient_summary_v1';
   var sessions = Object.create(null);
 
   function esc(value) {
@@ -79,7 +80,10 @@
       var side = message.side || (/医生|医助|AI/.test(String(message.name || '')) ? 'self' : 'other');
       return { text: String(message.text || ''), date: date, time: String(message.time || message.date || ''), side: side, name: String(message.name || '') , timestamp: Number.isNaN(time) ? null : time };
     }).filter(function (message) {
-      return message.text && !/系统/.test(message.name) && (message.timestamp === null || (message.timestamp >= start && message.timestamp <= end));
+      // The agent contract is based on the latest 50 conversation messages;
+      // archive dates are retained as evidence and are not used to discard
+      // older turns before the message-count limit is applied.
+      return message.text && !/系统/.test(message.name);
     });
   }
 
@@ -113,7 +117,7 @@
     now = Number(now) || Date.now();
     var end = dateAtStart(now) + 24 * 60 * 60 * 1000 - 1;
     var start = end - WINDOW_MS + 1;
-    var messages = normalizeMessages(ctx, start, end);
+    var messages = normalizeMessages(ctx, start, end).slice(-MAX_MESSAGE_COUNT);
     var metrics = metricRecords(record, start, end);
     var followups = record && Array.isArray(record.followups) ? record.followups.slice() : [];
     var medicationRows = record && record.medication && record.medication.current && Array.isArray(record.medication.current.rows) ? record.medication.current.rows.slice() : [];
@@ -130,6 +134,7 @@
       patientName: ctx && ctx.patientName ? String(ctx.patientName) : '',
       patientGender: ctx && ctx.patientGender ? String(ctx.patientGender) : '',
       patientAge: ctx && ctx.patientAge ? Number(ctx.patientAge) : 0,
+      patientBirthDate: ctx && ctx.patientBirthDate ? String(ctx.patientBirthDate) : '',
       hasConversation: messages.length > 0,
       hasArchive: hasArchive,
       hasData: messages.length > 0 || hasArchive
@@ -160,15 +165,29 @@
       input: {
         rangeStart: sources && sources.rangeStart || '',
         rangeEnd: sources && sources.rangeEnd || '',
-        messages: messages
+        messages: messages,
+        patient: {
+          name: sources && sources.patientName || '',
+          sex: sources && sources.patientGender || null,
+          age: sources && sources.patientAge || null,
+          birth_date: sources && sources.patientBirthDate || null,
+          tags: sources && sources.tags || [],
+          diagnoses: ctx && ctx.patientDiagnosis ? String(ctx.patientDiagnosis).split(/[、,，]/).map(function (item) { return item.trim(); }).filter(Boolean) : []
+        },
+        health_archive: {
+          metrics: sources && sources.metrics || [],
+          followups: sources && sources.followups || [],
+          medications: sources && sources.medicationRows || [],
+          timeline: record && record.timeline || []
+        }
       },
       outputSchema: AGENT_OUTPUT_SCHEMA,
       context: {
         patientId: ctx && ctx.patientId || '',
         sceneCode: ctx && (ctx.sceneCode || ctx.sceneName) || ''
       },
-      // Archive data is retained as downstream display context. It is not mixed
-      // into the seven-category extraction input sent to the configured agent.
+      // Keep the same archive snapshot available for the agent and for the
+      // display projection; the UI never infers a clinical conclusion from it.
       displayContext: {
         tags: sources && sources.tags || [],
         metrics: sources && sources.metrics || [],
@@ -205,7 +224,7 @@
        memory so an existing browser session immediately gets the current agent
        output without silently making a new generation request. */
     var legacySummary = sessions[key].data;
-    var needsSchemaRefresh = legacySummary && (Number(legacySummary.version || 0) < SUMMARY_VERSION || !legacySummary.agentOutput || /当前以|当前最先处理|有一条患者提问|当前有\s*\d+\s*条用药/.test(String(legacySummary.headline || '') + ' ' + String(legacySummary.overview || '')));
+    var needsSchemaRefresh = legacySummary && (Number(legacySummary.version || 0) < SUMMARY_VERSION || !legacySummary.agentOutput || !validateAgentOutput(legacySummary.agentOutput) || /当前以|当前最先处理|有一条患者提问|当前有\s*\d+\s*条用药/.test(String(legacySummary.headline || '') + ' ' + String(legacySummary.overview || '')));
     if (needsSchemaRefresh && sessions[key].sources.hasData) {
       var migrated = buildSummary(ctx, record, sessions[key].sources, sessions[key].lastGeneratedAt || Date.now());
       sessions[key].data = migrated;
@@ -615,6 +634,102 @@
     };
   }
 
+  function compactPush(list, value, limit) {
+    value = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+    if (!value || list.indexOf(value) >= 0 || list.length >= (limit || 6)) return;
+    list.push(value);
+  }
+
+  function compactPhrase(value, maxLength) {
+    var text = String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+    if (!text) return '';
+    if (maxLength && text.length > maxLength) return text.slice(0, maxLength - 1) + '…';
+    return text;
+  }
+
+  function compactSentence(value, maxLength) {
+    return compactPhrase(value, maxLength).replace(/[。！？!?]+$/, '');
+  }
+
+  function compactDate(value) {
+    var match = String(value || '').match(/20\d{2}-\d{2}-\d{2}/);
+    return match ? match[0] : '';
+  }
+
+  function compactDiagnosis(ctx) {
+    var raw = ctx && (ctx.patientDiagnosis || ctx.diagnosis) || '';
+    return String(raw).split(/[、,，]/).map(function (item) { return item.trim(); }).filter(Boolean).slice(0, 5);
+  }
+
+  function compactMetricText(metrics) {
+    var groups = {};
+    (metrics || []).forEach(function (item) {
+      if (!item || !item.name) return;
+      (groups[item.name] || (groups[item.name] = [])).push(item);
+    });
+    return Object.keys(groups).slice(0, 3).map(function (name) {
+      var values = groups[name].slice().sort(function (a, b) { return String(a.date || '').localeCompare(String(b.date || '')); }).slice(-3);
+      return name + '为' + values.map(function (item) { return String(item.value == null ? '' : item.value) + (item.unit ? ' ' + item.unit : '') + (item.date ? '（' + item.date + '）' : ''); }).join('、');
+    });
+  }
+
+  function compactMedicationNames(rows) {
+    return (rows || []).map(function (row) {
+      return Array.isArray(row) ? row[0] : row && (row.name || row.medication || row.drug);
+    }).filter(Boolean).map(function (name) { return compactPhrase(name, 42); }).filter(function (name, index, list) { return list.indexOf(name) === index; }).slice(0, 4);
+  }
+
+  function compactPatientSummary(ctx, record, sources) {
+    var messages = (sources && sources.messages || []).filter(function (message) { return message && message.text; });
+    var patientMessages = messages.filter(function (message) { return message.side === 'other'; });
+    var allText = messages.map(function (message) { return message.text; }).join('\n');
+    var timeline = record && Array.isArray(record.timeline) ? record.timeline.slice().sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); }) : [];
+    var patient = {
+      name: sources && sources.patientName || ctx && ctx.patientName || null,
+      sex: sources && sources.patientGender || ctx && ctx.patientGender || null,
+      age: sources && sources.patientAge ? Number(sources.patientAge) : null,
+      birth_date: sources && sources.patientBirthDate || null,
+      tags: (sources && sources.tags || []).filter(Boolean).map(String).slice(0, 6),
+      diagnoses: compactDiagnosis(ctx)
+    };
+    var attention = [], status = [], portrait = [];
+    var symptom = patientMessages.filter(function (message) { return /头晕|头昏|胸痛|胸闷|气短|明显不适/.test(message.text); })[0];
+    if (symptom) compactPush(attention, '**待核实**：' + (compactDate(symptom.date || symptom.time) ? compactDate(symptom.date || symptom.time) + ' ' : '') + compactSentence(symptom.text, 58) + '，原因尚未明确。', 5);
+    if (/可能[^。！？\n]{0,10}高血压|高血压[^。！？\n]{0,10}(可能|不确定|未确诊)/.test(allText) && patient.diagnoses.every(function (diagnosis) { return !/高血压/.test(diagnosis); })) {
+      compactPush(attention, '**待核实**：家属或对话提到可能存在高血压，但档案暂无确诊记录。', 5);
+    }
+    var nodule = timeline.filter(function (event) { return /小结节|结节/.test(String(event.text || '') + String(event.report || '')); })[0];
+    if (nodule) compactPush(attention, '**待核实**：' + (compactDate(nodule.date) ? compactDate(nodule.date) + ' ' : '') + compactSentence(nodule.text || nodule.report, 58) + '，性质尚未确定。', 5);
+    var failedReport = timeline.filter(function (event) { return event.readingStatus === 'failed' || event.statusTone === 'failed' || event.status === '处理失败'; })[0];
+    if (failedReport) compactPush(attention, '**待补录**：' + (compactDate(failedReport.date) ? compactDate(failedReport.date) + ' ' : '') + '复查报告解读处理失败，尚未生成解读内容。', 5);
+    var missed = patientMessages.filter(function (message) { return /漏服|忘记.*(药|服药)|没吃药/.test(message.text); })[0];
+    if (missed) compactPush(attention, '**待核实**：' + (compactDate(missed.date || missed.time) ? compactDate(missed.date || missed.time) + ' ' : '') + compactSentence(missed.text, 54) + '，补服情况尚未核对。', 5);
+    if (!patient.birth_date) compactPush(attention, '**待补录**：出生日期、过敏史尚未记录。', 5);
+
+    var diagnoses = patient.diagnoses;
+    if (diagnoses.length) compactPush(status, '**诊断**：档案记录' + diagnoses.join('、') + '，患者标签为' + (patient.tags.length ? patient.tags.join('、') : '暂无') + '。', 6);
+    var metricText = compactMetricText(sources && sources.metrics);
+    if (metricText.length) compactPush(status, '**指标**：' + metricText.join('；') + '。', 6);
+    var medicationNames = compactMedicationNames(sources && sources.medicationRows);
+    if (medicationNames.length) compactPush(status, '**用药**：记录中有' + medicationNames.join('、') + '，具体频次、服用时机及起止日期以原始记录为准。', 6);
+    var followups = (sources && sources.followups || []).slice(0, 2);
+    if (followups.length) compactPush(status, '**随访**：' + followups.map(function (item) { return (compactDate(item.date) ? compactDate(item.date) + ' ' : '') + (item.title || item.planTag || '随访') + '（' + (item.status || '状态未知') + '）'; }).join('；') + '。', 6);
+    var timelineStatus = timeline.filter(function (event) { return event && (event.text || event.type); }).slice(0, 2);
+    if (timelineStatus.length) compactPush(status, '**病例记录**：' + timelineStatus.map(function (event) { return (compactDate(event.date) ? compactDate(event.date) + ' ' : '') + compactPhrase(event.type || '记录', 18) + (event.text ? '：' + compactPhrase(event.text, 46) : ''); }).join('；') + '。', 6);
+
+    if (patientMessages.some(function (message) { return /血糖|血压|体重|指标|数值|复诊|复查|报告|用药|漏服|怎么|是否|吗[？?]/.test(message.text); })) {
+      compactPush(portrait, '**沟通**：会主动提供指标或描述具体问题，并就用药、复诊等事项提问。', 4);
+    }
+    if (allText && /家属/.test(allText) && /饮食|记录|规律|忘记/.test(allText)) {
+      compactPush(portrait, '**记录习惯**：家属称饮食和健康记录偶有不规律；患者近期反馈会继续记录。', 4);
+    }
+    if (messages.some(function (message) { return /家属/.test(String(message.name || '')) || /家属/.test(message.text); })) {
+      compactPush(portrait, '**家庭支持**：家属会参与反馈患者情况，体现一定关注。', 4);
+    }
+    if (!portrait.length) compactPush(portrait, '**画像有限**：现有资料不足，暂不形成稳定画像。', 4);
+    return { patient: patient, attention: attention, status: status, portrait: portrait };
+  }
+
   function recentDynamics(messages, rangeEnd) {
     var recent = messages.filter(function (message) { var days = isoDaysBetween(rangeEnd, message.date); return days !== null && days <= 7; });
     return recent.length ? ['近7天有 ' + recent.length + ' 条对话记录', '患者消息 ' + recent.filter(function (message) { return message.side === 'other'; }).length + ' 条，医生/医助消息 ' + recent.filter(function (message) { return message.side === 'self'; }).length + ' 条'] : ['近7天暂无对话记录'];
@@ -641,7 +756,7 @@
     var profileGroupsRows = profileGroups(sources, questions, adherence, risks);
     var replies = replyDirections(pending, healthSnapshotRows, profileGroupsRows, archiveStale, sources, adherence);
     return {
-      agentOutput: agentExtraction(ctx, sources),
+      agentOutput: compactPatientSummary(ctx, record, sources),
       generatedAt: new Date(Number(now) || Date.now()).toISOString(),
       rangeStart: sources.rangeStart,
       rangeEnd: sources.rangeEnd,
@@ -690,23 +805,16 @@
   }
 
   function validateAgentOutput(value) {
-    var profile = value && value.patient_profile;
-    var identity = profile && profile.identity;
-    var obstetric = profile && profile.obstetric_history;
-    return !!(exactKeys(value, ['patient_profile', 'asked_unanswered', 'need_review', 'extraction_notes']) &&
-      exactKeys(profile, ['identity', 'allergy_history', 'major_disease_history', 'surgery_trauma_transfusion_implant_history', 'family_history', 'obstetric_history', 'vaccination_history']) &&
-      exactKeys(identity, ['birth_date', 'gender', 'blood_type', 'genetic_traits']) &&
-      exactKeys(obstetric, ['gravidity', 'parity', 'cesarean_history', 'menopause_status', 'menopause_age', 'events']) &&
-      Array.isArray(identity.genetic_traits) &&
-      Array.isArray(profile.allergy_history) &&
-      Array.isArray(profile.major_disease_history) &&
-      Array.isArray(profile.surgery_trauma_transfusion_implant_history) &&
-      Array.isArray(profile.family_history) &&
-      Array.isArray(obstetric.events) &&
-      Array.isArray(profile.vaccination_history) &&
-      Array.isArray(value.asked_unanswered) &&
-      Array.isArray(value.need_review) &&
-      typeof value.extraction_notes === 'string');
+    var patient = value && value.patient;
+    var arraysAreText = function (items) { return Array.isArray(items) && items.every(function (item) { return typeof item === 'string'; }); };
+    return !!(exactKeys(value, ['patient', 'attention', 'status', 'portrait']) &&
+      exactKeys(patient, ['name', 'sex', 'age', 'birth_date', 'tags', 'diagnoses']) &&
+      (patient.name == null || typeof patient.name === 'string') &&
+      (patient.sex == null || typeof patient.sex === 'string') &&
+      (patient.age == null || (typeof patient.age === 'number' && Number.isFinite(patient.age))) &&
+      (patient.birth_date == null || typeof patient.birth_date === 'string') &&
+      arraysAreText(patient.tags) && arraysAreText(patient.diagnoses) &&
+      arraysAreText(value.attention) && arraysAreText(value.status) && arraysAreText(value.portrait));
   }
 
   function invokeExternal(request) {
@@ -839,17 +947,47 @@
     return '<section class="cp-ai-structured-review"><header><div><h3>需人工复核</h3><small>智能体保留疑似、冲突与转写存疑内容</small></div><span>' + items.length + ' 条</span></header><div class="cp-ai-structured-review-list">' + items.map(function (item) { return '<article><div><strong>' + esc(item.type || '需复核') + '</strong><p>' + esc(item.summary || '') + '</p></div>' + (structuredEvidence(item.related_evidence).length ? '<details class="cp-ai-structured-evidence"><summary>查看证据（' + structuredEvidence(item.related_evidence).length + '）</summary><ul>' + structuredEvidence(item.related_evidence).map(function (evidence) { return '<li>' + esc(evidence) + '</li>'; }).join('') + '</ul></details>' : '') + '</article>'; }).join('') + '</div></section>';
   }
 
+  function renderInlineText(value) {
+    return esc(value).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  }
+
+  function renderCompactList(items) {
+    return '<ul class="cp-ai-compact-list">' + items.map(function (item) { return '<li><p class="cp-ai-compact-text">' + renderInlineText(item) + '</p></li>'; }).join('') + '</ul>';
+  }
+
+  function renderCompactSection(title, items, className, hint) {
+    if (!Array.isArray(items) || !items.length) return '';
+    return '<section class="cp-ai-compact-section ' + className + '"><header><div><h3>' + esc(title) + '</h3>' + (hint ? '<small>' + esc(hint) + '</small>' : '') + '</div><span>' + items.length + ' 条</span></header>' + renderCompactList(items) + '</section>';
+  }
+
+  function renderCompactPatient(output) {
+    var patient = output.patient || {};
+    var tags = Array.isArray(patient.tags) ? patient.tags.filter(Boolean) : [];
+    var diagnoses = Array.isArray(patient.diagnoses) ? patient.diagnoses.filter(Boolean) : [];
+    var meta = [];
+    if (patient.sex) meta.push(patient.sex);
+    if (patient.age != null && patient.age !== '') meta.push(patient.age + '岁');
+    var chips = tags.concat(diagnoses.map(function (item) { return '诊断：' + item; }));
+    return '<section class="cp-ai-compact-patient"><div class="cp-ai-compact-patient-head"><div><span class="cp-ai-compact-kicker">患者信息</span><h2>' + esc(patient.name || '未命名患者') + '</h2></div>' + (meta.length ? '<div class="cp-ai-compact-patient-meta">' + meta.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div>' : '') + '</div>' + (chips.length ? '<div class="cp-ai-compact-chips" aria-label="患者标签与诊断">' + chips.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div>' : '') + '</section>';
+  }
+
+  function renderCompactData(output) {
+    return '<div class="cp-ai-compact-page" data-structured-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '">' + renderCompactPatient(output) + renderCompactSection('建议关注', output.attention, 'is-attention', '仅列出需要核实或补录的内容') + renderCompactSection('健康现状', output.status, 'is-status', '按档案与对话中已记录内容整理') + renderCompactSection('患者画像', output.portrait, 'is-portrait', '只保留对话中有依据的沟通与支持线索') + '</div>';
+  }
+
   function renderData(data) {
-    var output = data.agentOutput || {}, profileMarkup = renderStructuredProfile(output);
-    return '<div class="cp-ai-structured-page" data-structured-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '">' + (output.extraction_notes ? '<p class="cp-ai-structured-notes"><strong>提取说明</strong><span>' + esc(output.extraction_notes) + '</span></p>' : '') + (profileMarkup || '<div class="cp-ai-structured-empty">本批对话未提取到七类静态健康档案事实。</div>') + renderAskedUnanswered(output.asked_unanswered) + renderNeedReview(output.need_review) + '</div>';
+    var output = data.agentOutput || {};
+    if (validateAgentOutput(output)) return renderCompactData(output);
+    var profileMarkup = renderStructuredProfile(output);
+    return '<div class="cp-ai-structured-page" data-structured-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '">' + (output.extraction_notes ? '<p class="cp-ai-structured-notes"><strong>提取说明</strong><span>' + esc(output.extraction_notes) + '</span></p>' : '') + (profileMarkup || '<div class="cp-ai-structured-empty">本批对话未提取到结构化健康档案事实。</div>') + renderAskedUnanswered(output.asked_unanswered) + renderNeedReview(output.need_review) + '</div>';
   }
 
   function render(ctx, record) {
     var result = get(ctx, record), state = result.state, sources = state.sources;
-    if (!sources.hasData) return '<section class="cp-ai-summary" data-ai-summary-status="empty-source"><div class="cp-ai-summary-empty"><strong>近30天暂无对话与档案数据，无法生成小结</strong><p>当前场景没有可供小结使用的1v1对话或健康档案记录。</p></div></section>';
+    if (!sources.hasData) return '<section class="cp-ai-summary" data-ai-summary-status="empty-source"><div class="cp-ai-summary-empty"><strong>近50条对话暂无可用记录，无法生成小结</strong><p>当前场景没有可供小结使用的1v1对话或健康档案记录。</p></div></section>';
     var rateRemaining = remainingMs(state, Date.now());
     var actionLabel = state.status === 'loading' ? '智能体整理中…' : state.data ? '再次调用智能体' : '调用智能体';
-    var actionHint = AGENT_NAME + ' · 最近30天对话 + 当前场景健康档案';
+    var actionHint = AGENT_NAME + ' · 近50条对话 + 当前场景健康档案';
     if (rateRemaining > 0 && state.status !== 'loading') actionHint += ' · 还需 ' + Math.ceil(rateRemaining / 1000) + ' 秒可再次调用';
     var content = '';
     if (state.status === 'loading') {
@@ -859,7 +997,7 @@
     } else if (state.data) {
       content = renderData(state.data);
     } else {
-      content = '<div class="cp-ai-summary-empty"><strong>暂无结构化健康档案事实，点击右上角调用智能体</strong><p>将按静态健康档案提取规则读取最近30天对话和当前场景档案，输出可核对的患者事实。</p>' + button('调用智能体', false, 'chat-ai-summary-generate') + '</div>';
+      content = '<div class="cp-ai-summary-empty"><strong>暂无结构化健康档案事实，点击右上角调用智能体</strong><p>将按静态健康档案提取规则读取近50条对话和当前场景档案，输出可核对的患者事实。</p>' + button('调用智能体', false, 'chat-ai-summary-generate') + '</div>';
     }
     return '<section class="cp-ai-summary" data-ai-summary-status="' + esc(state.status) + '" data-agent-id="' + esc(AGENT_ID) + '" data-agent-name="' + esc(AGENT_NAME) + '" data-agent-prompt-version="' + esc(AGENT_PROMPT_VERSION) + '" data-agent-prompt-source="' + esc(AGENT_PROMPT_SOURCE) + '" data-agent-output-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '" data-last-trigger="' + esc(state.lastTrigger || '') + '" data-rate-remaining="' + rateRemaining + '" aria-live="polite"><header class="cp-ai-summary-header"><div><strong>患者管理记忆</strong><small>' + esc(actionHint) + '</small></div>' + button(actionLabel, state.status === 'loading', 'chat-ai-summary-generate') + '</header>' + (state.status === 'error' && state.data ? '<p class="cp-ai-summary-error-inline" role="alert">' + esc(state.error) + '</p>' : '') + '<div class="cp-ai-summary-body">' + content + '</div><footer class="cp-ai-summary-disclaimer">' + esc((state.data && state.data.declaration) || '智能体仅按提示词提取静态健康档案事实；页面展示仅供医生参考，需结合原始记录人工核对，不构成医疗结论。') + '</footer></section>';
   }
