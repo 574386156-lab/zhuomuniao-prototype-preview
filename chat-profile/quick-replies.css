@@ -412,3 +412,230 @@ html.ops-quick-replies-standalone .ops-quick-reply-page .qr-navigation-hint { di
   .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select-trigger { min-height:48px; }
   #ops-shell .ops-quick-reply-page.is-embedded .ops-material-search-row .ops-search-shell input { height:46px; font-size:16px; }
 }
+
+/* v1 quick-reply/materials board: mobile-first component contract. The
+   existing renderer and data-action hooks remain unchanged; this layer only
+   establishes the visual tokens and touch geometry shown in the design board. */
+.ops-quick-reply-page.ops-chat-workbench {
+  --qr-blue:#0365bf;
+  --qr-ink:#173c61;
+  --qr-muted:#607b95;
+  --qr-border:#cfe0ef;
+  --qr-canvas:#f5f9fd;
+  background:var(--qr-canvas);
+  color:var(--qr-ink);
+}
+.ops-quick-reply-page.ops-chat-workbench > .qr-content {
+  max-width:560px;
+  padding-inline:16px;
+}
+.ops-quick-reply-page.ops-chat-workbench .qr-scope-row {
+  min-height:58px;
+  margin-inline:-16px;
+  padding-inline:16px;
+  border-bottom:1px solid #e2edf6;
+  background:#fff;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs {
+  min-width:0;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs::-webkit-scrollbar { display:none; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button {
+  min-height:58px;
+  padding-inline:14px;
+  border-radius:0;
+  color:#526d87;
+  font-size:15px;
+  white-space:nowrap;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button.is-active {
+  color:var(--qr-blue);
+  background:#fff;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button.is-active::after {
+  right:14px;
+  bottom:0;
+  left:14px;
+  height:3px;
+  background:var(--qr-blue);
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new {
+  min-height:40px;
+  margin:9px 0 9px 10px;
+  padding-inline:13px;
+  border:0;
+  border-radius:20px;
+  background:var(--qr-blue);
+  color:#fff;
+  font-size:14px;
+  font-weight:600;
+  box-shadow:0 5px 12px rgba(3,101,191,.18);
+  white-space:nowrap;
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-browser { margin-top:14px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-search-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+  padding:0;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row .ops-search-shell,
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row select {
+  box-sizing:border-box;
+  width:100%;
+  min-height:52px;
+  border:1px solid var(--qr-border);
+  border-radius:12px;
+  background:#fff;
+  color:var(--qr-ink);
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row .ops-search-shell {
+  display:flex;
+  align-items:center;
+  padding-inline:14px;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row .ops-search-shell input {
+  width:100%;
+  height:50px;
+  font-size:16px;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row select {
+  padding:0 38px 0 14px;
+  font-size:16px;
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs {
+  margin:12px 0 14px;
+  padding-bottom:2px;
+  gap:8px;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs button {
+  min-height:42px;
+  padding:0 14px;
+  border:1px solid var(--qr-border);
+  border-radius:21px;
+  background:#fff;
+  color:#526d87;
+  font-size:14px;
+  white-space:nowrap;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs button.is-active {
+  border-color:var(--qr-blue);
+  background:var(--qr-blue);
+  color:#fff;
+  box-shadow:0 4px 10px rgba(3,101,191,.16);
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-snippet {
+  min-height:128px;
+  margin:0 0 12px;
+  padding:14px;
+  border:1px solid #dce8f2;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 4px 14px rgba(23,60,97,.06);
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-open {
+  min-height:64px;
+  gap:12px;
+  color:var(--qr-ink);
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-visual {
+  flex-basis:52px;
+  width:52px;
+  height:52px;
+  border-radius:12px;
+  background:#edf5ff;
+  color:var(--qr-blue);
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-visual svg { width:28px; height:28px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-row-title,
+.ops-quick-reply-page.ops-chat-workbench .ops-material-text { color:var(--qr-ink); font-size:16px; line-height:1.5; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-row-meta { color:var(--qr-muted); font-size:14px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-actions { margin-top:4px; padding-left:64px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-actions .ops-link {
+  min-height:40px;
+  padding-inline:12px;
+  color:var(--qr-blue);
+  font-size:14px;
+}
+
+#ops-shell .ops-modal:has(.qr-material-editor) {
+  width:min(560px,calc(100vw - 24px));
+  max-height:min(820px,calc(100dvh - 24px));
+  overflow:hidden;
+  border:1px solid #d8e6f2;
+  border-radius:18px;
+  box-shadow:0 22px 56px rgba(15,47,79,.24);
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header {
+  min-height:68px;
+  padding:0 20px;
+  background:#f4f9ff;
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header h2 { color:var(--qr-ink); font-size:21px; }
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-body { padding:18px 20px; }
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer {
+  min-height:68px;
+  padding:10px 20px max(10px,env(safe-area-inset-bottom));
+  background:#fff;
+}
+.qr-material-editor .ops-form-card-body { gap:18px; padding:0; }
+.qr-material-editor .ops-material-create-grid { display:grid; grid-template-columns:1fr; gap:16px; }
+.qr-material-editor .ops-field-label { color:#315d82; font-weight:600; }
+.qr-material-editor .ops-field input,
+.qr-material-editor .ops-field select,
+.qr-material-editor .ops-field textarea,
+.qr-material-editor .ops-material-group-choice select {
+  min-height:48px;
+  border-color:var(--qr-border);
+  border-radius:10px;
+  background:#fff;
+  color:var(--qr-ink);
+}
+.qr-material-editor .ops-choice-row { min-height:44px; gap:22px; }
+.qr-material-editor .ops-choice-row label { color:var(--qr-ink); }
+.qr-material-editor .ops-material-types {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+#ops-shell .qr-material-editor .ops-material-type {
+  min-width:0;
+  min-height:76px;
+  padding:8px 4px;
+  border:1px solid var(--qr-border);
+  border-radius:12px;
+  background:#fff;
+  color:#244e73;
+}
+#ops-shell .qr-material-editor .ops-material-type.is-active {
+  border-color:var(--qr-blue);
+  background:#eef7ff;
+  color:var(--qr-blue);
+  box-shadow:0 0 0 2px rgba(3,101,191,.1);
+}
+.qr-material-editor .ops-material-group-choice { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+.qr-material-editor .ops-material-group-choice .ops-button { min-height:48px; border-color:var(--qr-border); color:var(--qr-ink); }
+
+@media (max-width:760px) {
+  #ops-shell .ops-modal:has(.qr-material-editor) {
+    width:100%;
+    max-width:none;
+    height:min(820px,calc(100dvh - 12px));
+    max-height:calc(100dvh - 12px);
+    border-radius:18px 18px 0 0;
+  }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header { min-height:62px; padding-inline:16px; }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-body { padding:16px; }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer { padding-inline:16px; }
+}
+
+@container (max-width:420px) {
+  .ops-quick-reply-page.ops-chat-workbench > .qr-content { padding-inline:12px; }
+  .ops-quick-reply-page.ops-chat-workbench .qr-scope-row { margin-inline:-12px; padding-inline:12px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { padding-inline:10px; font-size:14px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { margin-left:8px; padding-inline:10px; font-size:13px; }
+  .qr-material-editor .ops-material-types { gap:8px; }
+  #ops-shell .qr-material-editor .ops-material-type { min-height:70px; font-size:13px; }
+}
