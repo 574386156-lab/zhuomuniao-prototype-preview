@@ -139,12 +139,12 @@
 .hm-entry-section-heading h3 { margin:0; color:#173c61; font-size:18px; line-height:1.35; }
 .hm-entry-section-heading span { white-space:nowrap; }
 .hm-entry-metrics,.hm-entry-choice-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
-.hm-entry-metric,.hm-entry-choice { display:flex; align-items:center; justify-content:center; gap:5px; min-width:0; min-height:48px; padding:8px 10px; border:1.5px solid #69b9ae; border-radius:10px; background:#eef9fb; color:#3f9d92; font:inherit; font-weight:600; cursor:pointer; }
-.hm-entry-metric.is-selected,.hm-entry-choice.is-selected { border-color:#42a99c; background:#dff6f0; color:#319889; }
+.hm-entry-metric,.hm-entry-choice { display:flex; align-items:center; justify-content:center; gap:5px; min-width:0; min-height:48px; padding:8px 10px; border:1.5px solid #8dbdeb; border-radius:10px; background:#f1f8ff; color:#0365bf; font:inherit; font-weight:600; cursor:pointer; }
+.hm-entry-metric.is-selected,.hm-entry-choice.is-selected { border-color:#0365bf; background:#e3f1ff; color:#0365bf; }
 .hm-entry-metric b,.hm-entry-choice b { font-size:16px; }
 .hm-entry-results { display:grid; gap:12px; }
 .hm-entry-card { display:grid; grid-template-columns:76px minmax(0,1fr); gap:14px; min-width:0; padding:14px; border:1px solid #e2ebf1; border-radius:13px; background:#fff; }
-.hm-entry-card-badge { display:grid; place-items:center; min-height:106px; border-radius:10px; background:#eef9fb; color:#3f9d92; font-size:17px; font-weight:600; text-align:center; }
+.hm-entry-card-badge { display:grid; place-items:center; min-height:106px; border-radius:10px; background:#eef6ff; color:#0365bf; font-size:17px; font-weight:600; text-align:center; }
 .hm-entry-card-body { display:grid; align-content:start; gap:10px; min-width:0; }
 .hm-entry-fields,.hm-entry-field-grid { display:grid; gap:10px; min-width:0; }
 .hm-entry-field-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }

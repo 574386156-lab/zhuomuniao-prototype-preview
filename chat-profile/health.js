@@ -96,8 +96,8 @@
   function shortGlucoseType(type){return ({'空腹血糖':'空腹','早餐后2小时血糖':'早餐后2h','午餐后2小时血糖':'午餐后2h','晚餐后2小时血糖':'晚餐后2h','睡前血糖':'睡前','随机血糖':'随机'})[type]||type;}
   function entryValue(state,key){return state&&state.values&&state.values[key]!=null?state.values[key]:'';}
   function entryInput(key,label,unit,placeholder,state){return '<label class="hm-entry-field" data-entry-field="'+esc(key)+'"><span>'+esc(label)+'</span><div class="hm-entry-input"><input type="number" step="any" min="0.01" inputmode="decimal" data-entry-value="'+esc(key)+'" aria-label="'+esc(label)+'" placeholder="'+esc(placeholder||'请输入数值')+'" value="'+esc(entryValue(state,key))+'"><small>'+esc(unit)+'</small></div></label>';}
-  function metricChoice(m,state){var active=(state.selected||[]).indexOf(m.id)>=0;return '<button type="button" class="hm-entry-metric'+(active?' is-selected':'')+'" data-entry-action="toggle-metric" data-entry-metric="'+esc(m.id)+'" aria-pressed="'+active+'"><span>'+esc(m.name)+'</span>'+(active?'<b aria-hidden="true">✓</b>':'')+'</button>';}
-  function subChoice(label,key,active,action,attr){return '<button type="button" class="hm-entry-choice'+(active?' is-selected':'')+'" data-entry-action="'+action+'" data-'+attr+'="'+esc(key)+'" aria-pressed="'+active+'">'+esc(label)+(active?'<b aria-hidden="true">✓</b>':'')+'</button>';}
+  function metricChoice(m,state){var active=(state.selected||[]).indexOf(m.id)>=0;return '<button type="button" class="hm-entry-metric'+(active?' is-selected':'')+'" data-action="toggle-metric" data-entry-action="toggle-metric" data-entry-metric="'+esc(m.id)+'" aria-pressed="'+active+'"><span>'+esc(m.name)+'</span>'+(active?'<b aria-hidden="true">✓</b>':'')+'</button>';}
+  function subChoice(label,key,active,action,attr){return '<button type="button" class="hm-entry-choice'+(active?' is-selected':'')+'" data-action="'+action+'" data-entry-action="'+action+'" data-'+attr+'="'+esc(key)+'" aria-pressed="'+active+'">'+esc(label)+(active?'<b aria-hidden="true">✓</b>':'')+'</button>';}
   function entryCard(id,state){
     var d=definition(id),body='';
     if(id==='glucose'){
