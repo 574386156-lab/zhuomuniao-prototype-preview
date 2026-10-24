@@ -2277,17 +2277,7 @@
             return '<option value="' + escapeHtml(group) + '"' + (draft.group === group ? " selected" : "") + '>' + escapeHtml(group) + "</option>";
           }).join("");
           var titleField = '<label class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>素材标题</span><input data-bind="material.title" data-initial-focus value="' + escapeHtml(draft.title) + '" placeholder="请输入素材标题"></label>';
-          var groupPicker = '';
-          if (state.modal && state.modal.type === "chat-material-create" && state.modal.groupPickerOpen) {
-            var inlineGroups = (state.materialGroupOrder[draft.scope] || []).map(function (group) {
-              return '<button class="qr-inline-group-option' + (draft.group === group ? ' is-selected' : '') + '" type="button" data-action="material-group-select" data-value="' + escapeHtml(group) + '" aria-pressed="' + (draft.group === group) + '"><span>' + escapeHtml(group) + '</span>' + (draft.group === group ? '<b aria-hidden="true">✓</b>' : '') + '</button>';
-            }).join('');
-            var createRow = state.modal.groupCreating
-              ? '<div class="qr-inline-group-create"><input data-modal="newGroup" data-initial-focus maxlength="20" value="' + escapeHtml(state.modal.newGroup || '') + '" placeholder="输入新分组名称" aria-label="新分组名称"><button class="ops-button ops-button-primary" type="button" data-action="material-form-save-group"><span>保存</span></button><button class="ops-button" type="button" data-action="material-group-create-cancel"><span>取消</span></button></div>'
-              : '<button class="qr-inline-group-new" type="button" data-action="material-group-create-start">＋ 新建分组</button>';
-            groupPicker = '<div class="qr-inline-group-picker" aria-label="素材分组选择"><div class="qr-inline-group-picker-head"><strong>选择素材分组</strong><button type="button" class="ops-link" data-action="material-group-picker-close">关闭</button></div><div class="qr-inline-group-options">' + (inlineGroups || '<span class="qr-inline-group-empty">暂无自定义分组</span>') + '</div>' + createRow + '</div>';
-          }
-          var groupField = '<div class="ops-field"><label class="ops-field-label" for="ops-material-group">素材分组</label><div class="ops-material-group-choice"><select id="ops-material-group" data-bind="material.group">' + groupOptions + '</select>'+button("新增分组","","material-form-new-group",'aria-expanded="' + !!(state.modal && state.modal.groupPickerOpen) + '"')+'</div>' + groupPicker + '</div>';
+          var groupField = '<div class="ops-field"><label class="ops-field-label" for="ops-material-group">素材分组</label><div class="ops-material-group-choice"><select id="ops-material-group" data-bind="material.group">' + groupOptions + '</select>'+button("新增分组","","material-form-new-group")+'</div></div>';
           var scopeChoices = state.materialMode === "edit" ? [draft.scope] : ["个人素材","租户素材"];
           var scopeField = '<div class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>素材范围</span><div class="ops-choice-row">'+scopeChoices.map(function(scope){return '<label><input type="radio" name="material-scope" data-material-scope="'+scope+'" '+(draft.scope===scope?'checked':'')+'>'+escapeHtml(scope==="租户素材"?"公共素材":scope)+'</label>';}).join('')+'</div></div>';
           var purposeField = '<div class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>用途标记</span><div class="ops-choice-row">' + purpose + "</div></div>";
@@ -4198,58 +4188,15 @@
           } else if (action === "material-file-pick") {
             var picker=shell.querySelector('[data-material-file="'+actionTarget.getAttribute('data-slot')+'"]');if(picker)picker.click();
           } else if (action === "material-form-new-group") {
-            if (state.modal && state.modal.type === "chat-material-create") {
-              state.modal.groupPickerOpen = true;
-              state.modal.groupCreating = false;
-              state.modal.newGroup = "";
-              render();
-              return;
-            }
-            openModal({type:"material-new-group"},actionTarget);
-          } else if (action === "material-group-picker-close") {
-            if (state.modal && state.modal.type === "chat-material-create") {
-              state.modal.groupPickerOpen = false;
-              state.modal.groupCreating = false;
-              state.modal.newGroup = "";
-              render();
-            }
-          } else if (action === "material-group-select") {
-            if (state.modal && state.modal.type === "chat-material-create") {
-              state.materialDraft.group = actionTarget.getAttribute("data-value") || "";
-              state.modal.groupPickerOpen = false;
-              state.modal.groupCreating = false;
-              state.modal.newGroup = "";
-              render();
-            }
-          } else if (action === "material-group-create-start") {
-            if (state.modal && state.modal.type === "chat-material-create") {
-              state.modal.groupCreating = true;
-              state.modal.newGroup = "";
-              render();
-              window.requestAnimationFrame(function(){var input=shell&&shell.querySelector('[data-modal="newGroup"]');if(input)input.focus();});
-            }
-          } else if (action === "material-group-create-cancel") {
-            if (state.modal && state.modal.type === "chat-material-create") {
-              state.modal.groupCreating = false;
-              state.modal.newGroup = "";
-              render();
-            }
+            openModal({type:"material-new-group",parent:state.modal&&state.modal.type==="chat-material-create"?state.modal:null},actionTarget);
           } else if (action === "material-form-save-group") {
             var newName=readModalValue("newGroup"),groups=state.materialGroupOrder[state.materialDraft.scope]||[];
             if(!newName||newName.length>20){toast("请输入 1–20 字分组名称");return;}
             if(newName==='全部素材'||newName==='未分组'||groups.indexOf(newName)>=0){toast("分组名称已存在或为保留名称");return;}
             groups.push(newName);state.materialGroupOrder[state.materialDraft.scope]=groups;state.materialDraft.group=newName;
-            if (state.modal && state.modal.type === "chat-material-create") {
-              state.modal.groupPickerOpen = false;
-              state.modal.groupCreating = false;
-              state.modal.newGroup = "";
-              render();
-              toast("分组已新增并已选中");
-            } else {
-              state.modal = state.modal && state.modal.parent ? state.modal.parent : null;
-              render();
-              toast("分组已新增");
-            }
+            state.modal = state.modal && state.modal.parent ? state.modal.parent : null;
+            render();
+            toast("分组已新增并已选中");
           } else if (action === "material-save") {
             saveMaterialDraft();
           } else if (action === "material-cancel") {
@@ -5559,7 +5506,7 @@ Error generating stack: `+a.message+`
   <link rel="stylesheet" href="./chat-profile/followups.css">
   <link rel="stylesheet" href="./chat-profile/diagnoses.css">
   <link rel="stylesheet" href="./shared/image-preview.css">
-    <link rel="stylesheet" href="./chat-profile/quick-replies.css?v=20261024-quick-replies-ui-v2">
+    <link rel="stylesheet" href="./chat-profile/quick-replies.css?v=20261024-quick-replies-ui-v3">
     <link rel="stylesheet" href="./chat-profile/handoffs.css">
   <link rel="stylesheet" href="./shared/date-time.css">
     <link rel="stylesheet" href="./shared/select-control.css">

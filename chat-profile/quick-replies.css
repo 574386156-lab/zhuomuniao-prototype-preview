@@ -394,6 +394,52 @@ html.ops-quick-replies-standalone .ops-quick-reply-page .qr-navigation-hint { di
   .qr-inline-group-create input { grid-column:1 / -1; }
 }
 
+/* Final mobile alignment: the search field and group filter are one control
+   row, and every quick-reply tab uses the same compact type scale. */
+.ops-quick-reply-page .qr-workbench-tabs,
+.ops-quick-reply-page .qr-workbench-tabs button { min-height:52px; }
+.ops-quick-reply-page .qr-workbench-tabs button { font-size:14px; line-height:1.2; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button {
+  min-height:52px;
+  padding-inline:12px;
+  font-size:14px;
+  line-height:1.2;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new {
+  min-height:40px;
+  margin-block:6px;
+  padding-inline:12px;
+  font-size:14px;
+}
+.ops-quick-reply-page .ops-material-search-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 136px;
+  align-items:stretch;
+  gap:8px;
+  padding:0;
+}
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+.ops-quick-reply-page .ops-material-search-row .ui-select,
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+  width:100%;
+  min-height:48px;
+  height:48px;
+  border-radius:10px;
+}
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell { padding-inline:12px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell input {
+  height:46px;
+  font-size:14px;
+}
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+  padding-inline:12px;
+  font-size:14px;
+}
+@media(max-width:380px) {
+  .ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr) 120px; }
+  .ops-quick-reply-page .ops-material-search-row .ui-select { width:120px; }
+}
+
 /* The embedded workbench uses the 556px design board as its desktop width.
    Use component width (rather than viewport width) for its two-column filter
    row so a wide browser cannot accidentally apply the standalone inspection
