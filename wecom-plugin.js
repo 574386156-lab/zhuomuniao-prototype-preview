@@ -9,7 +9,7 @@
   var pages={'quick-replies':{title:'快捷回复',file:'quick-replies.html'},'patient-followups':{title:'患者跟进',file:'patient-followups.html'},'patient-profile':{title:'患者档案',file:'patient-profile.html'}};
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages'),phoneScreen=document.querySelector('.phone-screen');
   var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
-  var previewVersion='20261024-health-entry-v5';
+  var previewVersion='20261024-health-entry-v6';
   var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null);
   var archiveTab='病例时间轴',archiveTabsExpanded=false,archiveTimelineDetail=null,archiveTimelineScroll=0,archiveFocusDetail=false,archiveEditMode=null,archiveFileOriginal=null,healthModal=null,healthReturnFocus=null;
   function fitPhone(){
@@ -74,7 +74,7 @@
   function markHealthField(input,invalid){if(!input)return;var field=input.closest('[data-health-field]');if(field)field.classList.toggle('is-error',!!invalid);input.setAttribute('aria-invalid',invalid?'true':'false');}
   function clearHealthField(input){if(!input)return;markHealthField(input,false);var errorNode=pageHost.querySelector('.wc-health-modal [data-health-error]');if(errorNode)errorNode.hidden=true;}
   function syncHealthEntry(){var root=pageHost.querySelector('.wc-health-modal [data-health-entry]');if(root&&healthModal&&window.PatientHealth.captureEntryState)window.PatientHealth.captureEntryState(root,healthModal);return root;}
-  function updateHealthEntryProgress(){var root=pageHost.querySelector('.wc-health-modal [data-health-entry]');if(!root||!window.PatientHealth.collectEntry)return;var result=window.PatientHealth.collectEntry(root),labels=pageHost.querySelectorAll('.wc-health-modal [data-entry-progress],.wc-health-modal [data-entry-completed]'),save=pageHost.querySelector('.wc-health-modal-save');Array.prototype.forEach.call(labels,function(label){label.textContent='已完成 '+result.completedCount+' 条记录';});if(save)save.disabled=result.completedCount<1;}
+  function updateHealthEntryProgress(){var root=pageHost.querySelector('.wc-health-modal [data-health-entry]');if(!root||!window.PatientHealth.collectEntry)return;var result=window.PatientHealth.collectEntry(root),labels=pageHost.querySelectorAll('.wc-health-modal [data-entry-progress],.wc-health-modal [data-entry-completed]'),selected=root.querySelectorAll('[data-entry-metric][aria-pressed="true"]').length,selectionLabel=pageHost.querySelector('.wc-health-modal [data-entry-selected]'),save=pageHost.querySelector('.wc-health-modal-save');Array.prototype.forEach.call(labels,function(label){label.textContent='已完成 '+result.completedCount+' 条记录';});if(selectionLabel)selectionLabel.textContent='已选 '+selected+' 项';if(save)save.disabled=result.completedCount<1;}
   function renderHealthModal(){
     if(!healthModal||!window.PatientHealth)return;
     syncHealthEntry();

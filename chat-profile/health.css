@@ -138,6 +138,7 @@
 .hm-entry-section-heading { display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
 .hm-entry-section-heading h3 { margin:0; color:#173c61; font-size:18px; line-height:1.35; }
 .hm-entry-section-heading span { white-space:nowrap; }
+.hm-entry-selection-count { color:#0365bf !important; font-weight:600; }
 .hm-entry-metrics,.hm-entry-choice-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
 .hm-entry-metric,.hm-entry-choice { display:flex; align-items:center; justify-content:center; gap:5px; min-width:0; min-height:48px; padding:8px 10px; border:1.5px solid #8dbdeb; border-radius:10px; background:#f1f8ff; color:#0365bf; font:inherit; font-weight:600; cursor:pointer; }
 .hm-entry-metric.is-selected,.hm-entry-choice.is-selected { border-color:#0365bf; background:#e3f1ff; color:#0365bf; }

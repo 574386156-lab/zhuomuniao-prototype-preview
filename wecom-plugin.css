@@ -122,3 +122,13 @@
 .wc-health-modal .wc-health-modal-footer { align-items:center; }
 .wc-health-modal-progress { margin-right:auto; color:#607b95; font-size:13px; white-space:nowrap; }
 .wc-health-modal-save:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
+
+/* The mobile entry flow is one focused sheet: no nested dialog and no hidden
+   footer behind the keyboard. The body remains the only scrolling region. */
+@media(max-width:600px){
+  .wc-health-modal-backdrop{align-items:stretch;padding:0;background:rgba(18,52,83,.42)}
+  .wc-health-modal{height:100%;max-height:none;border-radius:18px 18px 0 0}
+  .wc-health-modal-header{padding:18px 18px 14px}
+  .wc-health-modal-body{padding:16px 18px 6px}
+  .wc-health-modal-footer{padding-inline:18px}
+}

@@ -316,6 +316,84 @@ html.ops-quick-replies-standalone .ops-quick-reply-page .qr-navigation-hint { di
   #ops-shell .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-actions .ops-link { min-height:40px; font-size:14px; }
 }
 
+/* Mobile group creation stays inside the material sheet. It avoids stacking a
+   second dialog and keeps the selected group visible before the user saves. */
+.qr-inline-group-picker {
+  display:grid;
+  gap:10px;
+  margin-top:10px;
+  padding:12px;
+  border:1px solid #cfe0ef;
+  border-radius:12px;
+  background:#f7fbff;
+}
+.qr-inline-group-picker-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  color:var(--qr-ink);
+  font-size:14px;
+}
+.qr-inline-group-picker-head .ops-link { min-height:32px; padding:4px 8px; }
+.qr-inline-group-options {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  max-height:148px;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+.qr-inline-group-option {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-height:42px;
+  padding:8px 10px;
+  border:1px solid #cfe0ef;
+  border-radius:9px;
+  background:#fff;
+  color:var(--qr-ink);
+  text-align:left;
+}
+.qr-inline-group-option.is-selected {
+  border-color:var(--qr-blue);
+  background:#eaf5ff;
+  color:var(--qr-blue);
+  box-shadow:0 0 0 2px rgba(3,101,191,.1);
+}
+.qr-inline-group-option b { font-size:16px; }
+.qr-inline-group-new {
+  min-height:42px;
+  border:1px dashed #8bbbe4;
+  border-radius:9px;
+  background:#fff;
+  color:var(--qr-blue);
+  font-weight:600;
+}
+.qr-inline-group-create {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:8px;
+  align-items:center;
+}
+.qr-inline-group-create input {
+  width:100%;
+  min-height:42px;
+  padding:8px 10px;
+  border:1px solid var(--qr-blue);
+  border-radius:9px;
+  background:#fff;
+  box-shadow:0 0 0 2px rgba(3,101,191,.1);
+}
+.qr-inline-group-create .ops-button { min-height:42px; padding-inline:12px; }
+.qr-inline-group-empty { padding:8px 2px; color:var(--qr-muted); font-size:13px; }
+@media (max-width:380px) {
+  .qr-inline-group-create { grid-template-columns:1fr 1fr; }
+  .qr-inline-group-create input { grid-column:1 / -1; }
+}
+
 /* The embedded workbench uses the 556px design board as its desktop width.
    Use component width (rather than viewport width) for its two-column filter
    row so a wide browser cannot accidentally apply the standalone inspection
