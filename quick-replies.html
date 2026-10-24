@@ -12,7 +12,7 @@
     (function () {
       var params = new URLSearchParams(location.search);
       var target = new URL('卓睦鸟患管平台-交互原型.html', location.href);
-      target.searchParams.set('v', '20261024-quick-replies-ui-v4');
+      target.searchParams.set('v', '20261024-quick-replies-ui-v5');
       target.searchParams.set('standalone', 'quick-replies');
       ['patient', 'doctor', 'scene', 'embedded', 'host', 'sidebarEnv'].forEach(function (key) {
         if (params.has(key)) target.searchParams.set(key, params.get(key));

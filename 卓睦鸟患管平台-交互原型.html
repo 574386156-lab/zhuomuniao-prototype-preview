@@ -3022,7 +3022,14 @@
           } else if (type === "视频") {
             preview = item.mediaUrl ? '<video class="ops-material-video-player" controls preload="metadata" src="' + escapeHtml(item.mediaUrl) + '"' + (item.thumbnail ? ' poster="' + escapeHtml(item.thumbnail) + '"' : '') + '></video>' : '<div class="ops-material-media-empty"><span aria-hidden="true">▶</span><strong>暂无可播放视频</strong><p>当前素材仅提供文件信息</p></div>';
           } else if (type === "语音" || type === "音频") {
-            preview = item.mediaUrl ? '<audio class="ops-material-audio-player" controls preload="metadata" src="' + escapeHtml(item.mediaUrl) + '"></audio>' : '<p class="ops-material-preview-hint">暂无可播放音频，当前素材仅提供文件信息。</p>';
+            if (item.mediaUrl) {
+              preview = '<audio class="ops-material-audio-player" controls preload="metadata" src="' + escapeHtml(item.mediaUrl) + '"></audio>';
+            } else {
+              var audioMeta = item.metadata || "MP3 · 00:36 · 576 KB";
+              var audioDurationMatch = String(audioMeta).match(/(\d{1,2}:\d{2})/);
+              var audioDuration = audioDurationMatch ? audioDurationMatch[1] : "00:36";
+              preview = '<div class="ops-material-audio-preview" data-audio-prototype data-audio-duration="' + escapeHtml(audioDuration) + '"><button type="button" class="ops-material-audio-toggle" data-action="material-preview-audio-toggle" aria-label="播放音频" aria-pressed="false"><span aria-hidden="true">▶</span></button><div class="ops-material-audio-track"><div class="ops-material-audio-meta"><strong>播放音频</strong><span>' + escapeHtml(audioMeta) + '</span></div><div class="ops-material-audio-progress" aria-hidden="true"><span></span></div></div><time data-audio-state>00:00</time></div>';
+            }
           } else if (type === "文件") {
             preview = item.mediaUrl ? '<a class="ops-link" href="'+escapeHtml(item.mediaUrl)+'" download="'+escapeHtml(item.uploadName||item.content)+'">下载文件</a>' : '<p class="ops-material-preview-hint">此处展示文件信息，当前示例未提供文件正文。</p>';
           } else if (type === "网页") {
@@ -3986,6 +3993,9 @@
         }
 
         function sendChatMessage() {
+          var preservedQuickReplyScrollTop = null;
+          var quickReplyScrollHost = document.querySelector("html.ops-quick-replies-standalone .ops-quick-reply-page");
+          if (quickReplyScrollHost) preservedQuickReplyScrollTop = quickReplyScrollHost.scrollTop;
           if (quickRepliesStandalone && !getChatConversationData().some(function(item){return item.name===state.chatSelected;})) {
             state.modal = null;
             render();
@@ -4008,6 +4018,12 @@
             window.parent.postMessage({type:"wecom-preview-send",patient:state.chatSelected,doctor:state.chatDoctorSelected,scene:state.chatArchiveScene,text:textValue},window.location.origin);
           }
           render();
+          if (preservedQuickReplyScrollTop !== null) {
+            window.requestAnimationFrame(function () {
+              var nextQuickReplyScrollHost = document.querySelector("html.ops-quick-replies-standalone .ops-quick-reply-page");
+              if (nextQuickReplyScrollHost) nextQuickReplyScrollHost.scrollTop = preservedQuickReplyScrollTop;
+            });
+          }
         }
 
         function filterChatDoctors(value) {
@@ -4793,6 +4809,40 @@
           } else if (action === "chat-material-send") {
             state.chatDraft = actionTarget.getAttribute("data-value") || "";
             sendChatMessage();
+          } else if (action === "material-preview-audio-toggle") {
+            var audioPlayer = actionTarget.closest ? actionTarget.closest("[data-audio-prototype]") : null;
+            if (audioPlayer) {
+              var isPlaying = audioPlayer.classList.toggle("is-playing");
+              actionTarget.setAttribute("aria-pressed", isPlaying ? "true" : "false");
+              actionTarget.setAttribute("aria-label", isPlaying ? "暂停音频" : "播放音频");
+              var audioIcon = actionTarget.querySelector("span");
+              if (audioIcon) audioIcon.textContent = isPlaying ? "Ⅱ" : "▶";
+              var audioState = audioPlayer.querySelector("[data-audio-state]");
+              var audioProgress = audioPlayer.querySelector(".ops-material-audio-progress span");
+              if (audioPlayer._prototypeAudioTimer) window.clearInterval(audioPlayer._prototypeAudioTimer);
+              if (isPlaying) {
+                var elapsed = Number(audioPlayer.getAttribute("data-audio-elapsed") || 0);
+                var durationText = audioPlayer.getAttribute("data-audio-duration") || "00:36";
+                var durationParts = durationText.split(":");
+                var durationSeconds = Number(durationParts[0]) * 60 + Number(durationParts[1] || 0) || 36;
+                audioPlayer._prototypeAudioTimer = window.setInterval(function () {
+                  elapsed = Math.min(durationSeconds, elapsed + 1);
+                  audioPlayer.setAttribute("data-audio-elapsed", String(elapsed));
+                  var minutes = String(Math.floor(elapsed / 60)).padStart(2, "0");
+                  var seconds = String(elapsed % 60).padStart(2, "0");
+                  if (audioState) audioState.textContent = minutes + ":" + seconds;
+                  if (audioProgress) audioProgress.style.width = Math.round(elapsed / durationSeconds * 100) + "%";
+                  if (elapsed >= durationSeconds) {
+                    audioPlayer.classList.remove("is-playing");
+                    actionTarget.setAttribute("aria-pressed", "false");
+                    actionTarget.setAttribute("aria-label", "播放音频");
+                    if (audioIcon) audioIcon.textContent = "▶";
+                    window.clearInterval(audioPlayer._prototypeAudioTimer);
+                    audioPlayer._prototypeAudioTimer = null;
+                  }
+                }, 1000);
+              }
+            }
           } else if (action === "material-preview-send") {
             state.chatDraft = readModalValue("material-content");
             state.modal = null;
@@ -5506,7 +5556,7 @@ Error generating stack: `+a.message+`
   <link rel="stylesheet" href="./chat-profile/followups.css">
   <link rel="stylesheet" href="./chat-profile/diagnoses.css">
   <link rel="stylesheet" href="./shared/image-preview.css">
-    <link rel="stylesheet" href="./chat-profile/quick-replies.css?v=20261024-quick-replies-ui-v4">
+    <link rel="stylesheet" href="./chat-profile/quick-replies.css?v=20261024-quick-replies-ui-v5">
     <link rel="stylesheet" href="./chat-profile/handoffs.css">
   <link rel="stylesheet" href="./shared/date-time.css">
     <link rel="stylesheet" href="./shared/select-control.css">

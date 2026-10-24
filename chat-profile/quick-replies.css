@@ -901,3 +901,81 @@ html.ops-quick-replies-standalone .ops-quick-reply-page .qr-navigation-hint { di
     padding-inline:16px !important;
   }
 }
+
+/* Prototype audio preview: keep the player visible even when the fixture has no media URL. */
+#ops-shell .ops-material-audio-preview {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin:8px 0 16px;
+  padding:16px;
+  border:1px solid #cfe2f4;
+  border-radius:14px;
+  background:#f4f9ff;
+  color:#244e73;
+}
+#ops-shell .ops-material-audio-toggle {
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:#1677ff;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+#ops-shell .ops-material-audio-toggle:focus-visible { outline:2px solid #0365bf; outline-offset:2px; }
+#ops-shell .ops-material-audio-track { min-width:0; }
+#ops-shell .ops-material-audio-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
+#ops-shell .ops-material-audio-meta strong { color:#173c61; font-size:15px; }
+#ops-shell .ops-material-audio-meta span { overflow:hidden; color:#607b95; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+#ops-shell .ops-material-audio-progress { height:5px; margin-top:10px; overflow:hidden; border-radius:999px; background:#dbeaf7; }
+#ops-shell .ops-material-audio-progress span { display:block; width:0; height:100%; border-radius:inherit; background:#1677ff; transition:width .2s linear; }
+#ops-shell .ops-material-audio-preview time { min-width:42px; color:#607b95; font-size:13px; font-variant-numeric:tabular-nums; text-align:right; }
+@media(max-width:560px) {
+  #ops-shell .ops-material-audio-preview { grid-template-columns:44px minmax(0,1fr) auto; gap:10px; padding:12px; }
+  #ops-shell .ops-material-audio-toggle { width:40px; height:40px; }
+  #ops-shell .ops-material-audio-meta { display:grid; gap:2px; }
+}
+
+/* Prototype audio preview: keep a playable state visible even when the fixture has no media URL. */
+#ops-shell .ops-material-audio-preview {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin:8px 0 16px;
+  padding:16px;
+  border:1px solid #cfe2f4;
+  border-radius:14px;
+  background:#f4f9ff;
+  color:#244e73;
+}
+#ops-shell .ops-material-audio-toggle {
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:#1677ff;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+#ops-shell .ops-material-audio-toggle:focus-visible { outline:2px solid #0365bf; outline-offset:2px; }
+#ops-shell .ops-material-audio-track { min-width:0; }
+#ops-shell .ops-material-audio-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
+#ops-shell .ops-material-audio-meta strong { color:#173c61; font-size:15px; }
+#ops-shell .ops-material-audio-meta span { overflow:hidden; color:#607b95; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+#ops-shell .ops-material-audio-progress { height:5px; margin-top:10px; overflow:hidden; border-radius:999px; background:#dbeaf7; }
+#ops-shell .ops-material-audio-progress span { display:block; width:0; height:100%; border-radius:inherit; background:#1677ff; transition:width .2s linear; }
+#ops-shell .ops-material-audio-preview time { min-width:42px; color:#607b95; font-size:13px; font-variant-numeric:tabular-nums; text-align:right; }
+@media(max-width:560px) {
+  #ops-shell .ops-material-audio-preview { grid-template-columns:44px minmax(0,1fr) auto; gap:10px; padding:12px; }
+  #ops-shell .ops-material-audio-toggle { width:40px; height:40px; }
+  #ops-shell .ops-material-audio-meta { display:grid; gap:2px; }
+}
