@@ -230,7 +230,9 @@
     if(!container||!container.querySelectorAll)return;
     container.querySelectorAll('.cp-panel').forEach(function(panel){
       var tabs=panel.querySelector('.cp-tabs-wrap');
-      panel.style.setProperty('--cp-sticky-offset','0px');
+      var pageOffset=parseFloat(panel.style.getPropertyValue('--cp-sticky-offset'));
+      if(!Number.isFinite(pageOffset))pageOffset=0;
+      panel.style.setProperty('--cp-sticky-offset',pageOffset+'px');
       if(tabs)panel.style.setProperty('--cp-tabs-height',tabs.getBoundingClientRect().height+'px');
     });
     container.querySelectorAll('.hm-panel').forEach(function(panel){
