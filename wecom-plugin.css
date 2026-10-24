@@ -60,3 +60,24 @@
 .wc-patient-archive .cp-tabs button{min-height:38px;padding:6px 8px;font-size:12px;}
 .wc-patient-archive .cp-tabs-more{min-height:38px;font-size:12px;}
 .wc-patient-archive .cp-content{min-height:0;}
+
+/* Blue health-record entry sheet used by the WeCom patient archive. */
+.wc-health-modal-backdrop{position:absolute;inset:0;z-index:20;display:flex;align-items:flex-end;padding:12px;background:rgba(18,52,83,.38);}
+.wc-health-modal{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;max-height:calc(100% - 16px);overflow:hidden;border:1px solid #d6e4f1;border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(18,52,83,.24);color:#173c61;}
+.wc-health-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 14px;border-bottom:1px solid #e5edf4;background:linear-gradient(135deg,#f7fbff,#eef6fd);}
+.wc-health-modal-kicker{display:block;margin-bottom:4px;color:#0365bf;font-size:12px;font-weight:600;letter-spacing:.04em;}
+.wc-health-modal-header h2{margin:0;font-size:20px;line-height:1.35;}
+.wc-health-modal-header p{margin:5px 0 0;color:#607b95;font-size:12px;line-height:1.5;}
+.wc-health-modal-close{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;padding:0;border:1px solid #d7e2ed;border-radius:50%;background:#fff;color:#52718e;font-size:24px;line-height:1;}
+.wc-health-modal-body{min-height:0;overflow:auto;padding:16px 18px 4px;background:#fff;}
+.wc-health-modal .hm-form{gap:14px;}
+.wc-health-modal .hm-form label{gap:6px;color:#526d87;font-size:13px;font-weight:500;}
+.wc-health-modal .hm-form input,.wc-health-modal .hm-form select{min-height:44px;padding:9px 11px;border:1px solid #cbdceb;border-radius:8px;background:#fff;color:#173c61;font-size:16px;}
+.wc-health-modal .hm-form input:focus,.wc-health-modal .hm-form select:focus{border-color:#0365bf;box-shadow:0 0 0 3px rgba(3,101,191,.12);outline:0;}
+.wc-health-modal .hm-form-values{gap:10px;}
+.wc-health-modal .hm-form-error{padding:9px 10px;border-radius:7px;background:#fff1f2;color:#b43d51;font-size:13px;}
+.wc-health-modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 18px max(12px,env(safe-area-inset-bottom));border-top:1px solid #e5edf4;background:#fff;}
+.wc-health-modal-footer button{min-height:42px;padding:8px 16px;border-radius:8px;font-size:15px;}
+.wc-health-modal-cancel{border:1px solid #cbdceb;background:#fff;color:#1d5585;}
+.wc-health-modal-save{border:1px solid #0365bf;background:#0365bf;color:#fff;box-shadow:0 4px 10px rgba(3,101,191,.2);}
+.wc-health-modal-save:active{background:#02569f;}
