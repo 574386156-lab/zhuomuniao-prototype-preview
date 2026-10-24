@@ -85,7 +85,7 @@
   .hm-nav { border:0; border-bottom:1px solid #e5edf4; }
   .hm-nav > strong { display:none; }
   .hm-nav-controls { display:grid; grid-template-columns:minmax(0,1fr) 56px; align-items:start; gap:8px; }
-  #ops-shell .hm-nav-more { display:flex; align-items:center; justify-content:center; gap:4px; padding:8px 4px; min-height:44px; border:1px solid #d7e2ed; border-radius:6px; background:#fff; color:#526d87; font-size:14px; }
+  .hm-nav-more { display:flex; align-items:center; justify-content:center; gap:4px; padding:8px 4px; min-height:44px; border:1px solid #d7e2ed; border-radius:6px; background:#fff; color:#526d87; font-size:14px; }
   .hm-nav-list { display:flex; overflow-x:auto; gap:6px; padding:4px 0 12px; }
   .hm-nav-list button { flex:0 0 auto; width:auto; min-height:44px; padding:8px 10px; border:1px solid #d7e2ed; border-radius:6px; white-space:nowrap; }
   .hm-nav.is-expanded .hm-nav-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); max-height:min(35vh,240px); overflow-x:hidden; overflow-y:auto; }
@@ -125,3 +125,13 @@
 .hm-form select { transition:border-color .16s ease, box-shadow .16s ease, background-color .16s ease; }
 .hm-form input::placeholder { color:#a5b5c5; }
 .hm-form-error { border:1px solid #f0b8bd; border-radius:8px; background:#fff4f5; }
+
+
+/* Health metric tabs: keep the strip visible at the content edge and center the active metric. */
+.hm-nav { isolation:isolate; box-shadow:0 1px 0 #e5edf4; }
+@container(max-width:640px) {
+  .hm-nav { position:sticky; top:var(--hm-sticky-offset,0px); z-index:10; box-shadow:0 2px 8px rgba(23,60,97,.08); }
+  .hm-nav-list { scroll-snap-type:x proximity; scroll-behavior:smooth; scroll-padding-inline:12px; }
+  .hm-nav-list button { scroll-snap-align:center; }
+  .hm-nav.is-expanded .hm-nav-list { scroll-snap-type:none; }
+}
