@@ -132,3 +132,28 @@
   .wc-health-modal-body{padding:16px 18px 6px}
   .wc-health-modal-footer{padding-inline:18px}
 }
+
+/* Patient tag editing uses the same mobile bottom-sheet pattern as health
+   entry, so the archive action remains usable inside the phone preview. */
+.wc-archive-tag-backdrop{position:absolute;inset:0;z-index:22;display:flex;align-items:flex-end;background:rgba(18,52,83,.42);}
+.wc-archive-tag-modal{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;max-height:92%;overflow:hidden;border:1px solid #d6e4f1;border-radius:18px 18px 0 0;background:#fff;color:#173c61;box-shadow:0 14px 34px rgba(18,52,83,.24);}
+.wc-archive-tag-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 14px;border-bottom:1px solid #e5edf4;background:linear-gradient(135deg,#f7fbff,#eef6fd);}
+.wc-archive-tag-kicker{display:block;margin-bottom:4px;color:#0365bf;font-size:12px;font-weight:600;letter-spacing:.04em;}
+.wc-archive-tag-header h2{margin:0;font-size:20px;line-height:1.35;}
+.wc-archive-tag-header p{margin:5px 0 0;color:#607b95;font-size:12px;line-height:1.5;}
+.wc-archive-tag-close{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;padding:0;border:1px solid #d7e2ed;border-radius:50%;background:#fff;color:#52718e;font-size:24px;line-height:1;}
+.wc-archive-tag-body{min-height:0;overflow:auto;padding:16px 18px 8px;background:#fff;}
+.wc-archive-tag-selected{margin-bottom:8px;color:#607b95;font-size:13px;}
+.wc-archive-tag-search{display:flex;align-items:center;gap:8px;min-height:44px;margin-bottom:12px;padding:0 11px;border:1px solid #cbdceb;border-radius:8px;background:#fff;color:#8b9bab;}
+.wc-archive-tag-search:focus-within{border-color:#0365bf;box-shadow:0 0 0 3px rgba(3,101,191,.12);}
+.wc-archive-tag-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#173c61;font-size:15px;}
+.wc-archive-tag-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
+.wc-archive-tag-option{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:46px;padding:9px 11px;border:1px solid #cbdceb;border-radius:8px;background:#fff;color:#315c83;text-align:left;font-size:14px;}
+.wc-archive-tag-option.is-selected{border-color:#0365bf;background:#eef6ff;color:#0365bf;}
+.wc-archive-tag-option b{font-size:16px;font-weight:600;}
+.wc-archive-tag-empty{grid-column:1/-1;margin:8px 0;color:#8193a6;font-size:13px;text-align:center;}
+.wc-archive-tag-footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 18px max(12px,env(safe-area-inset-bottom));border-top:1px solid #e5edf4;background:#fff;}
+.wc-archive-tag-footer button{min-height:42px;padding:8px 18px;border-radius:8px;font-size:15px;}
+.wc-archive-tag-cancel{border:1px solid #cbdceb;background:#fff;color:#1d5585;}
+.wc-archive-tag-save{border:1px solid #0365bf;background:#0365bf;color:#fff;box-shadow:0 4px 10px rgba(3,101,191,.2);}
+@media(max-width:380px){.wc-archive-tag-header{padding:16px 14px 12px}.wc-archive-tag-body{padding:14px 14px 6px}.wc-archive-tag-footer{padding-inline:14px}.wc-archive-tag-footer button{flex:1 1 0}}

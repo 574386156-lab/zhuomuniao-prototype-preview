@@ -9,9 +9,10 @@
   var pages={'quick-replies':{title:'快捷回复',file:'quick-replies.html'},'patient-followups':{title:'患者跟进',file:'patient-followups.html'},'patient-profile':{title:'患者档案',file:'patient-profile.html'}};
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages'),phoneScreen=document.querySelector('.phone-screen');
   var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
-  var previewVersion='20261024-health-entry-v6';
+  var previewVersion='20261024-health-entry-v7';
   var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null);
-  var archiveTab='病例时间轴',archiveTabsExpanded=false,archiveTimelineDetail=null,archiveTimelineScroll=0,archiveFocusDetail=false,archiveEditMode=null,archiveFileOriginal=null,healthModal=null,healthReturnFocus=null;
+  var archiveTab='病例时间轴',archiveTabsExpanded=false,archiveTimelineDetail=null,archiveTimelineScroll=0,archiveFocusDetail=false,archiveEditMode=null,archiveFileOriginal=null,healthModal=null,healthReturnFocus=null,archiveTags=['慢病随访'],archiveTagModal=null,archiveTagReturnFocus=null;
+  var archiveTagOptions=['慢病随访','用药提醒','健康宣教','复诊服务','高血压管理','糖尿病管理'];
   function fitPhone(){
     if(!phoneScaleBox||!phoneDevice)return;
     var scale=Math.max(.42,Math.min((window.innerWidth-48)/511,(window.innerHeight-128)/968,1));
@@ -27,7 +28,7 @@
     var right='<span aria-hidden="true"></span>';
     return '<header class="wc-header">'+left+'<h2>'+esc(title)+'</h2>'+right+'</header>';
   }
-  function clearFrames(){Object.keys(frames).forEach(function(key){frames[key].remove();});frames=Object.create(null);archiveTab='病例时间轴';archiveTabsExpanded=false;archiveTimelineDetail=null;archiveTimelineScroll=0;archiveFocusDetail=false;archiveEditMode=null;archiveFileOriginal=null;healthModal=null;healthReturnFocus=null;}
+  function clearFrames(){Object.keys(frames).forEach(function(key){frames[key].remove();});frames=Object.create(null);archiveTab='病例时间轴';archiveTabsExpanded=false;archiveTimelineDetail=null;archiveTimelineScroll=0;archiveFocusDetail=false;archiveEditMode=null;archiveFileOriginal=null;healthModal=null;healthReturnFocus=null;archiveTags=['慢病随访'];archiveTagModal=null;archiveTagReturnFocus=null;}
   function showMessages(){
     currentPage='';pageHost.hidden=true;if(phoneScreen)phoneScreen.classList.remove('wc-source-patient');
     app.innerHTML=header('消息')+'<label class="wc-search"><span aria-hidden="true">⌕</span><input type="search" id="wc-search" placeholder="搜索消息" aria-label="搜索消息" value="'+esc(search)+'"></label><section class="wc-messages" aria-label="消息列表">'+people.map(function(person){return '<button class="wc-conversation" type="button" data-wc-person="'+person.id+'"><span class="wc-avatar">'+esc(person.name[0])+(person.unread?'<i>'+person.unread+'</i>':'')+'</span><span class="wc-row-copy"><span class="wc-row-heading"><strong>'+esc(person.name)+'</strong><time>'+esc(person.time)+'</time></span><p>'+esc(person.messages[person.messages.length-1].text)+'</p></span></button>';}).join('')+'<p class="wc-empty" hidden>暂无匹配消息</p></section><footer class="wc-list-footer">消息</footer>';
@@ -67,7 +68,7 @@
     document.title=selectedTab.name+' · 企微插件手机预览';
   }
   function archiveConversation(){
-    return Object.assign({},current,{type:'私聊',gender:'男',age:'58',date:'2026-10-23',tags:['慢病随访']});
+    return Object.assign({},current,{type:'私聊',gender:'男',age:'58',date:'2026-10-23',tags:archiveTags.slice()});
   }
   function localDate(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
   function closeHealthModal(){var restore=healthReturnFocus;healthModal=null;healthReturnFocus=null;renderPatientArchive();if(restore){window.setTimeout(function(){var buttons=pageHost.querySelectorAll('[data-action="health-add"]'),target=null;for(var i=0;i<buttons.length;i++){if(buttons[i].getAttribute('data-health-key')===restore.key&&buttons[i].getAttribute('data-metric')===restore.metric){target=buttons[i];break;}}if(target)target.focus();},0);}}
@@ -85,6 +86,20 @@
     if(dateInput){if(!dateInput.value)dateInput.value=healthModal.date||localDate();dateInput.max=localDate();}
     updateHealthEntryProgress();
     var first=pageHost.querySelector('.wc-health-modal [data-entry-metric]');if(first)first.focus();
+  }
+  function closeArchiveTagModal(){
+    var restore=archiveTagReturnFocus;archiveTagModal=null;archiveTagReturnFocus=null;renderPatientArchive();
+    if(restore){window.setTimeout(function(){var target=pageHost.querySelector('[data-action="chat-patient-tags-edit"]');if(target)target.focus();},0);}
+  }
+  function renderArchiveTagModal(){
+    if(!archiveTagModal)return;
+    pageHost.querySelectorAll('.wc-archive-tag-backdrop').forEach(function(node){node.remove();});
+    var query=(archiveTagModal.query||'').trim().toLowerCase();
+    var options=archiveTagOptions.filter(function(tag){return !query||tag.toLowerCase().indexOf(query)>=0;});
+    var selected=archiveTagModal.tags||[];
+    var optionHtml=options.length?options.map(function(tag){var isSelected=selected.indexOf(tag)>=0;return '<button type="button" class="wc-archive-tag-option'+(isSelected?' is-selected':'')+'" data-wc-tag-action="toggle" data-tag="'+esc(tag)+'" aria-pressed="'+(isSelected?'true':'false')+'"><span>'+esc(tag)+'</span><b aria-hidden="true">'+(isSelected?'✓':'')+'</b></button>';}).join(''):'<p class="wc-archive-tag-empty">暂无匹配标签</p>';
+    pageHost.insertAdjacentHTML('beforeend','<div class="wc-archive-tag-backdrop" role="presentation"><section class="wc-archive-tag-modal" role="dialog" aria-modal="true" aria-labelledby="wc-archive-tag-title"><header class="wc-archive-tag-header"><div><span class="wc-archive-tag-kicker">患者档案</span><h2 id="wc-archive-tag-title">编辑患者标签</h2><p>可选择多个标签，保存后立即更新档案。</p></div><button type="button" class="wc-archive-tag-close" data-wc-tag-action="close" aria-label="关闭标签编辑">×</button></header><div class="wc-archive-tag-body"><div class="wc-archive-tag-selected" aria-live="polite">已选 '+selected.length+' 个标签</div><label class="wc-archive-tag-search"><span aria-hidden="true">⌕</span><input type="search" data-wc-tag-search value="'+esc(archiveTagModal.query||'')+'" placeholder="搜索标签" aria-label="搜索标签"></label><div class="wc-archive-tag-options" role="listbox" aria-multiselectable="true">'+optionHtml+'</div></div><footer class="wc-archive-tag-footer"><button type="button" class="wc-archive-tag-cancel" data-wc-tag-action="close">取消</button><button type="button" class="wc-archive-tag-save" data-wc-tag-action="save">保存</button></footer></section></div>');
+    var input=pageHost.querySelector('.wc-archive-tag-modal [data-wc-tag-search]');if(input){input.focus();input.setSelectionRange(input.value.length,input.value.length);}
   }
   function renderPatientArchive(){
     if(!current||!window.ChatPatientArchive){pageHost.innerHTML='<p class="wc-loading">患者档案加载中…</p>';return;}
@@ -134,10 +149,19 @@
   app.addEventListener('click',function(event){var person=event.target.closest('[data-wc-person]'),page=event.target.closest('[data-wc-page]'),action=event.target.closest('[data-wc-action]');if(person)navigate('#chat/'+person.getAttribute('data-wc-person'));else if(page&&current)navigate('#page/'+current.id+'/'+page.getAttribute('data-wc-page'));else if(action)navigate(action.getAttribute('data-wc-action')==='chat'&&current?'#chat/'+current.id:'#messages');});
   pageHost.addEventListener('click',function(event){
     if(currentPage!=='patient-profile')return;
+    if(event.target.classList&&event.target.classList.contains('wc-archive-tag-backdrop')){closeArchiveTagModal();return;}
     if(event.target.classList&&event.target.classList.contains('wc-health-modal-backdrop')){closeHealthModal();return;}
-    var target=event.target.closest&&event.target.closest('[data-action],[data-entry-action],[data-wc-health-action]');if(!target)return;
-    var action=target.getAttribute('data-action')||target.getAttribute('data-entry-action')||target.getAttribute('data-wc-health-action');
+    var target=event.target.closest&&event.target.closest('[data-action],[data-entry-action],[data-wc-health-action],[data-wc-tag-action]');if(!target)return;
+    var action=target.getAttribute('data-action')||target.getAttribute('data-entry-action')||target.getAttribute('data-wc-health-action')||target.getAttribute('data-wc-tag-action');
     if(action==='health-modal-close'||action==='health-modal-cancel'){closeHealthModal();}
+    else if(action==='chat-patient-tags-edit'){
+      archiveTagReturnFocus=target;archiveTagModal={tags:archiveTags.slice(),query:''};renderArchiveTagModal();
+    }
+    else if(action==='toggle'&&target.closest('.wc-archive-tag-modal')){
+      if(!archiveTagModal)return;var tag=target.getAttribute('data-tag'),tagIndex=archiveTagModal.tags.indexOf(tag);if(tagIndex>=0)archiveTagModal.tags.splice(tagIndex,1);else if(archiveTagModal.tags.length<10)archiveTagModal.tags.push(tag);renderArchiveTagModal();
+    }
+    else if(action==='close'&&target.closest('.wc-archive-tag-modal')){closeArchiveTagModal();}
+    else if(action==='save'&&target.closest('.wc-archive-tag-modal')){if(archiveTagModal){archiveTags=archiveTagModal.tags.slice();}closeArchiveTagModal();}
     else if(action==='health-modal-save'){
       if(!healthModal)return;
       var form=syncHealthEntry(),result=window.PatientHealth.collectEntry(form),error=result.error||window.PatientHealth.addBatch(healthModal.key,result.date,result.entries);
@@ -202,9 +226,9 @@
     else if(action==='chat-workbench-panel-toggle'){navigate('#chat/'+current.id);}
     else if(action==='chat-patient-phone-toggle'){renderPatientArchive();}
   });
-  pageHost.addEventListener('input',function(event){if(healthModal&&event.target.closest&&event.target.closest('.wc-health-modal')){clearHealthField(event.target);syncHealthEntry();updateHealthEntryProgress();}});
+  pageHost.addEventListener('input',function(event){if(archiveTagModal&&event.target.matches('[data-wc-tag-search]')){archiveTagModal.query=event.target.value;renderArchiveTagModal();return;}if(healthModal&&event.target.closest&&event.target.closest('.wc-health-modal')){clearHealthField(event.target);syncHealthEntry();updateHealthEntryProgress();}});
   pageHost.addEventListener('change',function(event){if(healthModal&&event.target.closest&&event.target.closest('.wc-health-modal')){clearHealthField(event.target);syncHealthEntry();updateHealthEntryProgress();}});
-  pageHost.addEventListener('keydown',function(event){if(event.key==='Escape'&&healthModal){event.preventDefault();closeHealthModal();}});
+  pageHost.addEventListener('keydown',function(event){if(event.key==='Escape'&&archiveTagModal){event.preventDefault();closeArchiveTagModal();return;}if(event.key==='Escape'&&healthModal){event.preventDefault();closeHealthModal();}});
   app.addEventListener('input',function(event){if(event.target.id==='wc-search'){search=event.target.value;filterMessages();}else if(event.target.matches('.wc-composer textarea')&&current){drafts[current.id]=event.target.value;app.querySelector('.wc-composer button').disabled=!event.target.value.trim();}});
   app.addEventListener('submit',function(event){if(!event.target.matches('.wc-composer')||!current)return;event.preventDefault();var text=(drafts[current.id]||'').trim();if(!text||text.length>500)return;current.messages.push({text:text,self:true});drafts[current.id]='';current.time='刚刚';showChat();app.querySelector('textarea').focus();});
   window.addEventListener('message',function(event){

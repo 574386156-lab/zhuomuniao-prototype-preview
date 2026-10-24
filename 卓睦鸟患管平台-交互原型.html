@@ -3057,6 +3057,7 @@
           var ctx = window.ChatPatientArchive.context(conversation, state.chatDoctorSelected, state.chatArchiveScene);
           if (conversation && !ctx.group && state.chatPatientTags[conversation.name]) ctx.tags = state.chatPatientTags[conversation.name].slice();
           ctx.patientDiagnosis = state.chatPatientBasic && state.chatPatientBasic.diagnosis || '';
+          ctx.patientBirthDate = state.chatPatientBasic && state.chatPatientBasic.birthDate || '';
           var spacer = '<span class="cp-navigation-spacer" aria-hidden="true"></span>';
           var navigation = embedded ? '' : '<nav class="cp-page-navigation" aria-label="患者档案页面导航">' + spacer + '<strong>患者档案</strong><button type="button" data-action="chat-archive-page-close" aria-label="关闭患者档案页面">关闭 ×</button></nav>';
           var hint = !embedded && archiveNavigationHint ? '<p class="cp-navigation-hint" role="status">' + escapeHtml(archiveNavigationHint) + '</p>' : '';
@@ -3085,6 +3086,7 @@
           var ctx = window.ChatPatientArchive.context(conversation, state.chatDoctorSelected, state.chatArchiveScene);
           if (conversation && !ctx.group && state.chatPatientTags[conversation.name]) ctx.tags = state.chatPatientTags[conversation.name].slice();
           ctx.patientDiagnosis = state.chatPatientBasic && state.chatPatientBasic.diagnosis || '';
+          ctx.patientBirthDate = state.chatPatientBasic && state.chatPatientBasic.birthDate || '';
           var resolved = window.ChatPatientArchive.resolve(ctx);
           var body = resolved.record && window.PatientAiSummary ? window.PatientAiSummary.render(ctx, resolved.record) : '<div class="cp-ai-summary-empty"><strong>' + escapeHtml(resolved.reason || 'AI小结暂不可用') + '</strong><p>' + escapeHtml(resolved.hint || '当前暂无可用于整理的患者档案。') + '</p></div>';
           return '<section class="ops-ai-summary-page' + (embedded ? ' is-embedded' : '') + '" aria-label="AI小结">' + (embedded ? '' : renderWorkbenchStandaloneTabs('ai-summary')) + '<div class="cp-panel cp-ai-summary-page-panel">' + body + '</div></section>';
@@ -3093,6 +3095,7 @@
           var conversation = getChatConversationData().filter(function (item) { return item.name === state.chatSelected; })[0];
           var context = window.ChatPatientArchive.context(conversation, state.chatDoctorSelected, state.chatArchiveScene);
           context.patientDiagnosis = state.chatPatientBasic && state.chatPatientBasic.diagnosis || '';
+          context.patientBirthDate = state.chatPatientBasic && state.chatPatientBasic.birthDate || '';
           var resolved = window.ChatPatientArchive.resolve(context);
           return { conversation: conversation, context: context, record: resolved.record || null };
         }
@@ -3102,7 +3105,7 @@
           if (!request.ok) {
             if (request.reason === 'rate' && trigger !== 'auto') toast('智能体每分钟只能调用一次，请稍后再试');
             else if (request.reason === 'loading' && trigger !== 'auto') toast('智能体正在整理，请稍候');
-            else if (request.reason === 'empty' && trigger !== 'auto') toast('近30天暂无对话与档案数据，无法生成小结');
+            else if (request.reason === 'empty' && trigger !== 'auto') toast('近50条对话暂无可用记录，无法生成小结');
             return;
           }
           render({ preserveArchiveScroll: true });
@@ -3125,7 +3128,7 @@
           }
           var finishExternal = function (agentOutput) {
             if (!window.PatientAiSummary.validateOutput(agentOutput)) {
-              failExternal(new Error('智能体返回不符合 patient_profile_v1 Schema'));
+              failExternal(new Error('智能体返回不符合 patient_summary_v1 Schema'));
               return;
             }
             finish(agentOutput);
@@ -3880,6 +3883,7 @@
             state.chatPatientTags[modal.patient] = modal.tags.slice();
             state.modal = null;
             toast("患者标签已更新");
+            render({preserveArchiveScroll:true});
             return;
           }
           if (modal.type === "patient-archive-tags") {
@@ -3887,6 +3891,7 @@
             if (archivePatient) archivePatient.tags = modal.tags.slice();
             state.modal = null;
             toast("患者标签已更新");
+            render({preserveArchiveScroll:true});
             return;
           }
           if (modal.type.indexOf("label-") === 0) {
