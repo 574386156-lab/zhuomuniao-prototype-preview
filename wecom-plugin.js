@@ -134,7 +134,7 @@
       window.setTimeout(function(){
         if(!current||current.id!==patientId)return;
         var finishCtx=window.ChatPatientArchive.context(archiveConversation(),current.doctor,current.scene);
-        window.ChatPatientArchive.updateTimelineEvent(finishCtx,eventIndex,isSummary?{status:'已完成',statusTone:'success',readingStatus:'completed',hasReport:true,report:'报告解读已完成，内容按原始病历记录整理展示。（示例解读）'}:{status:eventRecord.status||'已完成',statusTone:eventRecord.statusTone==='failed'?'success':(eventRecord.statusTone||'success'),readingStatus:'completed',hasReport:true,report:'报告解读已完成，内容按原始病历记录整理展示。（示例解读）'});
+        window.ChatPatientArchive.updateTimelineEvent(finishCtx,eventIndex,isSummary?{date:eventRecord.successDate||eventRecord.date||'2026-10-21',type:eventRecord.successType||eventRecord.type||'病历总结',text:eventRecord.successText||'复查报告示例已完成总结，原始文件已关联。',status:'已完成',statusTone:'success',readingStatus:'completed',hasReport:true,report:'报告解读已完成，内容按原始病历记录整理展示。（示例解读）'}:{status:eventRecord.status||'已完成',statusTone:eventRecord.statusTone==='failed'?'success':(eventRecord.statusTone||'success'),readingStatus:'completed',hasReport:true,report:'报告解读已完成，内容按原始病历记录整理展示。（示例解读）'});
         renderPatientArchive();
       },1200);
     }

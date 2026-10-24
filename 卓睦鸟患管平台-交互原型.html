@@ -4531,7 +4531,8 @@
               if (state.chatSelected !== archiveActionPatient) return;
               var finishConversation = getChatConversationData().filter(function (item) { return item.name === state.chatSelected; })[0];
               var finishContext = window.ChatPatientArchive.context(finishConversation, state.chatDoctorSelected, state.chatArchiveScene);
-              window.ChatPatientArchive.updateTimelineEvent(finishContext, archiveActionIndex, {status:"已完成",statusTone:"success",readingStatus:"completed",hasReport:true,report:"报告解读已完成，内容按原始病历记录整理展示。（示例解读）"});
+              var finishedEvent = window.ChatPatientArchive.findTimelineEvent(finishContext, archiveActionIndex);
+              window.ChatPatientArchive.updateTimelineEvent(finishContext, archiveActionIndex, isResummary ? {date:finishedEvent && (finishedEvent.successDate || finishedEvent.date) || "2026-10-21",type:finishedEvent && (finishedEvent.successType || finishedEvent.type) || "病历总结",text:finishedEvent && finishedEvent.successText || "复查报告示例已完成总结，原始文件已关联。",status:"已完成",statusTone:"success",readingStatus:"completed",hasReport:true,report:"报告解读已完成，内容按原始病历记录整理展示。（示例解读）"} : {status:"已完成",statusTone:"success",readingStatus:"completed",hasReport:true,report:"报告解读已完成，内容按原始病历记录整理展示。（示例解读）"});
               render({preserveArchiveScroll:true});
             },1200);
           } else if (action === "chat-ai-summary-generate") {
