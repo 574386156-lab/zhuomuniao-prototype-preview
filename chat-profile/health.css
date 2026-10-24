@@ -113,3 +113,15 @@
 .ops-patient-detail-tabs { position:sticky; top:0; z-index:5; overflow-x:auto; background:#fff; }
 .ops-patient-detail-tabs button { flex:0 0 auto; min-height:44px; white-space:nowrap; }
 .ops-modal:has(.hm-form) .ops-modal-footer button { min-height:44px; font-size:16px; }
+
+/* Shared UI-kit states for health record entry fields. */
+.hm-form-label { display:inline-flex; align-items:center; gap:4px; color:#526d87; font-weight:600; line-height:1.35; }
+.hm-form-label i { color:#d64242; font-style:normal; }
+.hm-form label:focus-within .hm-form-label { color:#0365bf; }
+.hm-form label.is-error .hm-form-label { color:#c4414f; }
+.hm-form label.is-error input,
+.hm-form label.is-error select { border-color:#d64242 !important; box-shadow:0 0 0 3px rgba(214,66,66,.1) !important; }
+.hm-form input,
+.hm-form select { transition:border-color .16s ease, box-shadow .16s ease, background-color .16s ease; }
+.hm-form input::placeholder { color:#a5b5c5; }
+.hm-form-error { border:1px solid #f0b8bd; border-radius:8px; background:#fff4f5; }

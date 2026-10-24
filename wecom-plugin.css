@@ -81,3 +81,24 @@
 .wc-health-modal-cancel{border:1px solid #cbdceb;background:#fff;color:#1d5585;}
 .wc-health-modal-save{border:1px solid #0365bf;background:#0365bf;color:#fff;box-shadow:0 4px 10px rgba(3,101,191,.2);}
 .wc-health-modal-save:active{background:#02569f;}
+
+/* UI-kit states for the WeCom health record sheet. */
+.wc-health-modal .hm-form-label { color:#526d87; font-weight:600; }
+.wc-health-modal .hm-form label:focus-within .hm-form-label { color:#0365bf; }
+.wc-health-modal .hm-form label.is-error .hm-form-label { color:#c4414f; }
+.wc-health-modal .hm-form label.is-error input,
+.wc-health-modal .hm-form label.is-error select { border-color:#d64242 !important; box-shadow:0 0 0 3px rgba(214,66,66,.1) !important; }
+.wc-health-modal .hm-form input::placeholder { color:#a5b5c5; }
+.wc-health-modal .hm-form-error { border:1px solid #f0b8bd; }
+.wc-health-modal-footer button { transition:background-color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
+.wc-health-modal-footer button:hover { transform:translateY(-1px); }
+.wc-health-modal-save:hover { background:#075aa5; box-shadow:0 6px 14px rgba(3,101,191,.26); }
+.wc-health-modal-cancel:hover { border-color:#0365bf; background:#f7fbff; }
+.wc-health-modal-body { overscroll-behavior:contain; }
+@media(max-width:380px){
+  .wc-health-modal-backdrop { padding:8px; }
+  .wc-health-modal-header { padding:16px 14px 12px; }
+  .wc-health-modal-body { padding:14px 14px 2px; }
+  .wc-health-modal-footer { padding-inline:14px; }
+  .wc-health-modal-footer button { flex:1 1 0; }
+}
