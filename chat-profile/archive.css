@@ -57,6 +57,25 @@
 .cp-panel .cp-basic-info .dx-confirm-slot,
 .cp-panel .cp-basic-info .dx-notice { display:none; }
 
+/* The host workbench gives every textarea a large form height. The diagnosis
+   editor is a single-line clinical field, so keep that host rule from pushing
+   the scene row underneath it. The diagnosis editor's own fitInput() may still
+   grow the field when the user enters multiple lines. */
+.cp-panel .cp-basic-info .cp-diagnosis .dx-editor { min-height:44px; }
+.cp-panel .cp-basic-info .cp-diagnosis .dx-search { height:auto !important; min-height:44px; }
+.cp-panel .cp-basic-info .cp-diagnosis .dx-search textarea {
+  display:block;
+  min-height:42px !important;
+  max-height:132px;
+  padding:8px 44px 8px 10px !important;
+  border:0 !important;
+  border-radius:6px !important;
+  background:transparent !important;
+  resize:none !important;
+  overflow:hidden;
+}
+#ops-shell .cp-panel .cp-basic-info .cp-diagnosis .dx-search textarea { min-height:42px !important; }
+
 @container (min-width:600px) {
   .cp-basic-info .cp-diagnosis { grid-template-columns:1fr; gap:4px; }
   .cp-basic-info .cp-diagnosis-label { padding-top:0; }
