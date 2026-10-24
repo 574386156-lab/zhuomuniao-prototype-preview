@@ -9,7 +9,7 @@
   var pages={'quick-replies':{title:'快捷回复',file:'quick-replies.html'},'patient-followups':{title:'患者跟进',file:'patient-followups.html'},'patient-profile':{title:'患者档案',file:'patient-profile.html'}};
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages'),phoneScreen=document.querySelector('.phone-screen');
   var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
-  var previewVersion='20261024-health-ui-kit-v2';
+  var previewVersion='20261024-health-ui-kit-v3';
   var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null);
   var archiveTab='病例时间轴',archiveTabsExpanded=false,archiveTimelineDetail=null,archiveTimelineScroll=0,archiveFocusDetail=false,archiveEditMode=null,archiveFileOriginal=null,healthModal=null,healthReturnFocus=null;
   function fitPhone(){
@@ -27,7 +27,7 @@
     var right='<span aria-hidden="true"></span>';
     return '<header class="wc-header">'+left+'<h2>'+esc(title)+'</h2>'+right+'</header>';
   }
-  function clearFrames(){Object.keys(frames).forEach(function(key){frames[key].remove();});frames=Object.create(null);archiveTab='病例时间轴';archiveTabsExpanded=false;archiveTimelineDetail=null;archiveTimelineScroll=0;archiveFocusDetail=false;archiveEditMode=null;archiveFileOriginal=null;healthModal=null;}
+  function clearFrames(){Object.keys(frames).forEach(function(key){frames[key].remove();});frames=Object.create(null);archiveTab='病例时间轴';archiveTabsExpanded=false;archiveTimelineDetail=null;archiveTimelineScroll=0;archiveFocusDetail=false;archiveEditMode=null;archiveFileOriginal=null;healthModal=null;healthReturnFocus=null;}
   function showMessages(){
     currentPage='';pageHost.hidden=true;if(phoneScreen)phoneScreen.classList.remove('wc-source-patient');
     app.innerHTML=header('消息')+'<label class="wc-search"><span aria-hidden="true">⌕</span><input type="search" id="wc-search" placeholder="搜索消息" aria-label="搜索消息" value="'+esc(search)+'"></label><section class="wc-messages" aria-label="消息列表">'+people.map(function(person){return '<button class="wc-conversation" type="button" data-wc-person="'+person.id+'"><span class="wc-avatar">'+esc(person.name[0])+(person.unread?'<i>'+person.unread+'</i>':'')+'</span><span class="wc-row-copy"><span class="wc-row-heading"><strong>'+esc(person.name)+'</strong><time>'+esc(person.time)+'</time></span><p>'+esc(person.messages[person.messages.length-1].text)+'</p></span></button>';}).join('')+'<p class="wc-empty" hidden>暂无匹配消息</p></section><footer class="wc-list-footer">消息</footer>';
@@ -139,7 +139,7 @@
       if(error){
         markHealthField(dateInput,!dateInput||!dateInput.value||error.indexOf('日期')>=0);
         markHealthField(typeInput,!!typeInput&&(!typeInput.value||error.indexOf('类型')>=0));
-        valueInputs.forEach(function(input){markHealthField(input,!input||!input.value||error.indexOf('数值')>=0);});
+        valueInputs.forEach(function(input){var value=input&&input.value;markHealthField(input,!input||value===''||!Number.isFinite(Number(value))||Number(value)<=0);});
         var errorNode=pageHost.querySelector('.wc-health-modal [data-health-error]');if(errorNode){errorNode.textContent=error;errorNode.hidden=false;}return;
       }
       closeHealthModal();
