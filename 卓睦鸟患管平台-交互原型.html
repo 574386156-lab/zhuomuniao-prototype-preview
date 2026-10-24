@@ -3020,7 +3020,14 @@
           if (type === "图片") {
             preview = '<figure class="ops-material-image-view"><img src="' + escapeHtml(item.thumbnail || "patient-profile-assets/profile-avatar.png") + '" alt="' + escapeHtml(item.name) + '"><figcaption>' + escapeHtml(item.metadata || "图片素材") + '</figcaption></figure>';
           } else if (type === "视频") {
-            preview = item.mediaUrl ? '<video class="ops-material-video-player" controls preload="metadata" src="' + escapeHtml(item.mediaUrl) + '"' + (item.thumbnail ? ' poster="' + escapeHtml(item.thumbnail) + '"' : '') + '></video>' : '<div class="ops-material-media-empty"><span aria-hidden="true">▶</span><strong>暂无可播放视频</strong><p>当前素材仅提供文件信息</p></div>';
+            if (item.mediaUrl) {
+              preview = '<video class="ops-material-video-player" controls preload="metadata" src="' + escapeHtml(item.mediaUrl) + '"' + (item.thumbnail ? ' poster="' + escapeHtml(item.thumbnail) + '"' : '') + '></video>';
+            } else {
+              var videoMeta = item.metadata || "MP4 · 03:12 · 24.8 MB";
+              var videoDurationMatch = String(videoMeta).match(/(\d{1,2}:\d{2})/);
+              var videoDuration = videoDurationMatch ? videoDurationMatch[1] : "03:12";
+              preview = '<div class="ops-material-video-preview" data-video-prototype data-video-duration="' + escapeHtml(videoDuration) + '"><button type="button" class="ops-material-video-toggle" data-action="material-preview-video-toggle" aria-label="播放视频" aria-pressed="false"><span class="ops-material-video-play-icon" aria-hidden="true">▶</span></button><div class="ops-material-video-meta"><strong>播放视频</strong><span>' + escapeHtml(videoMeta) + '</span><div class="ops-material-video-progress" aria-hidden="true"><span></span></div></div><time data-video-state>00:00</time></div>';
+            }
           } else if (type === "语音" || type === "音频") {
             if (item.mediaUrl) {
               preview = '<audio class="ops-material-audio-player" controls preload="metadata" src="' + escapeHtml(item.mediaUrl) + '"></audio>';
@@ -4809,6 +4816,40 @@
           } else if (action === "chat-material-send") {
             state.chatDraft = actionTarget.getAttribute("data-value") || "";
             sendChatMessage();
+          } else if (action === "material-preview-video-toggle") {
+            var videoPlayer = actionTarget.closest ? actionTarget.closest("[data-video-prototype]") : null;
+            if (videoPlayer) {
+              var videoPlaying = videoPlayer.classList.toggle("is-playing");
+              actionTarget.setAttribute("aria-pressed", videoPlaying ? "true" : "false");
+              actionTarget.setAttribute("aria-label", videoPlaying ? "暂停视频" : "播放视频");
+              var videoIcon = actionTarget.querySelector(".ops-material-video-play-icon");
+              if (videoIcon) videoIcon.textContent = videoPlaying ? "Ⅱ" : "▶";
+              var videoState = videoPlayer.querySelector("[data-video-state]");
+              var videoProgress = videoPlayer.querySelector(".ops-material-video-progress span");
+              if (videoPlayer._prototypeVideoTimer) window.clearInterval(videoPlayer._prototypeVideoTimer);
+              if (videoPlaying) {
+                var videoElapsed = Number(videoPlayer.getAttribute("data-video-elapsed") || 0);
+                var videoDurationText = videoPlayer.getAttribute("data-video-duration") || "03:12";
+                var videoDurationParts = videoDurationText.split(":");
+                var videoDurationSeconds = Number(videoDurationParts[0]) * 60 + Number(videoDurationParts[1] || 0) || 192;
+                videoPlayer._prototypeVideoTimer = window.setInterval(function () {
+                  videoElapsed = Math.min(videoDurationSeconds, videoElapsed + 1);
+                  videoPlayer.setAttribute("data-video-elapsed", String(videoElapsed));
+                  var videoMinutes = String(Math.floor(videoElapsed / 60)).padStart(2, "0");
+                  var videoSeconds = String(videoElapsed % 60).padStart(2, "0");
+                  if (videoState) videoState.textContent = videoMinutes + ":" + videoSeconds;
+                  if (videoProgress) videoProgress.style.width = Math.round(videoElapsed / videoDurationSeconds * 100) + "%";
+                  if (videoElapsed >= videoDurationSeconds) {
+                    videoPlayer.classList.remove("is-playing");
+                    actionTarget.setAttribute("aria-pressed", "false");
+                    actionTarget.setAttribute("aria-label", "播放视频");
+                    if (videoIcon) videoIcon.textContent = "▶";
+                    window.clearInterval(videoPlayer._prototypeVideoTimer);
+                    videoPlayer._prototypeVideoTimer = null;
+                  }
+                }, 1000);
+              }
+            }
           } else if (action === "material-preview-audio-toggle") {
             var audioPlayer = actionTarget.closest ? actionTarget.closest("[data-audio-prototype]") : null;
             if (audioPlayer) {
@@ -5556,7 +5597,7 @@ Error generating stack: `+a.message+`
   <link rel="stylesheet" href="./chat-profile/followups.css">
   <link rel="stylesheet" href="./chat-profile/diagnoses.css">
   <link rel="stylesheet" href="./shared/image-preview.css">
-    <link rel="stylesheet" href="./chat-profile/quick-replies.css?v=20261024-quick-replies-ui-v5">
+    <link rel="stylesheet" href="./chat-profile/quick-replies.css?v=20261024-quick-replies-ui-v6">
     <link rel="stylesheet" href="./chat-profile/handoffs.css">
   <link rel="stylesheet" href="./shared/date-time.css">
     <link rel="stylesheet" href="./shared/select-control.css">
