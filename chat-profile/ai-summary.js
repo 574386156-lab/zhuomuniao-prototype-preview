@@ -15,6 +15,11 @@
   var AGENT_PROMPT_VERSION = '2026-10-24';
   var AGENT_PROMPT_SOURCE = '已粘贴的文本.txt';
   var AGENT_OUTPUT_SCHEMA = 'patient_summary_v1';
+  var SCENE_OPTIONS = [
+    { name: '慢病随访', code: 'scene-chronic-followup' },
+    { name: '用药提醒', code: 'scene-medication-reminder' },
+    { name: '健康宣教', code: 'scene-health-education' }
+  ];
   var sessions = Object.create(null);
 
   function esc(value) {
@@ -967,8 +972,10 @@
     var meta = [];
     if (patient.sex) meta.push(patient.sex);
     if (patient.age != null && patient.age !== '') meta.push(patient.age + '岁');
-    var chips = tags.concat(diagnoses.map(function (item) { return '诊断：' + item; }));
-    return '<section class="cp-ai-compact-patient"><div class="cp-ai-compact-patient-head"><div><span class="cp-ai-compact-kicker">患者信息</span><h2>' + esc(patient.name || '未命名患者') + '</h2></div>' + (meta.length ? '<div class="cp-ai-compact-patient-meta">' + meta.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div>' : '') + '</div>' + (chips.length ? '<div class="cp-ai-compact-chips" aria-label="患者标签与诊断">' + chips.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div>' : '') + '</section>';
+    var factRows = '';
+    if (tags.length) factRows += '<div class="cp-ai-compact-fact-row"><span class="cp-ai-compact-fact-label">标签</span><div class="cp-ai-compact-chips" aria-label="患者标签">' + tags.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div></div>';
+    if (diagnoses.length) factRows += '<div class="cp-ai-compact-fact-row"><span class="cp-ai-compact-fact-label">诊断</span><p class="cp-ai-compact-diagnosis">' + esc(diagnoses.join('、')) + '</p></div>';
+    return '<section class="cp-ai-compact-patient"><div class="cp-ai-compact-patient-head"><div><span class="cp-ai-compact-kicker">患者信息</span><h2>' + esc(patient.name || '未命名患者') + '</h2></div>' + (meta.length ? '<div class="cp-ai-compact-patient-meta">' + meta.map(function (item) { return '<span>' + esc(item) + '</span>'; }).join('') + '</div>' : '') + '</div>' + (factRows ? '<div class="cp-ai-compact-facts" aria-label="患者标签与诊断">' + factRows + '</div>' : '') + '</section>';
   }
 
   function renderCompactData(output) {
@@ -986,9 +993,10 @@
     var result = get(ctx, record), state = result.state, sources = state.sources;
     if (!sources.hasData) return '<section class="cp-ai-summary" data-ai-summary-status="empty-source"><div class="cp-ai-summary-empty"><strong>近50条对话暂无可用记录，无法生成小结</strong><p>当前场景没有可供小结使用的1v1对话或健康档案记录。</p></div></section>';
     var rateRemaining = remainingMs(state, Date.now());
-    var actionLabel = state.status === 'loading' ? '智能体整理中…' : state.data ? '再次调用智能体' : '调用智能体';
-    var actionHint = AGENT_NAME + ' · 近50条对话 + 当前场景健康档案';
-    if (rateRemaining > 0 && state.status !== 'loading') actionHint += ' · 还需 ' + Math.ceil(rateRemaining / 1000) + ' 秒可再次调用';
+    var actionLabel = state.status === 'loading' ? '重新总结中…' : state.data ? '重新总结' : '调用智能体';
+    var sceneOptions = SCENE_OPTIONS.slice();
+    if (ctx && ctx.sceneName && !sceneOptions.some(function (scene) { return scene.name === ctx.sceneName; })) sceneOptions.push({ name: ctx.sceneName, code: ctx.sceneCode || ctx.sceneName });
+    var sceneSelect = '<label class="cp-ai-summary-scene"><span>场景码</span><select data-change-action="chat-ai-summary-scene" aria-label="切换场景码">' + sceneOptions.map(function (scene) { return '<option value="' + esc(scene.name) + '" ' + (ctx && ctx.sceneName === scene.name ? 'selected' : '') + '>' + esc(scene.name) + '（' + esc(scene.code) + '）</option>'; }).join('') + '</select></label>';
     var content = '';
     if (state.status === 'loading') {
       content = '<div class="cp-ai-summary-skeleton" aria-label="AI小结生成中" aria-busy="true"><span></span><span></span><span></span><span></span></div>';
@@ -999,7 +1007,7 @@
     } else {
       content = '<div class="cp-ai-summary-empty"><strong>暂无结构化健康档案事实，点击右上角调用智能体</strong><p>将按静态健康档案提取规则读取近50条对话和当前场景档案，输出可核对的患者事实。</p>' + button('调用智能体', false, 'chat-ai-summary-generate') + '</div>';
     }
-    return '<section class="cp-ai-summary" data-ai-summary-status="' + esc(state.status) + '" data-agent-id="' + esc(AGENT_ID) + '" data-agent-name="' + esc(AGENT_NAME) + '" data-agent-prompt-version="' + esc(AGENT_PROMPT_VERSION) + '" data-agent-prompt-source="' + esc(AGENT_PROMPT_SOURCE) + '" data-agent-output-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '" data-last-trigger="' + esc(state.lastTrigger || '') + '" data-rate-remaining="' + rateRemaining + '" aria-live="polite"><header class="cp-ai-summary-header"><div><strong>患者管理记忆</strong><small>' + esc(actionHint) + '</small></div>' + button(actionLabel, state.status === 'loading', 'chat-ai-summary-generate') + '</header>' + (state.status === 'error' && state.data ? '<p class="cp-ai-summary-error-inline" role="alert">' + esc(state.error) + '</p>' : '') + '<div class="cp-ai-summary-body">' + content + '</div><footer class="cp-ai-summary-disclaimer">' + esc((state.data && state.data.declaration) || '智能体仅按提示词提取静态健康档案事实；页面展示仅供医生参考，需结合原始记录人工核对，不构成医疗结论。') + '</footer></section>';
+    return '<section class="cp-ai-summary" data-ai-summary-status="' + esc(state.status) + '" data-agent-id="' + esc(AGENT_ID) + '" data-agent-name="' + esc(AGENT_NAME) + '" data-agent-prompt-version="' + esc(AGENT_PROMPT_VERSION) + '" data-agent-prompt-source="' + esc(AGENT_PROMPT_SOURCE) + '" data-agent-output-schema="' + esc(AGENT_OUTPUT_SCHEMA) + '" data-last-trigger="' + esc(state.lastTrigger || '') + '" data-rate-remaining="' + rateRemaining + '" aria-live="polite"><header class="cp-ai-summary-header"><div class="cp-ai-summary-header-controls">' + sceneSelect + button(actionLabel, state.status === 'loading', 'chat-ai-summary-generate') + '</div></header>' + (state.status === 'error' && state.data ? '<p class="cp-ai-summary-error-inline" role="alert">' + esc(state.error) + '</p>' : '') + '<div class="cp-ai-summary-body">' + content + '</div><footer class="cp-ai-summary-disclaimer">' + esc((state.data && state.data.declaration) || '智能体仅按提示词提取静态健康档案事实；页面展示仅供医生参考，需结合原始记录人工核对，不构成医疗结论。') + '</footer></section>';
   }
 
   root.PatientAiSummary = { key: STORAGE_KEY, windowMs: WINDOW_MS, minIntervalMs: MIN_INTERVAL_MS, agentId: AGENT_ID, agentName: AGENT_NAME, promptVersion: AGENT_PROMPT_VERSION, promptSource: AGENT_PROMPT_SOURCE, outputSchema: AGENT_OUTPUT_SCHEMA, contextKey: contextKey, sourceSnapshot: sourceSnapshot, requestPayload: requestPayload, validateOutput: validateAgentOutput, invoke: invokeExternal, remainingMs: remainingMs, get: get, start: start, complete: complete, fail: fail, render: render };

@@ -5171,6 +5171,16 @@
             render();
             return;
           }
+          if (event.target.getAttribute("data-change-action") === "chat-ai-summary-scene") {
+            state.chatArchiveScene = event.target.value || "慢病随访";
+            state.chatArchiveTab = "病例时间轴";
+            state.chatArchiveMetric = 0;
+            state.chatArchiveTimelineDetail = null;
+            state.chatArchiveTabsExpanded = false;
+            state.chatAiAutoStartedKey = "";
+            render();
+            return;
+          }
           if (event.target.getAttribute("data-change-action") === "chat-patient-tag-scope") {
             if (state.modal && (state.modal.type === "chat-patient-tags" || state.modal.type === "patient-archive-tags")) {
               state.modal.tagScope = event.target.value || "个人标签";
@@ -5616,7 +5626,7 @@ Error generating stack: `+a.message+`
     <link rel="stylesheet" href="./chat-profile/patient-followups.css">
     <script src="./shared/sidebar-config.js"></script>
     <link rel="stylesheet" href="./sidebar-config/settings.css">
-    <script src="./chat-profile/ai-summary.js?v=20261024-ai-summary-v2"></script>
+    <script src="./chat-profile/ai-summary.js?v=20261024-ai-summary-v3"></script>
     <script src="./chat-profile/archive.js?v=20261024-health-entry-v6"></script>
     <link rel="stylesheet" href="./shared/event-simulation.css">
     <script src="./shared/event-simulation.js" data-simulation-host="receiver"></script>
