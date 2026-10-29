@@ -1,0 +1,1150 @@
+/* One material page: embedded chat workbench, direct H5 and narrow host frame. */
+html.ops-quick-replies-standalone #root,html.ops-quick-replies-standalone .prototype-index-fab,html.ops-quick-replies-standalone #ops-shell > .ops-sidebar,html.ops-quick-replies-standalone #ops-shell .ops-tabs { display:none!important; }
+html.ops-quick-replies-standalone #ops-shell { inset:0; grid-template-columns:minmax(0,1fr); font-size:16px; }
+html.ops-quick-replies-standalone #ops-shell > .ops-workspace { grid-template-rows:minmax(0,1fr); }
+.ops-quick-reply-page { container-type:inline-size; min-width:0; min-height:0; height:100%; overflow:auto; overscroll-behavior:contain; background:#fff; color:#173c61; font:400 16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+.ops-quick-reply-page.is-embedded { height:auto; overflow:visible; }
+html.ops-quick-replies-standalone .ops-quick-reply-page.is-embedded { height:100%; overflow:auto; }
+.qr-content { width:100%; max-width:720px; margin:0 auto; padding-bottom:max(12px,env(safe-area-inset-bottom)); }
+.qr-page-navigation { position:sticky; top:0; z-index:5; display:grid; grid-template-columns:80px minmax(0,1fr) 80px; align-items:center; min-height:48px; padding:env(safe-area-inset-top) 8px 0; border-bottom:1px solid #e5edf4; background:#fff; }
+.qr-page-navigation strong { text-align:center; font-size:16px; font-weight:500; }
+#ops-shell .qr-page-navigation button { min-height:44px; min-width:44px; padding:0 8px; border:0; background:transparent; color:#0365bf; font-size:14px; }
+.qr-scope-row { display:flex; align-items:stretch; min-width:0; }
+.qr-scope-row .cp-material-tabs { flex:1; min-width:0; margin:0; }
+#ops-shell .ops-quick-reply-page .cp-material-tabs button { min-height:44px; font-size:16px; }
+#ops-shell .qr-material-new { flex:0 0 auto; min-height:44px; padding:0 10px; border:0; border-bottom:1px solid #e5edf4; background:#fff; color:#0365bf; font-size:14px; cursor:pointer; }
+#ops-shell .qr-material-new:focus-visible { outline:2px solid #0365bf; outline-offset:-2px; }
+.qr-material-editor .ops-form-card-body { display:grid; gap:20px; padding:0; }
+.qr-navigation-hint,.qr-send-status { margin:8px 12px 0; padding:8px 12px; border-radius:6px; color:#315c83; background:#eef7ff; font-size:14px; }
+#ops-shell .ops-quick-reply-page .ops-material-type-tabs button { min-height:44px; font-size:14px; }
+.ops-quick-reply-page .ops-material-search-row { display:grid; grid-template-columns:minmax(0,1fr) 116px; }
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell { width:100%; }
+.ops-quick-reply-page .ops-material-search-row .ui-select { width:116px; min-width:0; }
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger { min-height:44px; }
+.ops-quick-reply-page a:focus-visible { outline:2px solid #0365bf; outline-offset:-2px; }
+@container (max-width:360px) {
+  #ops-shell .qr-material-new { padding-inline:6px; }
+  .ops-quick-reply-page .ops-material-search-row { padding-inline:8px; gap:6px; grid-template-columns:minmax(0,1fr) 104px; }
+  .ops-quick-reply-page .ops-material-search-row .ui-select { width:104px; }
+}
+
+@media (max-width:600px) {
+  .qr-content { padding-bottom:max(20px,env(safe-area-inset-bottom)); }
+  .ops-quick-reply-page .ops-material-type-tabs { flex-wrap:nowrap; overflow-x:auto; margin-inline:10px; padding-bottom:4px; scrollbar-width:none; }
+  .ops-quick-reply-page .ops-material-type-tabs::-webkit-scrollbar { display:none; }
+  #ops-shell .ops-quick-reply-page .ops-material-type-tabs button { flex:0 0 auto; min-height:40px; padding-inline:12px; border-radius:999px; }
+  .ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr); gap:8px; padding-inline:10px; }
+  .ops-quick-reply-page .ops-material-search-row .ui-select { width:100%; }
+  .ops-quick-reply-page .ops-chat-workbench .ops-material-snippet { width:calc(100% - 20px); margin:8px 10px; border:1px solid #e5edf4; border-radius:12px; box-shadow:0 2px 8px #173c610d; }
+}
+
+/* Reconcile the live page with the selected visual target. The scope row is a
+   navigation segment; the create action is the single primary action. */
+.ops-quick-reply-page.ops-chat-workbench > .qr-content { padding-inline:10px; }
+.ops-quick-reply-page.ops-chat-workbench .qr-scope-row { margin-inline:-10px; padding:0 12px; align-items:center; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs { gap:0; padding:0; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { position:relative; min-height:52px; padding:0 14px; border:0; border-radius:0; background:transparent; color:#526d87; font-weight:400; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button.is-active { border:0; background:transparent; color:#0365bf; font-weight:600; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button.is-active::after { content:""; position:absolute; right:14px; bottom:0; left:14px; height:3px; border-radius:3px 3px 0 0; background:#0365bf; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { min-height:40px; margin:6px 0 6px 10px; padding-inline:14px; border:1px solid #0365bf; border-radius:999px; background:#0365bf; color:#fff; font-weight:600; box-shadow:0 5px 12px rgba(3,101,191,.18); }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new:hover,
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new:focus-visible { background:#0256a5; color:#fff; }
+
+/* Keep the type rail a real horizontal touch scroller even when the host viewport
+   is wider than the device preview. The right fade communicates that more types exist. */
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs { flex-wrap:nowrap; overflow-x:auto; overflow-y:hidden; touch-action:pan-x; overscroll-behavior-x:contain; -webkit-overflow-scrolling:touch; scrollbar-width:none; position:relative; padding:0 42px 6px 0; background:linear-gradient(90deg,transparent 0%,transparent calc(100% - 42px),#f7fbff 100%); }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs::-webkit-scrollbar { display:none; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs.is-dragging { cursor:grabbing; user-select:none; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs.is-dragging button { pointer-events:none; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs::after { content:"›"; position:absolute; top:50%; right:0; z-index:2; display:flex; align-items:center; justify-content:center; width:34px; height:38px; transform:translateY(-50%); border-radius:19px 0 0 19px; background:linear-gradient(90deg,rgba(247,251,255,0),#f7fbff 52%); color:#7b98b2; font-size:22px; line-height:1; pointer-events:none; transition:opacity .16s ease; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs.is-at-end::after { opacity:0; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs button { flex:0 0 auto; }
+
+/* Cards sit inside the light canvas instead of touching the viewport edge. */
+.ops-quick-reply-page.ops-chat-workbench .ops-material-snippet { box-sizing:border-box; }
+
+@container (max-width:600px) {
+  .ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs { margin-inline:0; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { min-height:52px; padding-inline:12px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { margin-left:8px; padding-inline:12px; }
+}
+
+/* Product Design unified clinical workspace polish: light blue canvas, capsule filters,
+   readable cards and layered mobile sheets. Interaction semantics stay unchanged. */
+.ops-quick-reply-page { background:#f7fbff; }
+.qr-content { max-width:760px; }
+.qr-page-navigation { background:rgba(255,255,255,.96); box-shadow:0 1px 0 #e5edf4; backdrop-filter:blur(10px); }
+.qr-page-navigation strong { color:#173c61; font-weight:600; }
+.qr-scope-row { padding:0 12px; border-bottom:1px solid #e5edf4; background:#fff; }
+#ops-shell .ops-quick-reply-page .cp-material-tabs { gap:6px; padding:7px 0; }
+#ops-shell .ops-quick-reply-page .cp-material-tabs button { min-height:40px; padding:0 14px; border:1px solid transparent; border-radius:999px; color:#526d87; }
+#ops-shell .ops-quick-reply-page .cp-material-tabs button.is-active { border-color:#b7d8f3; background:#eaf5ff; color:#0365bf; font-weight:600; }
+#ops-shell .qr-material-new { min-height:40px; align-self:center; margin:7px 0 7px 8px; padding-inline:14px; border:1px solid #cfe2f4; border-radius:999px; background:#eef7ff; color:#0365bf; font-weight:500; }
+.ops-material-browser { margin-top:10px; }
+.ops-quick-reply-page .ops-material-search-row { gap:10px; padding:0 12px; }
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+.ops-quick-reply-page .ops-material-search-row select,
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger { border-radius:10px; border-color:#c9dbea; background:#fff; }
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell { box-shadow:0 2px 8px rgba(23,60,97,.04); }
+.ops-quick-reply-page .ops-material-type-tabs { gap:8px; margin:10px 12px 8px; }
+#ops-shell .ops-quick-reply-page .ops-material-type-tabs button { min-height:44px; padding:7px 14px; border-color:#d8e4ee; border-radius:999px; background:#fff; color:#526d87; }
+#ops-shell .ops-quick-reply-page .ops-material-type-tabs button.is-active { border-color:#0365bf; background:#0365bf; color:#fff; box-shadow:0 4px 10px rgba(3,101,191,.16); }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-snippet { width:100%; min-height:96px; margin:10px 0; padding:14px; border:1px solid #e0eaf3; border-radius:14px; background:#fff; box-shadow:0 4px 14px rgba(23,60,97,.06); }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-snippet:hover,
+.ops-quick-reply-page.ops-chat-workbench .ops-material-snippet:focus-within { border-color:#a9cbe8; background:#fff; box-shadow:0 7px 18px rgba(23,60,97,.1); transform:translateY(-1px); }
+.ops-quick-reply-page .ops-material-snippet-title strong { color:#173c61; }
+.ops-quick-reply-page .ops-material-snippet-summary { color:#607b95; }
+
+#ops-shell .ops-modal:has(.qr-material-editor),
+#ops-shell .ops-modal:has(.ops-material-preview) { overflow:hidden; border-radius:18px; box-shadow:0 22px 56px rgba(15,47,79,.24); }
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header,
+#ops-shell .ops-modal:has(.ops-material-preview) .ops-modal-header { min-height:60px; padding-inline:20px; background:#fff; }
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header h2,
+#ops-shell .ops-modal:has(.ops-material-preview) .ops-modal-header h2 { color:#173c61; font-size:18px; font-weight:600; }
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer,
+#ops-shell .ops-modal:has(.ops-material-preview) .ops-modal-footer { min-height:72px; padding:12px 20px max(12px,env(safe-area-inset-bottom)); background:#fff; }
+#ops-shell .qr-material-editor .ops-material-types { gap:10px; }
+#ops-shell .qr-material-editor .ops-material-type { min-height:78px; border-radius:12px; border-color:#d7e3ee; background:#fff; color:#244e73; }
+#ops-shell .qr-material-editor .ops-material-type.is-active { border-color:#0365bf; background:#eef7ff; box-shadow:0 0 0 2px rgba(3,101,191,.1); color:#0365bf; }
+#ops-shell .ops-modal-parent-layer .ops-modal { opacity:.64; filter:saturate(.88); }
+
+/* Standalone quick replies follows the workbench design: the page title and
+   browser fallback hint are removed, while the four workbench destinations
+   stay visible as the primary navigation. */
+.ops-quick-reply-page .qr-workbench-tabs { position:sticky; top:0; z-index:6; display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); min-height:52px; border-bottom:1px solid #e5edf4; background:rgba(255,255,255,.98); box-shadow:0 1px 0 rgba(23,60,97,.03); }
+.ops-quick-reply-page .qr-workbench-tabs button { position:relative; min-width:0; min-height:52px; padding:0 6px; border:0; background:transparent; color:#526d87; font-size:14px; font-weight:400; white-space:nowrap; }
+.ops-quick-reply-page .qr-workbench-tabs button.is-active { color:#0365bf; font-weight:600; }
+.ops-quick-reply-page .qr-workbench-tabs button.is-active::after { position:absolute; right:18%; bottom:-1px; left:18%; height:3px; border-radius:3px 3px 0 0; background:#0365bf; content:""; }
+.ops-quick-reply-page .qr-workbench-tabs button:focus-visible { outline:2px solid #0365bf; outline-offset:-3px; }
+
+html.ops-quick-replies-standalone .ops-quick-reply-page .qr-page-navigation,
+html.ops-quick-replies-standalone .ops-quick-reply-page .qr-navigation-hint { display:none; }
+
+/* Match the supplied 556px reference board: generous touch targets, a single
+   search row and 20px content gutters. */
+.ops-quick-reply-page.ops-chat-workbench > .qr-content { padding-inline:20px; }
+.ops-quick-reply-page.ops-chat-workbench .qr-scope-row { margin-inline:-20px; padding-inline:20px; min-height:78px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { min-height:78px; padding-inline:18px; font-size:20px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button.is-active::after { right:20px; left:20px; height:4px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { min-height:44px; margin:10px 0 10px 12px; padding-inline:16px; font-size:16px; }
+.ops-quick-reply-page .ops-material-browser { margin-top:20px; }
+.ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr) 172px; gap:12px; padding:0; }
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+.ops-quick-reply-page .ops-material-search-row .ui-select,
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger { min-height:64px; }
+.ops-quick-reply-page .ops-material-search-row .ui-select { width:172px; }
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger { width:100%; padding-inline:14px; border-radius:14px; font-size:18px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell { min-height:64px; padding-inline:16px; border-radius:14px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell input { height:62px; font-size:18px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs { gap:10px; margin:18px 0 16px; padding-bottom:0; }
+#ops-shell .ops-quick-reply-page .ops-material-type-tabs button { min-height:44px; padding:6px 14px; border-radius:999px; font-size:14px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-snippet { min-height:145px; margin:0 0 18px; padding:20px; border-radius:14px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-open { min-height:64px; gap:20px; font-size:18px; }
+.ops-quick-reply-page .ops-material-visual { flex-basis:64px; width:64px; height:64px; border-radius:12px; }
+.ops-quick-reply-page .ops-material-visual svg { width:34px; height:34px; }
+.ops-quick-reply-page .ops-material-row-copy { gap:5px; }
+.ops-quick-reply-page .ops-material-row-title,
+.ops-quick-reply-page .ops-material-text { font-size:18px; }
+.ops-quick-reply-page .ops-material-row-meta { font-size:16px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-actions { margin-top:4px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-actions .ops-link { min-height:44px; font-size:16px; }
+.ops-quick-reply-page .ops-workbench-search .ops-icon { width:24px; font-size:24px; }
+.ops-quick-reply-page .ops-material-search-row .ui-select-value { max-width:calc(100% - 26px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+@media (max-width:600px) {
+  .qr-scope-row { padding-inline:10px; }
+  #ops-shell .ops-quick-reply-page .cp-material-tabs button { min-height:44px; padding-inline:12px; }
+  #ops-shell .qr-material-new { margin-left:5px; padding-inline:12px; }
+  .ops-quick-reply-page.ops-chat-workbench .ops-material-snippet { width:100%; margin:8px 0; }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header,
+  #ops-shell .ops-modal:has(.ops-material-preview) .ops-modal-header { padding-inline:16px; }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer,
+  #ops-shell .ops-modal:has(.ops-material-preview) .ops-modal-footer { min-height:76px; padding-inline:16px; }
+  .ops-modal-backdrop:has(.qr-material-editor), .ops-modal-backdrop:has(.ops-material-preview) { backdrop-filter:blur(2px); background:rgba(15,47,79,.28); }
+  .ops-quick-reply-page .qr-workbench-tabs button { font-size:13px; }
+}
+
+@media (max-width:420px) {
+  .ops-quick-reply-page.ops-chat-workbench > .qr-content { padding-inline:12px; }
+  .ops-quick-reply-page.ops-chat-workbench .qr-scope-row { margin-inline:-12px; padding-inline:12px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { min-height:64px; padding-inline:10px; font-size:16px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { margin-left:8px; padding-inline:12px; font-size:14px; }
+  .ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr); gap:10px; }
+  .ops-quick-reply-page .ops-material-search-row .ui-select { width:100%; }
+  .ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs { margin-top:14px; }
+  .ops-quick-reply-page.ops-chat-workbench .ops-material-snippet { min-height:128px; padding:14px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-open { gap:12px; }
+  .ops-quick-reply-page .ops-material-visual { flex-basis:52px; width:52px; height:52px; }
+  .ops-quick-reply-page .ops-material-row-title,
+  .ops-quick-reply-page .ops-material-text { font-size:16px; }
+}
+
+/* Final mobile-board overrides sit after the legacy 600px rules so the
+   reference layout remains side-by-side at the 556px design width. */
+.ops-quick-reply-page .qr-workbench-tabs,
+.ops-quick-reply-page .qr-workbench-tabs button { min-height:64px; }
+.ops-quick-reply-page .qr-workbench-tabs button { font-size:16px; }
+.ops-quick-reply-page.ops-chat-workbench > .qr-content { padding-inline:20px; }
+.ops-quick-reply-page.ops-chat-workbench .qr-scope-row { margin-inline:-20px; padding-inline:20px; min-height:64px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs { padding:0; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { min-height:64px; padding-inline:18px; font-size:18px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button.is-active::after { right:20px; left:20px; height:4px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { min-height:44px; margin:10px 0 10px 12px; padding-inline:16px; font-size:16px; }
+.ops-quick-reply-page .ops-material-browser { margin-top:20px; }
+.ops-quick-reply-page .ops-material-search-row { gap:12px; padding:0; }
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+.ops-quick-reply-page .ops-material-search-row .ui-select,
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger { min-height:64px; }
+.ops-quick-reply-page .ops-material-search-row .ui-select { width:172px; }
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger { width:100%; padding-inline:14px; border-radius:14px; font-size:18px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell { min-height:64px; padding-inline:16px; border-radius:14px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell input { height:62px; font-size:18px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs { gap:10px; margin:18px 0 16px; padding-bottom:0; }
+#ops-shell .ops-quick-reply-page .ops-material-type-tabs button { min-height:44px; padding:6px 14px; border-radius:999px; font-size:14px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-snippet { min-height:145px; margin:0 0 18px; padding:20px; border-radius:14px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-open { min-height:64px; gap:20px; font-size:18px; }
+.ops-quick-reply-page .ops-material-visual { flex-basis:64px; width:64px; height:64px; border-radius:12px; }
+.ops-quick-reply-page .ops-material-visual svg { width:34px; height:34px; }
+.ops-quick-reply-page .ops-material-row-copy { gap:5px; }
+.ops-quick-reply-page .ops-material-row-title,
+.ops-quick-reply-page .ops-material-text { font-size:18px; }
+.ops-quick-reply-page .ops-material-row-meta { font-size:16px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-actions { margin-top:4px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-actions .ops-link { min-height:44px; font-size:16px; }
+
+@media (max-width:420px) {
+  .ops-quick-reply-page.ops-chat-workbench > .qr-content { padding-inline:12px; }
+  .ops-quick-reply-page.ops-chat-workbench .qr-scope-row { margin-inline:-12px; padding-inline:12px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { min-height:64px; padding-inline:10px; font-size:16px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { margin-left:8px; padding-inline:12px; font-size:14px; }
+  .ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr); gap:10px; }
+  .ops-quick-reply-page .ops-material-search-row .ui-select { width:100%; }
+  .ops-quick-reply-page.ops-chat-workbench .ops-material-snippet { min-height:128px; padding:14px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-open { gap:12px; }
+  .ops-quick-reply-page .ops-material-visual { flex-basis:52px; width:52px; height:52px; }
+  .ops-quick-reply-page .ops-material-row-title,
+  .ops-quick-reply-page .ops-material-text { font-size:16px; }
+}
+
+/* Wide reference breakpoint: stack the filters into full-width fields. */
+@media (min-width:700px) {
+  .ops-quick-reply-page .ops-material-search-row {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr);
+    gap:20px;
+  }
+  .ops-quick-reply-page .ops-material-search-row .ui-select {
+    width:100%;
+  }
+  #ops-shell .ops-quick-reply-page .ops-material-search-row > select {
+    width:100%;
+    min-width:0;
+    height:0;
+    flex:0 0 auto;
+  }
+  .ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+  .ops-quick-reply-page .ops-material-search-row .ui-select,
+  .ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+    min-height:88px;
+  }
+  #ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell input {
+    height:86px;
+    font-size:28px;
+  }
+  .ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+    padding-inline:18px;
+    font-size:28px;
+  }
+  .ops-quick-reply-page .ops-workbench-search .ops-icon {
+    width:32px;
+    font-size:32px;
+  }
+  .ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs {
+    gap:16px;
+    margin-top:20px;
+  }
+  #ops-shell .ops-quick-reply-page .ops-material-type-tabs button {
+    min-height:88px;
+    padding-inline:28px;
+    font-size:26px;
+  }
+}
+
+/* Embedded WeCom sidebar: the host gives this page roughly 320px of content
+   width. Keep the same visual hierarchy as the full page, but prevent the
+   scope labels from wrapping and preserve the stacked filter fields. */
+@container (max-width:420px) {
+  .ops-quick-reply-page.is-embedded > .qr-content { padding-inline:12px; }
+  .ops-quick-reply-page.is-embedded .qr-scope-row {
+    margin-inline:-12px;
+    padding-inline:12px;
+    min-height:64px;
+  }
+  #ops-shell .ops-quick-reply-page.is-embedded .cp-material-tabs { gap:0; }
+  #ops-shell .ops-quick-reply-page.is-embedded .cp-material-tabs button {
+    min-height:64px;
+    padding-inline:8px;
+    font-size:16px;
+    white-space:nowrap;
+  }
+  #ops-shell .ops-quick-reply-page.is-embedded .qr-material-new {
+    min-height:44px;
+    margin:10px 0 10px 8px;
+    padding-inline:12px;
+    font-size:14px;
+    white-space:nowrap;
+  }
+  .ops-quick-reply-page.is-embedded .ops-material-browser { margin-top:12px; }
+  .ops-quick-reply-page.is-embedded .ops-material-search-row {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr);
+    gap:10px;
+  }
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select { width:100%; }
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ops-search-shell,
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select,
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select-trigger { min-height:64px; }
+  #ops-shell .ops-quick-reply-page.is-embedded .ops-material-search-row .ops-search-shell input { height:62px; font-size:18px; }
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select-trigger { font-size:16px; }
+  .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-type-tabs { margin:12px 0 12px; gap:8px; }
+  #ops-shell .ops-quick-reply-page.is-embedded .ops-material-type-tabs button { min-height:44px; padding:6px 14px; font-size:14px; }
+  .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-snippet { min-height:128px; margin-bottom:12px; padding:14px; border-radius:12px; }
+  #ops-shell .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-open { gap:12px; font-size:16px; }
+  .ops-quick-reply-page.is-embedded .ops-material-visual { flex-basis:52px; width:52px; height:52px; }
+  .ops-quick-reply-page.is-embedded .ops-material-row-title,
+  .ops-quick-reply-page.is-embedded .ops-material-text { font-size:16px; }
+  #ops-shell .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-actions .ops-link { min-height:40px; font-size:14px; }
+}
+
+/* Mobile group creation stays inside the material sheet. It avoids stacking a
+   second dialog and keeps the selected group visible before the user saves. */
+.qr-inline-group-picker {
+  display:grid;
+  gap:10px;
+  margin-top:10px;
+  padding:12px;
+  border:1px solid #cfe0ef;
+  border-radius:12px;
+  background:#f7fbff;
+}
+.qr-inline-group-picker-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  color:var(--qr-ink);
+  font-size:14px;
+}
+.qr-inline-group-picker-head .ops-link { min-height:32px; padding:4px 8px; }
+.qr-inline-group-options {
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+  max-height:148px;
+  overflow:auto;
+  overscroll-behavior:contain;
+}
+.qr-inline-group-option {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  min-height:42px;
+  padding:8px 10px;
+  border:1px solid #cfe0ef;
+  border-radius:9px;
+  background:#fff;
+  color:var(--qr-ink);
+  text-align:left;
+}
+.qr-inline-group-option.is-selected {
+  border-color:var(--qr-blue);
+  background:#eaf5ff;
+  color:var(--qr-blue);
+  box-shadow:0 0 0 2px rgba(3,101,191,.1);
+}
+.qr-inline-group-option b { font-size:16px; }
+.qr-inline-group-new {
+  min-height:42px;
+  border:1px dashed #8bbbe4;
+  border-radius:9px;
+  background:#fff;
+  color:var(--qr-blue);
+  font-weight:600;
+}
+.qr-inline-group-create {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto auto;
+  gap:8px;
+  align-items:center;
+}
+.qr-inline-group-create input {
+  width:100%;
+  min-height:42px;
+  padding:8px 10px;
+  border:1px solid var(--qr-blue);
+  border-radius:9px;
+  background:#fff;
+  box-shadow:0 0 0 2px rgba(3,101,191,.1);
+}
+.qr-inline-group-create .ops-button { min-height:42px; padding-inline:12px; }
+.qr-inline-group-empty { padding:8px 2px; color:var(--qr-muted); font-size:13px; }
+@media (max-width:380px) {
+  .qr-inline-group-create { grid-template-columns:1fr 1fr; }
+  .qr-inline-group-create input { grid-column:1 / -1; }
+}
+
+/* Final mobile alignment: the search field and group filter are one control
+   row, and every quick-reply tab uses the same compact type scale. */
+.ops-quick-reply-page .qr-workbench-tabs,
+.ops-quick-reply-page .qr-workbench-tabs button { min-height:52px; }
+.ops-quick-reply-page .qr-workbench-tabs button { font-size:14px; line-height:1.2; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button {
+  min-height:52px;
+  padding-inline:12px;
+  font-size:14px;
+  line-height:1.2;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new {
+  min-height:40px;
+  margin-block:6px;
+  padding-inline:12px;
+  font-size:14px;
+}
+.ops-quick-reply-page .ops-material-search-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 136px;
+  align-items:stretch;
+  gap:8px;
+  padding:0;
+}
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+.ops-quick-reply-page .ops-material-search-row .ui-select,
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+  width:100%;
+  min-height:48px;
+  height:48px;
+  border-radius:10px;
+}
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell { padding-inline:12px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell input {
+  height:46px;
+  font-size:14px;
+}
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+  padding-inline:12px;
+  font-size:14px;
+}
+@media(max-width:380px) {
+  .ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr) 120px; }
+  .ops-quick-reply-page .ops-material-search-row .ui-select { width:120px; }
+}
+
+/* Final contract, kept at EOF so older board-specific rules cannot reopen the
+   filter into two stacked rows or enlarge the workbench tabs. */
+.ops-quick-reply-page .qr-workbench-tabs,
+.ops-quick-reply-page .qr-workbench-tabs button { min-height:52px !important; }
+.ops-quick-reply-page .qr-workbench-tabs button { font-size:14px !important; line-height:1.2; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button {
+  min-height:52px !important;
+  padding-inline:12px !important;
+  font-size:14px !important;
+  line-height:1.2;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new {
+  min-height:40px !important;
+  margin-block:6px !important;
+  padding-inline:12px !important;
+  font-size:14px !important;
+}
+.ops-quick-reply-page .ops-material-search-row {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 136px !important;
+  align-items:stretch;
+  gap:8px !important;
+  padding:0 !important;
+}
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+.ops-quick-reply-page .ops-material-search-row .ui-select,
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+  width:100% !important;
+  min-width:0;
+  min-height:48px !important;
+  height:48px !important;
+  border-radius:10px;
+}
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell { padding-inline:12px !important; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell input {
+  height:46px !important;
+  font-size:14px !important;
+}
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+  padding-inline:12px !important;
+  font-size:14px !important;
+}
+@media(max-width:380px) {
+  .ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr) 120px !important; }
+  .ops-quick-reply-page .ops-material-search-row .ui-select { width:120px !important; }
+}
+
+/* The embedded workbench uses the 556px design board as its desktop width.
+   Use component width (rather than viewport width) for its two-column filter
+   row so a wide browser cannot accidentally apply the standalone inspection
+   layout to the sidebar. */
+.ops-chat-workbench > .ops-workbench-tabs,
+.ops-chat-workbench > .ops-workbench-tabs button { min-height:64px; }
+.ops-chat-workbench > .ops-workbench-tabs button { font-size:16px; }
+
+@container (min-width:400px) {
+  .ops-quick-reply-page.is-embedded .ops-material-search-row {
+    display:grid !important;
+    grid-template-columns:minmax(0,1fr) 172px;
+    gap:12px;
+  }
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select { width:172px; }
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ops-search-shell,
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select,
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select-trigger { min-height:64px; }
+  #ops-shell .ops-quick-reply-page.is-embedded .ops-material-search-row .ops-search-shell input { height:62px; font-size:18px; }
+  #ops-shell .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select-trigger {
+    width:100%;
+    padding-inline:14px;
+    border-radius:14px;
+    font-size:18px;
+  }
+  .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-type-tabs { gap:8px; margin:12px 0 12px; }
+  #ops-shell .ops-quick-reply-page.is-embedded .ops-material-type-tabs button { min-height:44px; padding:6px 14px; font-size:14px; }
+  .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-snippet { min-height:145px; margin:0 0 18px; padding:20px; border-radius:14px; }
+  #ops-shell .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-open { min-height:64px; gap:20px; font-size:18px; }
+  .ops-quick-reply-page.is-embedded .ops-material-visual { flex-basis:64px; width:64px; height:64px; border-radius:12px; }
+  .ops-quick-reply-page.is-embedded .ops-material-visual svg { width:34px; height:34px; }
+  .ops-quick-reply-page.is-embedded .ops-material-row-title,
+  .ops-quick-reply-page.is-embedded .ops-material-text { font-size:18px; }
+  .ops-quick-reply-page.is-embedded .ops-material-row-meta { font-size:16px; }
+  #ops-shell .ops-quick-reply-page.is-embedded.ops-chat-workbench .ops-material-actions .ops-link { min-height:44px; font-size:16px; }
+}
+
+/* Compact the embedded rail and keep the overflow cue outside the last pill.
+   The cue is a sibling overlay so it never reads as part of a material button. */
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs-wrap {
+  position:relative;
+  min-width:0;
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs::after { display:none; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-scroll-cue {
+  position:absolute;
+  top:50%;
+  right:0;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:28px;
+  height:28px;
+  transform:translateY(-50%);
+  border:1px solid #cfe2f4;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 7px rgba(23,60,97,.12);
+  color:#7b98b2;
+  font-size:21px;
+  line-height:1;
+  pointer-events:none;
+  transition:opacity .16s ease;
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs.is-at-end + .ops-material-type-scroll-cue { opacity:0; }
+
+/* The side panel has a tight vertical rhythm; these values override the older
+   wide-board defaults above without changing the touch/drag behavior. */
+.ops-quick-reply-page .qr-workbench-tabs,
+.ops-quick-reply-page .qr-workbench-tabs button { min-height:48px; }
+.ops-quick-reply-page .qr-workbench-tabs button { font-size:14px; }
+.ops-quick-reply-page.ops-chat-workbench .qr-scope-row { min-height:56px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { min-height:56px; padding-inline:14px; font-size:16px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { min-height:38px; margin:8px 0 8px 10px; padding-inline:12px; font-size:14px; }
+.ops-quick-reply-page .ops-material-browser { margin-top:8px; }
+.ops-quick-reply-page .ops-material-search-row { gap:8px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ui-select,
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ui-select-trigger { min-height:56px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell { padding-inline:12px; border-radius:10px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell input { height:54px; font-size:16px; }
+.ops-quick-reply-page .ops-material-search-row .ui-select { width:150px; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ui-select-trigger { padding-inline:12px; border-radius:10px; font-size:16px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs { gap:8px; margin:10px 0 8px; padding-bottom:0; }
+#ops-shell .ops-quick-reply-page .ops-material-type-tabs button { min-height:44px; padding:5px 12px; font-size:14px; }
+
+@container (max-width:420px) {
+  .ops-quick-reply-page.is-embedded.ops-chat-workbench .qr-scope-row { min-height:52px; }
+  #ops-shell .ops-quick-reply-page.is-embedded .cp-material-tabs button { min-height:52px; padding-inline:8px; font-size:15px; }
+  #ops-shell .ops-quick-reply-page.is-embedded .qr-material-new { min-height:36px; margin:7px 0 7px 8px; padding-inline:10px; font-size:13px; }
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ops-search-shell,
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select,
+  .ops-quick-reply-page.is-embedded .ops-material-search-row .ui-select-trigger { min-height:48px; }
+  #ops-shell .ops-quick-reply-page.is-embedded .ops-material-search-row .ops-search-shell input { height:46px; font-size:16px; }
+}
+
+/* v1 quick-reply/materials board: mobile-first component contract. The
+   existing renderer and data-action hooks remain unchanged; this layer only
+   establishes the visual tokens and touch geometry shown in the design board. */
+.ops-quick-reply-page.ops-chat-workbench {
+  --qr-blue:#0365bf;
+  --qr-ink:#173c61;
+  --qr-muted:#607b95;
+  --qr-border:#cfe0ef;
+  --qr-canvas:#f5f9fd;
+  background:var(--qr-canvas);
+  color:var(--qr-ink);
+}
+.ops-quick-reply-page.ops-chat-workbench > .qr-content {
+  max-width:560px;
+  padding-inline:16px;
+}
+.ops-quick-reply-page.ops-chat-workbench .qr-scope-row {
+  min-height:58px;
+  margin-inline:-16px;
+  padding-inline:16px;
+  border-bottom:1px solid #e2edf6;
+  background:#fff;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs {
+  min-width:0;
+  overflow-x:auto;
+  scrollbar-width:none;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs::-webkit-scrollbar { display:none; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button {
+  min-height:58px;
+  padding-inline:14px;
+  border-radius:0;
+  color:#526d87;
+  font-size:15px;
+  white-space:nowrap;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button.is-active {
+  color:var(--qr-blue);
+  background:#fff;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button.is-active::after {
+  right:14px;
+  bottom:0;
+  left:14px;
+  height:3px;
+  background:var(--qr-blue);
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new {
+  min-height:40px;
+  margin:9px 0 9px 10px;
+  padding-inline:13px;
+  border:0;
+  border-radius:20px;
+  background:var(--qr-blue);
+  color:#fff;
+  font-size:14px;
+  font-weight:600;
+  box-shadow:0 5px 12px rgba(3,101,191,.18);
+  white-space:nowrap;
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-browser { margin-top:14px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-search-row {
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:10px;
+  padding:0;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row .ops-search-shell,
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row select {
+  box-sizing:border-box;
+  width:100%;
+  min-height:52px;
+  border:1px solid var(--qr-border);
+  border-radius:12px;
+  background:#fff;
+  color:var(--qr-ink);
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row .ops-search-shell {
+  display:flex;
+  align-items:center;
+  padding-inline:14px;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row .ops-search-shell input {
+  width:100%;
+  height:50px;
+  font-size:16px;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-search-row select {
+  padding:0 38px 0 14px;
+  font-size:16px;
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs {
+  margin:12px 0 14px;
+  padding-bottom:2px;
+  gap:8px;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs button {
+  min-height:42px;
+  padding:0 14px;
+  border:1px solid var(--qr-border);
+  border-radius:21px;
+  background:#fff;
+  color:#526d87;
+  font-size:14px;
+  white-space:nowrap;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-type-tabs button.is-active {
+  border-color:var(--qr-blue);
+  background:var(--qr-blue);
+  color:#fff;
+  box-shadow:0 4px 10px rgba(3,101,191,.16);
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-snippet {
+  min-height:128px;
+  margin:0 0 12px;
+  padding:14px;
+  border:1px solid #dce8f2;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 4px 14px rgba(23,60,97,.06);
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-open {
+  min-height:64px;
+  gap:12px;
+  color:var(--qr-ink);
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-visual {
+  flex-basis:52px;
+  width:52px;
+  height:52px;
+  border-radius:12px;
+  background:#edf5ff;
+  color:var(--qr-blue);
+}
+.ops-quick-reply-page.ops-chat-workbench .ops-material-visual svg { width:28px; height:28px; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-row-title,
+.ops-quick-reply-page.ops-chat-workbench .ops-material-text { color:var(--qr-ink); font-size:16px; line-height:1.5; }
+.ops-quick-reply-page.ops-chat-workbench .ops-material-row-meta { color:var(--qr-muted); font-size:14px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-actions { margin-top:4px; padding-left:64px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-actions .ops-link {
+  min-height:40px;
+  padding-inline:12px;
+  color:var(--qr-blue);
+  font-size:14px;
+}
+
+#ops-shell .ops-modal:has(.qr-material-editor) {
+  width:min(560px,calc(100vw - 24px));
+  max-height:min(820px,calc(100dvh - 24px));
+  overflow:hidden;
+  border:1px solid #d8e6f2;
+  border-radius:18px;
+  box-shadow:0 22px 56px rgba(15,47,79,.24);
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header {
+  min-height:68px;
+  padding:0 20px;
+  background:#f4f9ff;
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header h2 { color:var(--qr-ink); font-size:21px; }
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-body { padding:18px 20px; }
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer {
+  min-height:68px;
+  padding:10px 20px max(10px,env(safe-area-inset-bottom));
+  background:#fff;
+}
+.qr-material-editor .ops-form-card-body { gap:18px; padding:0; }
+.qr-material-editor .ops-material-create-grid { display:grid; grid-template-columns:1fr; gap:16px; }
+.qr-material-editor .ops-field-label { color:#315d82; font-weight:600; }
+.qr-material-editor .ops-field input,
+.qr-material-editor .ops-field select,
+.qr-material-editor .ops-field textarea,
+.qr-material-editor .ops-material-group-choice select {
+  min-height:48px;
+  border-color:var(--qr-border);
+  border-radius:10px;
+  background:#fff;
+  color:var(--qr-ink);
+}
+.qr-material-editor .ops-choice-row { min-height:44px; gap:22px; }
+.qr-material-editor .ops-choice-row label { color:var(--qr-ink); }
+.qr-material-editor .ops-material-types {
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+#ops-shell .qr-material-editor .ops-material-type {
+  min-width:0;
+  min-height:76px;
+  padding:8px 4px;
+  border:1px solid var(--qr-border);
+  border-radius:12px;
+  background:#fff;
+  color:#244e73;
+}
+#ops-shell .qr-material-editor .ops-material-type.is-active {
+  border-color:var(--qr-blue);
+  background:#eef7ff;
+  color:var(--qr-blue);
+  box-shadow:0 0 0 2px rgba(3,101,191,.1);
+}
+.qr-material-editor .ops-material-group-choice { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:8px; }
+.qr-material-editor .ops-material-group-choice .ops-button { min-height:48px; border-color:var(--qr-border); color:var(--qr-ink); }
+
+@media (max-width:760px) {
+  #ops-shell .ops-modal:has(.qr-material-editor) {
+    width:100%;
+    max-width:none;
+    height:min(820px,calc(100dvh - 12px));
+    max-height:calc(100dvh - 12px);
+    border-radius:18px 18px 0 0;
+  }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header { min-height:62px; padding-inline:16px; }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-body { padding:16px; }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer { padding-inline:16px; }
+}
+
+@container (max-width:420px) {
+  .ops-quick-reply-page.ops-chat-workbench > .qr-content { padding-inline:12px; }
+  .ops-quick-reply-page.ops-chat-workbench .qr-scope-row { margin-inline:-12px; padding-inline:12px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button { padding-inline:10px; font-size:14px; }
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new { margin-left:8px; padding-inline:10px; font-size:13px; }
+  .qr-material-editor .ops-material-types { gap:8px; }
+  #ops-shell .qr-material-editor .ops-material-type { min-height:70px; font-size:13px; }
+}
+
+/* Final EOF contract: compact tabs and a single aligned search/filter row. */
+.ops-quick-reply-page .qr-workbench-tabs,
+.ops-quick-reply-page .qr-workbench-tabs button { min-height:52px !important; }
+.ops-quick-reply-page .qr-workbench-tabs button { font-size:14px !important; line-height:1.2; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs button {
+  min-height:52px !important;
+  padding-inline:12px !important;
+  font-size:14px !important;
+  line-height:1.2;
+}
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-material-new {
+  min-height:40px !important;
+  margin-block:6px !important;
+  padding-inline:12px !important;
+  font-size:14px !important;
+}
+.ops-quick-reply-page .ops-material-search-row {
+  display:grid !important;
+  grid-template-columns:minmax(0,1fr) 136px !important;
+  align-items:stretch;
+  gap:8px !important;
+  padding:0 !important;
+}
+.ops-quick-reply-page .ops-material-search-row .ops-search-shell,
+.ops-quick-reply-page .ops-material-search-row .ui-select,
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+  width:100% !important;
+  min-width:0;
+  min-height:48px !important;
+  height:48px !important;
+  border-radius:10px;
+}
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell { padding-inline:12px !important; }
+#ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell input {
+  height:46px !important;
+  font-size:14px !important;
+}
+.ops-quick-reply-page .ops-material-search-row .ui-select-trigger {
+  padding-inline:12px !important;
+  font-size:14px !important;
+}
+@media(max-width:380px) {
+  .ops-quick-reply-page .ops-material-search-row { grid-template-columns:minmax(0,1fr) 120px !important; }
+  .ops-quick-reply-page .ops-material-search-row .ui-select { width:120px !important; }
+}
+
+/* Modal geometry fix: the base dialog uses fixed 64/68px grid tracks. The
+   material sheet has a taller header/footer, so let those tracks size to their
+   content instead of letting the first input slide under the header. */
+#ops-shell .ops-modal:has(.qr-material-editor) {
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  max-height:min(820px,calc(100dvh - 24px));
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header {
+  min-height:68px !important;
+  height:auto !important;
+  box-sizing:border-box;
+  flex:none;
+  overflow:visible;
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-body {
+  min-height:0 !important;
+  height:auto !important;
+  overflow:auto !important;
+  box-sizing:border-box;
+  padding:18px 20px !important;
+}
+#ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer {
+  min-height:68px !important;
+  height:auto !important;
+  box-sizing:border-box;
+  flex:none;
+}
+@media(max-width:760px) {
+  #ops-shell .ops-modal:has(.qr-material-editor) {
+    grid-template-rows:auto minmax(0,1fr) auto !important;
+    max-height:calc(100dvh - 12px);
+  }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-header {
+    min-height:62px !important;
+    padding-inline:16px !important;
+  }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-body {
+    padding:16px !important;
+  }
+  #ops-shell .ops-modal:has(.qr-material-editor) .ops-modal-footer {
+    min-height:68px !important;
+    padding-inline:16px !important;
+  }
+}
+
+/* Prototype audio preview: keep the player visible even when the fixture has no media URL. */
+#ops-shell .ops-material-audio-preview {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin:8px 0 16px;
+  padding:16px;
+  border:1px solid #cfe2f4;
+  border-radius:14px;
+  background:#f4f9ff;
+  color:#244e73;
+}
+#ops-shell .ops-material-audio-toggle {
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:#1677ff;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+#ops-shell .ops-material-audio-toggle:focus-visible { outline:2px solid #0365bf; outline-offset:2px; }
+#ops-shell .ops-material-audio-track { min-width:0; }
+#ops-shell .ops-material-audio-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
+#ops-shell .ops-material-audio-meta strong { color:#173c61; font-size:15px; }
+#ops-shell .ops-material-audio-meta span { overflow:hidden; color:#607b95; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+#ops-shell .ops-material-audio-progress { height:5px; margin-top:10px; overflow:hidden; border-radius:999px; background:#dbeaf7; }
+#ops-shell .ops-material-audio-progress span { display:block; width:0; height:100%; border-radius:inherit; background:#1677ff; transition:width .2s linear; }
+#ops-shell .ops-material-audio-preview time { min-width:42px; color:#607b95; font-size:13px; font-variant-numeric:tabular-nums; text-align:right; }
+@media(max-width:560px) {
+  #ops-shell .ops-material-audio-preview { grid-template-columns:44px minmax(0,1fr) auto; gap:10px; padding:12px; }
+  #ops-shell .ops-material-audio-toggle { width:40px; height:40px; }
+  #ops-shell .ops-material-audio-meta { display:grid; gap:2px; }
+}
+
+/* Prototype audio preview: keep a playable state visible even when the fixture has no media URL. */
+#ops-shell .ops-material-audio-preview {
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) auto;
+  align-items:center;
+  gap:12px;
+  margin:8px 0 16px;
+  padding:16px;
+  border:1px solid #cfe2f4;
+  border-radius:14px;
+  background:#f4f9ff;
+  color:#244e73;
+}
+#ops-shell .ops-material-audio-toggle {
+  display:grid;
+  place-items:center;
+  width:44px;
+  height:44px;
+  border:0;
+  border-radius:50%;
+  background:#1677ff;
+  color:#fff;
+  font-size:18px;
+  cursor:pointer;
+}
+#ops-shell .ops-material-audio-toggle:focus-visible { outline:2px solid #0365bf; outline-offset:2px; }
+#ops-shell .ops-material-audio-track { min-width:0; }
+#ops-shell .ops-material-audio-meta { display:flex; align-items:center; justify-content:space-between; gap:8px; min-width:0; }
+#ops-shell .ops-material-audio-meta strong { color:#173c61; font-size:15px; }
+#ops-shell .ops-material-audio-meta span { overflow:hidden; color:#607b95; font-size:13px; text-overflow:ellipsis; white-space:nowrap; }
+#ops-shell .ops-material-audio-progress { height:5px; margin-top:10px; overflow:hidden; border-radius:999px; background:#dbeaf7; }
+#ops-shell .ops-material-audio-progress span { display:block; width:0; height:100%; border-radius:inherit; background:#1677ff; transition:width .2s linear; }
+#ops-shell .ops-material-audio-preview time { min-width:42px; color:#607b95; font-size:13px; font-variant-numeric:tabular-nums; text-align:right; }
+@media(max-width:560px) {
+  #ops-shell .ops-material-audio-preview { grid-template-columns:44px minmax(0,1fr) auto; gap:10px; padding:12px; }
+  #ops-shell .ops-material-audio-toggle { width:40px; height:40px; }
+  #ops-shell .ops-material-audio-meta { display:grid; gap:2px; }
+}
+
+/* Prototype video preview: keep a playable state visible even when the fixture has no media URL. */
+#ops-shell .ops-material-video-preview {
+  display:grid;
+  grid-template-columns:64px minmax(0,1fr) auto;
+  align-items:center;
+  gap:16px;
+  min-height:150px;
+  margin:8px 0 16px;
+  padding:24px;
+  border-radius:16px;
+  background:linear-gradient(135deg,#eaf4ff,#f5faff);
+  color:#244e73;
+}
+#ops-shell .ops-material-video-toggle {
+  display:grid;
+  place-items:center;
+  width:60px;
+  height:60px;
+  border:0;
+  border-radius:50%;
+  background:#1677ff;
+  color:#fff;
+  font-size:25px;
+  cursor:pointer;
+  box-shadow:0 6px 16px rgba(3,101,191,.2);
+}
+#ops-shell .ops-material-video-toggle:focus-visible { outline:2px solid #0365bf; outline-offset:3px; }
+#ops-shell .ops-material-video-meta { display:grid; gap:6px; min-width:0; }
+#ops-shell .ops-material-video-meta strong { color:#173c61; font-size:17px; }
+#ops-shell .ops-material-video-meta > span { overflow:hidden; color:#607b95; font-size:14px; text-overflow:ellipsis; white-space:nowrap; }
+#ops-shell .ops-material-video-progress { height:6px; margin-top:6px; overflow:hidden; border-radius:999px; background:#d6e7f7; }
+#ops-shell .ops-material-video-progress span { display:block; width:0; height:100%; border-radius:inherit; background:#1677ff; transition:width .2s linear; }
+#ops-shell .ops-material-video-preview time { min-width:44px; color:#607b95; font-size:14px; font-variant-numeric:tabular-nums; text-align:right; }
+@media(max-width:560px) {
+  #ops-shell .ops-material-video-preview { grid-template-columns:52px minmax(0,1fr) auto; gap:12px; min-height:128px; padding:18px; }
+  #ops-shell .ops-material-video-toggle { width:50px; height:50px; font-size:21px; }
+}
+
+/* Three source tabs and personal management, shared by desktop and mobile. */
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .cp-material-tabs {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  width:100%;
+}
+.ops-quick-reply-page .qr-create-row { display:flex; justify-content:flex-end; padding-top:8px; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-create-row .qr-material-new { margin-left:0; }
+.ops-quick-reply-page .qr-card-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:4px 8px; margin-top:8px; }
+.ops-quick-reply-page .qr-personal-actions { display:flex; align-items:center; gap:4px; }
+#ops-shell .ops-quick-reply-page .qr-card-footer .ops-material-actions { display:flex; gap:4px; margin:0 0 0 auto; padding:0; }
+#ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-card-footer button.ops-link { display:inline-flex; align-items:center; justify-content:center; gap:4px; min-height:44px; min-width:44px; padding:0 6px; font-size:14px; white-space:nowrap; }
+#ops-shell .ops-quick-reply-page .qr-card-footer .qr-material-delete { color:#a84343; }
+.ops-quick-reply-page .qr-pinned-badge { display:inline-flex; align-items:center; gap:4px; margin-bottom:8px; padding:2px 7px; border-radius:5px; background:#eef7ff; color:#0365bf; font-size:12px; }
+.qr-delete-message { overflow-wrap:anywhere; line-height:1.7; }
+@container (max-width:360px) {
+  #ops-shell .ops-quick-reply-page.ops-chat-workbench .qr-card-footer button.ops-link { padding-inline:4px; font-size:13px; }
+  .ops-quick-reply-page .qr-card-footer { column-gap:4px; }
+}
+
+/* A destructive confirmation is a compact dialog, not a full-height editor sheet. */
+html #ops-shell .ops-modal-backdrop:has(.qr-delete-confirm) {
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  padding:16px !important;
+}
+html #ops-shell .ops-modal.qr-delete-confirm {
+  position:relative !important;
+  inset:auto !important;
+  align-self:center !important;
+  width:min(420px,100%) !important;
+  height:auto !important;
+  min-height:0 !important;
+  max-height:calc(100dvh - 32px) !important;
+  grid-template-rows:auto minmax(0,1fr) auto !important;
+  border-radius:16px !important;
+  overflow:hidden;
+}
+html #ops-shell .qr-delete-confirm .ops-modal-header { height:auto !important; min-height:60px !important; padding:12px 18px !important; }
+html #ops-shell .qr-delete-confirm .ops-modal-header h2 { font-size:18px; }
+html #ops-shell .qr-delete-confirm .ops-modal-body { height:auto !important; min-height:0 !important; padding:16px 18px !important; overflow:auto; }
+html #ops-shell .qr-delete-confirm .ops-modal-body p { margin:0; }
+html #ops-shell .qr-delete-confirm .ops-modal-body .ops-field-hint { margin-top:8px; }
+html #ops-shell .qr-delete-confirm .ops-modal-footer { height:auto !important; min-height:68px !important; padding:12px 18px !important; }
+html #ops-shell .qr-delete-confirm .ops-modal-footer button { min-height:44px; }
+
+/* Selected folder-list design: filters above a light list, create action below. */
+html #ops-shell .ops-quick-reply-page.ops-chat-workbench { display:flex; flex-direction:column; height:100%; min-height:0; overflow:hidden; background:#fff; }
+html #ops-shell .ops-quick-reply-page.ops-chat-workbench > .qr-scope-row { flex:none; margin:0; padding:0 12px; }
+html #ops-shell .ops-quick-reply-page.ops-chat-workbench > .qr-content { flex:1; min-height:0; width:100%; max-width:none; margin:0; padding:0 0 16px; overflow:auto; overscroll-behavior:contain; }
+.ops-quick-reply-page .qr-filter-area { padding:14px; background:#f3f8fc; }
+html #ops-shell .ops-quick-reply-page .ops-material-search-row { display:block !important; }
+html #ops-shell .ops-quick-reply-page .ops-material-search-row .ops-search-shell { width:100% !important; box-sizing:border-box; }
+.ops-quick-reply-page .qr-filter-row { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(0,1fr); gap:10px; margin-top:12px; }
+.ops-quick-reply-page .qr-folder-filter { display:flex; align-items:center; min-width:0; border:1px solid #d1e1f0; border-radius:9px; background:#fff; padding-left:12px; }
+.ops-quick-reply-page .qr-folder-filter > .ops-icon { color:#173c61; flex:none; }
+html #ops-shell .ops-quick-reply-page .qr-filter-row .ui-select { width:100%; min-width:0; }
+html #ops-shell .ops-quick-reply-page .qr-filter-row .ui-select-trigger { min-height:44px; padding:0 10px; border-radius:9px; font-size:14px; }
+html #ops-shell .ops-quick-reply-page .qr-folder-filter .ui-select-trigger { border:0; background:transparent; }
+.ops-quick-reply-page .qr-folder { margin:0; }
+html #ops-shell .ops-quick-reply-page button.qr-folder-header { display:flex; align-items:center; gap:10px; width:100%; min-height:54px; padding:10px 16px; border:0; border-top:8px solid #f3f8fc; background:#edf6fd; color:#173c61; text-align:left; font-size:16px; }
+.ops-quick-reply-page .qr-folder-header > .ops-icon { color:#0365bf; }
+.ops-quick-reply-page .qr-folder-header > .ops-icon:last-child { margin-left:auto; }
+.ops-quick-reply-page .qr-folder-header strong { min-width:0; overflow-wrap:anywhere; }
+html #ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-snippet { min-height:0; width:auto; margin:0 16px; padding:16px 0 10px; border:0; border-bottom:1px solid #e3edf5; border-radius:0; background:#fff; box-shadow:none; transform:none; }
+html #ops-shell .ops-quick-reply-page .ops-material-snippet:last-child { border-bottom:0; }
+html #ops-shell .ops-quick-reply-page .ops-material-open { align-items:flex-start; gap:14px; padding:0; }
+html #ops-shell .ops-quick-reply-page .ops-material-row-title { display:block; font-size:16px; font-weight:600; line-height:1.5; }
+html #ops-shell .ops-quick-reply-page .ops-material-row-meta { display:block; margin-top:4px; font-size:14px; line-height:1.5; }
+html #ops-shell .ops-quick-reply-page .ops-material-row-meta:not(.is-url) { white-space:normal; overflow-wrap:anywhere; }
+html #ops-shell .ops-quick-reply-page .qr-pinned-badge { padding:0; margin:0 6px 0 0; background:none; font-size:14px; vertical-align:baseline; }
+html #ops-shell .ops-quick-reply-page .qr-card-footer { margin-top:8px; }
+html #ops-shell .ops-quick-reply-page .qr-card-footer [data-action="chat-material-send"] { min-width:58px; min-height:36px; padding:0 10px; margin-left:6px; border:1px solid #0365bf; border-radius:9px; font-weight:600; }
+html #ops-shell .ops-quick-reply-page .qr-create-footer { flex:none; position:sticky; bottom:0; z-index:3; padding:8px 14px max(10px,env(safe-area-inset-bottom)); border-top:1px solid #dce8f2; background:#fff; box-shadow:0 -3px 12px #173c6108; }
+html #ops-shell .ops-quick-reply-page .qr-create-footer .qr-material-new { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:46px !important; margin:0 !important; border-radius:10px; font-size:16px !important; box-shadow:none; }
+html #ops-shell .ops-quick-reply-page [hidden] { display:none !important; }
+
+/* Text replies retain a readable two-line excerpt; URL previews stay single-line. */
+html #ops-shell .ops-quick-reply-page .ops-material-snippet[data-material-kind="文本"] .ops-material-row-meta {
+  display:-webkit-box;
+  -webkit-box-orient:vertical;
+  -webkit-line-clamp:2;
+  white-space:normal !important;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-height:3em;
+}
+html #ops-shell .ops-quick-reply-page .qr-create-footer .qr-material-new {
+  background:#0365bf !important;
+  border-color:#0365bf !important;
+}
+
+/* Web sidebar reserves its navigation row before sizing the quick-reply panel. */
+html #ops-shell .ops-chat-layout > aside.ops-chat-workbench:has(> .ops-quick-reply-page) {
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:hidden;
+}
+html #ops-shell .ops-chat-layout > aside.ops-chat-workbench:has(> .ops-quick-reply-page) > .ops-workbench-tabs {
+  flex:0 0 auto;
+}
+html #ops-shell .ops-chat-layout > aside.ops-chat-workbench > .ops-quick-reply-page {
+  flex:1 1 0;
+  height:auto;
+  min-height:0;
+}
+
+/* Tenant selector is only shown within the tenant scope. */
+.ops-quick-reply-page .qr-tenant-filter { display:flex; align-items:center; gap:12px; margin-bottom:12px; min-width:0; color:#52718e; font-size:14px; }
+.ops-quick-reply-page .qr-tenant-filter > span { flex:none; }
+html #ops-shell .ops-quick-reply-page .qr-tenant-filter .ui-select { flex:1; min-width:0; width:100%; }
+html #ops-shell .ops-quick-reply-page .qr-tenant-filter .ui-select-trigger { min-height:44px; border-radius:9px; background:#fff; font-size:14px; }
+
+/* Group membership stays visible while pinned replies sort in a flat list. */
+html #ops-shell .ops-quick-reply-page .qr-card-heading { display:block; line-height:1.5; }
+html #ops-shell .ops-quick-reply-page .qr-card-heading .ops-material-row-title { display:inline; }
+html #ops-shell .ops-quick-reply-page .qr-group-tag { display:inline-block; width:auto; max-width:100%; margin:0 0 0 6px; padding:1px 6px; border-radius:4px; background:#edf5fc; color:#52718e; font-size:12px; font-weight:400; line-height:1.5; vertical-align:middle; white-space:normal; overflow-wrap:anywhere; }
+
+html #ops-shell .ops-quick-reply-page .qr-material-secondary { margin-top:2px; font-size:12px; color:#8aa2b8; }
+html #ops-shell .ops-quick-reply-page .ops-material-row-meta.is-file-name { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Three rows: name/group, icon/summary, actions. */
+html #ops-shell .ops-quick-reply-page.ops-chat-workbench .ops-material-open { display:flex; flex-direction:column; align-items:stretch; min-height:0; gap:8px; }
+html #ops-shell .ops-quick-reply-page .qr-summary-row { display:flex; align-items:center; gap:12px; min-width:0; width:100%; }
+html #ops-shell .ops-quick-reply-page .qr-summary-row .ops-material-row-copy { flex:1; min-width:0; }
+html #ops-shell .ops-quick-reply-page .qr-summary-row .ops-material-visual { width:44px; height:44px; flex:0 0 44px; border-radius:9px; }
+html #ops-shell .ops-quick-reply-page .qr-summary-row .ops-material-visual svg { width:24px; height:24px; }
+html #ops-shell .ops-quick-reply-page .qr-summary-row .ops-material-row-meta:first-child { margin-top:0; }

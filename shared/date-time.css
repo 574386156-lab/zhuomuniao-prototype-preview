@@ -1,0 +1,49 @@
+input[data-ui-date-source] { display:none!important; }
+.ui-date { display:block; min-width:0; width:100%; }
+.ui-date .ui-date-trigger,#ops-shell .ui-date-trigger { display:flex; align-items:center; justify-content:space-between; gap:8px; width:100%; min-width:0; min-height:44px; padding:10px 12px; border:1px solid #d7e2ed; border-radius:6px; color:#173c61; background:#fff; font:inherit; font-size:16px; text-align:left; cursor:pointer; touch-action:manipulation; }
+.ui-date .ui-date-value { min-width:0; white-space:normal; overflow-wrap:anywhere; color:inherit; font:inherit; }
+.ui-date .ui-date-icon { flex:0 0 auto; color:#607b95; font-size:20px; }
+.ui-date .ui-date-trigger:disabled { color:#526d87; background:#f5f8fb; cursor:default; opacity:1; }
+.ui-date-trigger:focus-visible,.dt-dialog button:focus-visible,.dt-dialog input:focus-visible { outline:2px solid #0365bf; outline-offset:2px; }
+.dt-backdrop { position:fixed; inset:0; z-index:2147483646; display:grid; place-items:center; padding:16px; background:#18395866; }
+.dt-dialog { display:flex; flex-direction:column; box-sizing:border-box; width:min(440px,100%); max-height:calc(100dvh - 32px); border:1px solid #d7e2ed; border-radius:12px; background:#fff; color:#173c61; font:400 16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; box-shadow:0 12px 48px #163b6030; }
+.dt-dialog * { box-sizing:border-box; }
+.dt-dialog header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex:0 0 auto; margin:0; padding:12px 16px; border-bottom:1px solid #e5edf4; }
+.dt-dialog h2 { flex:1; margin:0 0 0 48px; text-align:center; font-size:18px; font-weight:600; }
+.dt-dialog button { min-height:48px; min-width:48px; border:1px solid #d7e2ed; border-radius:6px; padding:10px 16px; background:#fff; color:#173c61; font:inherit; cursor:pointer; touch-action:manipulation; }
+.dt-dialog .dt-dismiss { padding:0; border:0; font-size:24px; }
+.dt-body { overflow-y:auto; min-height:0; padding:16px; }
+.dt-preview { position:absolute; width:1px; height:1px; margin:-1px; padding:0; overflow:hidden; clip-path:inset(50%); }
+.dt-calendar-heading { display:grid; grid-template-columns:48px minmax(0,1fr) 48px; align-items:center; gap:4px; margin-bottom:8px; }
+.dt-calendar-heading button { padding:0; border:0; }
+.dt-calendar-heading .dt-month-label { font-size:18px; font-weight:500; }
+.dt-calendar-heading > button:not(.dt-month-label) { font-size:26px; }
+.dt-month-picker { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+.dt-month-picker[hidden] { display:none; }
+.dt-weekdays,.dt-calendar > [role="row"] { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
+.dt-weekdays span { display:grid; place-items:center; min-height:36px; font-size:14px; color:#607b95; }
+.dt-calendar .dt-day { display:grid; place-items:center; min-width:0; min-height:44px; padding:0; margin:2px 0; border:0; border-radius:6px; background:transparent; font-size:16px; font-variant-numeric:tabular-nums; }
+.dt-calendar .dt-day.is-outside { color:#8395a8; }
+.dt-calendar .dt-day[aria-current="date"] { color:#0365bf; font-weight:600; box-shadow:inset 0 0 0 1px #b9d9f5; }
+.dt-calendar .dt-day.is-selected { color:#fff; background:#3775d9; box-shadow:none; }
+.dt-calendar .dt-day:disabled { color:#a9b5c0; cursor:default; }
+.dt-calendar .dt-day.is-selected:disabled { color:#8395a8; background:#edf1f5; }
+.dt-calendar-heading button:disabled { opacity:.35; cursor:default; }
+@media(hover:hover) { .dt-calendar .dt-day:not(:disabled):not(.is-selected):hover { color:#0365bf; background:#edf4ff; } }
+.dt-time-parts { display:flex; gap:10px; margin-top:16px; }
+.dt-time-parts label { flex:1; min-width:0; }
+.dt-dialog label { display:grid; gap:6px; margin:0; font-size:14px; color:#607b95; }
+.dt-dialog input { width:100%; min-width:0; min-height:48px; border:1px solid #d7e2ed; border-radius:6px; padding:10px 8px; color:#173c61; background:#fff; font:inherit; font-size:18px; }
+.dt-dialog .ui-select .ui-select-trigger { min-height:48px; padding:10px 8px; font-size:18px; }
+.dt-error { margin:12px 0 0; color:#b3473f; font-size:14px; }
+.dt-error[hidden] { display:none; }
+.dt-dialog footer { display:flex; flex:0 0 auto; justify-content:flex-end; gap:10px; padding:12px 16px max(12px,env(safe-area-inset-bottom)); border-top:1px solid #e5edf4; }
+.dt-dialog footer [data-dt-action="clear"] { margin-right:auto; padding:10px 8px; }
+.dt-dialog .dt-confirm { color:#fff; background:#0365bf; border-color:#0365bf; }
+.dt-dialog .dt-confirm:disabled { opacity:.45; cursor:default; }
+@media(max-width:640px) {
+  .dt-backdrop { align-items:end; padding:0; }
+  .dt-dialog { width:100%; max-height:calc(100dvh - env(safe-area-inset-top)); border-radius:16px 16px 0 0; }
+}
+
+@media(max-width:360px) { .dt-body { padding:12px 4px; } }

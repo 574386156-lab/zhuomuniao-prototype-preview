@@ -1,0 +1,214 @@
+:root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;color:#173c61;background:#edf2f8;font-synthesis:none}*{box-sizing:border-box}body{margin:0;min-width:320px}button,input,textarea{font:inherit;color:inherit}button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer;touch-action:manipulation}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid #0365bf;outline-offset:2px}[hidden]{display:none!important}.preview-stage{padding:24px 16px 32px;display:grid;justify-items:center;gap:20px}.preview-heading{width:min(100%,430px);display:flex;align-items:center;gap:12px}.preview-heading a{color:#52718e;text-decoration:none;font-size:14px}.preview-heading h1{margin:0 auto;font-size:20px;font-weight:600}.preview-heading>span{font-size:12px;background:#dfeaf6;border-radius:20px;padding:5px 10px;color:#52718e}.phone-device{width:414px;max-width:100%;height:864px;height:min(864px,calc(100dvh - 110px));min-height:540px;padding:9px;background:#172333;border:1px solid #34475c;border-radius:49px;box-shadow:0 24px 60px #18385825,0 3px 7px #18385822}.phone-screen{height:100%;position:relative;overflow:hidden;background:#f4f5f7;border-radius:40px;display:flex;flex-direction:column}.phone-status{position:relative;flex:0 0 43px;display:flex;align-items:center;justify-content:space-between;padding:0 25px;font-size:13px;font-weight:600;color:#182a3b;background:#f6f7f8}.phone-island{position:absolute;width:103px;height:26px;top:7px;left:50%;transform:translateX(-50%);border-radius:18px;background:#172333}.phone-home{height:24px;flex:0 0 24px;display:grid;place-items:center;background:#fff}.phone-home>span{height:4px;width:125px;border-radius:4px;background:#263746}#wecom-app{min-height:0;flex:1;display:flex;flex-direction:column}#plugin-pages{position:absolute;inset:93px 0 24px;background:#fff}#plugin-pages iframe{border:0;width:100%;height:100%;display:block;background:#fff}.wc-header{display:grid;grid-template-columns:74px minmax(0,1fr) 74px;align-items:center;min-height:50px;flex:0 0 50px;padding:0 8px;background:#f6f7f8;border-bottom:1px solid #e3e8ee}.wc-header h2{font-size:17px;font-weight:600;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}.wc-header button{min-height:44px;background:none;border:0;color:#24445f;font-size:14px}.wc-search{display:flex;align-items:center;margin:12px 14px;padding:0 12px;gap:7px;min-height:38px;border-radius:8px;background:#fff;color:#8b9bab}.wc-search input{width:100%;min-width:0;border:0;outline:none;background:none;font-size:14px}.wc-messages{flex:1;overflow:auto;background:#fff;padding-left:16px}.wc-conversation{display:flex;align-items:center;width:100%;gap:12px;text-align:left;padding:17px 16px 17px 0;background:#fff;border:0;border-bottom:1px solid #edf0f3;min-height:86px}.wc-avatar{width:48px;height:48px;border-radius:10px;display:grid;place-items:center;flex:0 0 48px;color:#fff;font-size:20px;background:#1675ce;position:relative}.wc-conversation:nth-child(2) .wc-avatar{background:#419d9b}.wc-conversation:nth-child(3) .wc-avatar{background:#9081bd}.wc-avatar i{position:absolute;top:-5px;right:-5px;border-radius:10px;min-width:18px;height:18px;background:#e85959;font-size:11px;font-style:normal;display:grid;place-items:center}.wc-row-copy{flex:1;min-width:0;display:grid;gap:7px}.wc-row-heading{display:flex;gap:8px;align-items:center}.wc-row-heading strong{font-size:16px;font-weight:500}.wc-row-heading time{margin-left:auto;font-size:12px;color:#8c9ba8}.wc-row-copy p{overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin:0;color:#8b98a5;font-size:13px}.wc-empty{padding:35px 16px;text-align:center;color:#8296a9}.wc-list-footer{background:#fafbfd;border-top:1px solid #e4eaf0;text-align:center;min-height:52px;display:grid;place-items:center;font-size:13px;color:#0365bf}.wc-thread{flex:1;min-height:0;overflow:auto;padding:18px 13px;display:flex;flex-direction:column;gap:16px;background:#f0f2f5}.wc-thread>time{text-align:center;color:#91a0ad;font-size:12px}.wc-message{display:flex;align-items:flex-start;gap:9px}.wc-message.is-self{flex-direction:row-reverse}.wc-message .wc-avatar{width:34px;height:34px;flex-basis:34px;font-size:14px;border-radius:7px}.wc-message.is-self .wc-avatar{background:#477fab}.wc-bubble{margin:0;padding:10px 12px;max-width:76%;border-radius:6px;background:#fff;line-height:1.6;font-size:15px;color:#243e56;overflow-wrap:anywhere;white-space:pre-wrap}.is-self .wc-bubble{background:#cce8ff}.wc-composer{display:flex;gap:8px;padding:10px 12px;align-items:flex-end;background:#f8f9fa;border-top:1px solid #e3e8ef}.wc-composer textarea{min-width:0;flex:1;height:40px;max-height:100px;resize:none;padding:8px 10px;border:1px solid #dde5ed;border-radius:7px;background:#fff;line-height:22px;font-size:15px}.wc-composer button{height:40px;padding:0 15px;border:0;border-radius:6px;background:#0767c3;color:#fff;font-size:14px}.wc-composer button:disabled{opacity:.45;cursor:default}.wc-plugin-nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));background:#fff;border-top:1px solid #e4eaf0;padding:0 4px}.wc-plugin-nav button{min-height:49px;min-width:0;background:#fff;border:0;font-size:14px;color:#285777}.wc-plugin-nav button+button{border-left:1px solid #eef1f5}.wc-message-feedback{margin:0;padding:5px 12px;background:#f8f9fa;color:#ad4b37;font-size:13px}.wc-loading{height:100%;display:grid;place-items:center;color:#8395a8;font-size:14px}@media(max-width:480px){.preview-stage{padding:12px 8px;gap:10px}.preview-heading{padding:0 5px}.preview-heading h1{font-size:18px}.phone-device{height:calc(100dvh - 66px);min-height:490px;border-radius:39px;padding:6px}.phone-screen{border-radius:32px}.phone-status{padding-inline:20px}.wc-plugin-nav button{font-size:13px}}
+
+.wc-external-page{display:block;margin:24px;padding:14px;text-align:center;border:1px solid #bdd9f5;border-radius:6px;color:#0767c3;text-decoration:none}.wc-plugin-nav{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
+
+/* Match the patient-side iPhone mockup while keeping the WeCom content blue. */
+.phone-device{position:relative;width:min(511px,calc(100vw - 32px));height:auto;min-height:0;aspect-ratio:511 / 968;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;isolation:isolate}
+.phone-bezel{position:absolute;inset:0;z-index:0;width:100%;height:100%;object-fit:contain;pointer-events:none;-webkit-user-drag:none}
+.phone-screen{position:absolute;z-index:1;left:11.546%;top:5.992%;width:76.908%;height:87.992%;border-radius:10.69% / 4.93%;background:#f4f5f7}
+.phone-status{z-index:2;flex:0 0 46px;min-height:46px;padding:0 25px;background:transparent;color:#132e49;font-size:13px;font-weight:600}
+.phone-island{display:none}
+.phone-home{height:34px;flex:0 0 34px;background:transparent}
+.phone-home>span{height:5px;width:134px;border-radius:5px;background:#101820}
+#plugin-pages{inset:46px 0 34px}
+@media(max-width:480px){.phone-device{width:min(511px,calc(100vw - 16px))}.phone-screen{border-radius:10.69% / 4.93%}.phone-status{padding-inline:25px}.phone-home>span{width:34.1%;height:4px}}
+
+/* Match the patient prototype's responsive phone scale. The reference uses a
+   511 x 968 iPhone canvas and scales it against both viewport dimensions. */
+.phone-scale-box{position:relative;width:511px;height:968px;flex:0 0 auto}
+.phone-scale-box .phone-device{position:absolute!important;inset:0;width:511px!important;height:968px!important;min-height:0!important;max-width:none!important;transform-origin:top left}
+@media(max-width:480px){.phone-scale-box{max-width:calc(100vw - 24px);max-height:calc(100dvh - 92px)}.phone-scale-box .phone-device{width:511px!important;height:968px!important}}
+
+/* Keep the outer navigation visible and let embedded pages sit below their
+   in-phone header instead of covering it with the iframe. */
+.preview-stage{min-height:100dvh;align-content:start}
+.preview-heading{position:relative;z-index:20;min-height:40px;display:flex!important;visibility:visible!important}
+.preview-heading a{display:inline-flex!important;align-items:center;min-height:40px;position:relative;z-index:21}
+#plugin-pages{position:relative;inset:auto;flex:1 1 auto;min-height:0;background:#fff;overflow:hidden}
+.phone-screen:has(#plugin-pages:not([hidden])) #wecom-app{flex:0 0 auto;min-height:0}
+#plugin-pages iframe{position:absolute;inset:0}
+
+/* Patient archive pages reuse the patient-side prototype inside the existing
+   WeCom iPhone frame. Hide the host-only chrome so the embedded timeline owns
+   the full screen area while retaining the outer bezel. */
+.phone-screen.wc-source-patient .phone-status,
+.phone-screen.wc-source-patient .phone-home,
+.phone-screen.wc-source-patient #wecom-app{display:none}
+.phone-screen.wc-source-patient #plugin-pages{position:absolute;inset:0;display:block;overflow:hidden;background:#f5f7fa}
+.phone-screen.wc-source-patient #plugin-pages iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.wc-patient-back{position:absolute;z-index:5;top:10px;left:12px;min-height:30px;padding:0 7px;border:0;border-radius:15px;background:rgba(255,255,255,.9);color:#24567f;font-size:12px;box-shadow:0 1px 4px rgba(18,56,95,.12)}
+
+/* The patient archive remains a WeCom tab. Only its timeline content is
+   sourced from the patient-side implementation. */
+.wc-patient-archive{position:relative;height:100%;min-height:0;overflow:auto;display:block;overscroll-behavior:contain;background:#f5f7fa;color:#173c61;}
+.wc-patient-archive .cp-panel{height:auto;min-height:100%;display:block;overflow:visible;padding:0 12px 18px;font-size:13px;}
+.wc-patient-archive .cp-basic-layout{grid-template-columns:46px minmax(0,1fr);column-gap:10px;}
+.wc-patient-archive .cp-basic-avatar{width:46px;height:46px;font-size:20px;}
+.wc-patient-archive .cp-basic-body{grid-column:2;grid-template-rows:24px 24px;height:48px;}
+.wc-patient-archive .cp-basic-name{font-size:17px;}
+.wc-patient-archive .cp-basic-gender{font-size:13px;}
+.wc-patient-archive .cp-basic-phone strong{font-size:15px;}
+.wc-patient-archive .cp-info-grid{grid-template-columns:repeat(2,minmax(0,1fr));}
+.wc-patient-archive .cp-context-section{padding:8px 0;gap:6px;}
+.wc-patient-archive .cp-scene-picker,.wc-patient-archive .cp-tag-row{grid-template-columns:34px minmax(0,1fr);gap:6px;}
+.wc-patient-archive .cp-field-label{min-height:38px;font-size:12px;}
+.wc-patient-archive .cp-scene-picker select{min-height:38px;font-size:14px;padding:6px 9px;}
+.wc-patient-archive .cp-tag-list{min-height:38px;}
+.wc-patient-archive .cp-tag-chip{font-size:12px;line-height:20px;padding:1px 6px;}
+.wc-patient-archive .cp-tabs-wrap{position:sticky;top:0;z-index:20;flex:0 0 auto;align-self:stretch;margin:0 0 8px;padding:2px 0;grid-template-columns:minmax(0,1fr) 48px;background:#f5f7fa;box-shadow:0 1px 0 rgba(23,60,97,.06);}
+.wc-patient-archive .cp-tabs{padding:0 6px;gap:2px;}
+.wc-patient-archive .cp-tabs button{min-height:38px;padding:6px 8px;font-size:12px;}
+.wc-patient-archive .cp-tabs-more{min-height:38px;font-size:12px;}
+.wc-patient-archive .cp-content{min-height:max(320px,calc(100% - 220px));overflow:visible;overscroll-behavior:contain;}
+.wc-patient-archive .cp-content .hm-nav,.wc-patient-archive .cp-content .hm-nav.is-expanded{top:var(--cp-tabs-height,60px);z-index:19;}
+
+/* Blue health-record entry sheet used by the WeCom patient archive. */
+.wc-health-modal-backdrop{position:absolute;inset:0;z-index:20;display:flex;align-items:flex-end;padding:12px;background:rgba(18,52,83,.38);}
+.wc-health-modal{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;max-height:calc(100% - 16px);overflow:hidden;border:1px solid #d6e4f1;border-radius:16px;background:#fff;box-shadow:0 14px 34px rgba(18,52,83,.24);color:#173c61;}
+.wc-health-modal-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 18px 14px;border-bottom:1px solid #e5edf4;background:linear-gradient(135deg,#f7fbff,#eef6fd);}
+.wc-health-modal-kicker{display:block;margin-bottom:4px;color:#0365bf;font-size:12px;font-weight:600;letter-spacing:.04em;}
+.wc-health-modal-header h2{margin:0;font-size:20px;line-height:1.35;}
+.wc-health-modal-header p{margin:5px 0 0;color:#607b95;font-size:12px;line-height:1.5;}
+.wc-health-modal-close{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;padding:0;border:1px solid #d7e2ed;border-radius:50%;background:#fff;color:#52718e;font-size:24px;line-height:1;}
+.wc-health-modal-body{min-height:0;overflow:auto;padding:16px 18px 4px;background:#fff;}
+.wc-health-modal .hm-form{gap:14px;}
+.wc-health-modal .hm-form label{gap:6px;color:#526d87;font-size:13px;font-weight:500;}
+.wc-health-modal .hm-form input,.wc-health-modal .hm-form select{min-height:44px;padding:9px 11px;border:1px solid #cbdceb;border-radius:8px;background:#fff;color:#173c61;font-size:16px;}
+.wc-health-modal .hm-form input:focus,.wc-health-modal .hm-form select:focus{border-color:#0365bf;box-shadow:0 0 0 3px rgba(3,101,191,.12);outline:0;}
+.wc-health-modal .hm-form-values{gap:10px;}
+.wc-health-modal .hm-form-error{padding:9px 10px;border-radius:7px;background:#fff1f2;color:#b43d51;font-size:13px;}
+.wc-health-modal-footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 18px max(12px,env(safe-area-inset-bottom));border-top:1px solid #e5edf4;background:#fff;}
+.wc-health-modal-footer button{min-height:42px;padding:8px 16px;border-radius:8px;font-size:15px;}
+.wc-health-modal-cancel{border:1px solid #cbdceb;background:#fff;color:#1d5585;}
+.wc-health-modal-save{border:1px solid #0365bf;background:#0365bf;color:#fff;box-shadow:0 4px 10px rgba(3,101,191,.2);}
+.wc-health-modal-save:active{background:#02569f;}
+
+/* UI-kit states for the WeCom health record sheet. */
+.wc-health-modal .hm-form-label { color:#526d87; font-weight:600; }
+.wc-health-modal .hm-form label:focus-within .hm-form-label { color:#0365bf; }
+.wc-health-modal .hm-form label.is-error .hm-form-label { color:#c4414f; }
+.wc-health-modal .hm-form label.is-error input,
+.wc-health-modal .hm-form label.is-error select { border-color:#d64242 !important; box-shadow:0 0 0 3px rgba(214,66,66,.1) !important; }
+.wc-health-modal .hm-form input::placeholder { color:#a5b5c5; }
+.wc-health-modal .hm-form-error { border:1px solid #f0b8bd; }
+.wc-health-modal-footer button { transition:background-color .16s ease, border-color .16s ease, box-shadow .16s ease, transform .16s ease; }
+.wc-health-modal-footer button:hover { transform:translateY(-1px); }
+.wc-health-modal-save:hover { background:#075aa5; box-shadow:0 6px 14px rgba(3,101,191,.26); }
+.wc-health-modal-cancel:hover { border-color:#0365bf; background:#f7fbff; }
+.wc-health-modal-body { overscroll-behavior:contain; }
+@media(max-width:380px){
+  .wc-health-modal-backdrop { padding:8px; }
+  .wc-health-modal-header { padding:16px 14px 12px; }
+  .wc-health-modal-body { padding:14px 14px 2px; }
+  .wc-health-modal-footer { padding-inline:14px; }
+  .wc-health-modal-footer button { flex:1 1 0; }
+}
+
+/* Mobile modal field geometry: one field fills the sheet; paired fields stay equal. */
+.wc-health-modal { container-type:inline-size; }
+.wc-health-modal-body { overflow-x:hidden; }
+.wc-health-modal .hm-form,
+.wc-health-modal .hm-form-values,
+.wc-health-modal .hm-form-values > label { min-width:0; }
+.wc-health-modal .hm-form-values { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.wc-health-modal .hm-form-values:has(> label:only-child) { grid-template-columns:minmax(0,1fr); }
+.wc-health-modal .hm-form input,
+.wc-health-modal .hm-form select { width:100%; min-width:0; max-width:100%; min-height:48px; box-sizing:border-box; }
+.wc-health-modal .hm-form label { min-width:0; font-size:14px; }
+.wc-health-modal .hm-form-values input { overflow:hidden; text-overflow:ellipsis; }
+.wc-health-modal-close { width:40px; height:40px; flex-basis:40px; }
+.wc-health-modal { height:min(92%,760px); }
+.wc-health-modal .hm-entry { min-width:0; }
+.wc-health-modal .wc-health-modal-body { overflow:auto; overscroll-behavior:contain; }
+.wc-health-modal .wc-health-modal-footer { align-items:center; }
+.wc-health-modal-progress { margin-right:auto; color:#607b95; font-size:13px; white-space:nowrap; }
+.wc-health-modal-save:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
+
+
+/* The mobile entry flow is one focused sheet: no nested dialog and no hidden
+   footer behind the keyboard. The body remains the only scrolling region. */
+@media(max-width:600px){
+  .wc-health-modal-backdrop{align-items:stretch;padding:0;background:rgba(18,52,83,.42)}
+  .wc-health-modal{height:100%;max-height:none;border-radius:18px 18px 0 0}
+  .wc-health-modal-header{padding:18px 18px 14px}
+  .wc-health-modal-body{padding:16px 18px 6px}
+  .wc-health-modal-footer{padding-inline:18px}
+}
+
+/* Patient tag editing uses the same mobile bottom-sheet pattern as health
+   entry, so the archive action remains usable inside the phone preview. */
+.wc-archive-tag-backdrop{position:absolute;inset:0;z-index:22;display:flex;align-items:flex-end;background:rgba(18,52,83,.42);}
+.wc-archive-tag-modal{display:grid;grid-template-rows:auto minmax(0,1fr) auto;width:100%;max-height:94%;overflow:hidden;border:1px solid #d6e4f1;border-radius:18px 18px 0 0;background:#f6f9fc;color:#173c61;box-shadow:0 14px 34px rgba(18,52,83,.24);}
+.wc-archive-tag-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:16px 18px 13px;border-bottom:1px solid #dfe8f1;background:#fff;}
+.wc-archive-tag-kicker{display:block;margin-bottom:4px;color:#0365bf;font-size:12px;font-weight:600;letter-spacing:.04em;}
+.wc-archive-tag-header h2{margin:0;font-size:20px;line-height:1.35;}
+.wc-archive-tag-header p{margin:5px 0 0;color:#607b95;font-size:12px;line-height:1.5;}
+.wc-archive-tag-close{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;padding:0;border:1px solid #d7e2ed;border-radius:50%;background:#fff;color:#52718e;font-size:24px;line-height:1;}
+.wc-archive-tag-body{min-height:0;overflow:auto;padding:14px;background:#f6f9fc;}
+.wc-archive-tag-selected-block,.wc-archive-tag-picker{display:grid;gap:10px;}
+.wc-archive-tag-selected-block{margin-bottom:12px;padding:12px;border:1px solid #e0eaf3;border-radius:10px;background:#fff;}
+.wc-archive-tag-picker{padding:12px;border:1px solid #e0eaf3;border-radius:10px;background:#fff;}
+.wc-archive-tag-picker-heading{display:grid;gap:8px;}
+.wc-archive-tag-scope-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));overflow:hidden;border:1px solid #cbdceb;border-radius:8px;background:#f7fbff;}
+.wc-archive-tag-scope-tab{min-height:34px;padding:0 10px;border:0;border-right:1px solid #cbdceb;background:transparent;color:#52718e;font-size:12px;white-space:nowrap;}
+.wc-archive-tag-scope-tab:last-child{border-right:0;}
+.wc-archive-tag-scope-tab.is-active{background:#0365bf;color:#fff;font-weight:600;}
+.wc-archive-tag-body h3{margin:0;color:#204568;font-size:14px;font-weight:600;}
+.wc-archive-tag-selected{display:flex;flex-wrap:wrap;gap:8px;min-height:32px;color:#607b95;font-size:13px;}
+.wc-archive-tag-chip{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:0 6px 0 10px;border:1px solid #8cc8ff;border-radius:4px;background:#eef7ff;color:#0365bf;font-size:13px;}
+.wc-archive-tag-chip button{display:grid;place-items:center;width:20px;height:20px;padding:0;border:0;border-radius:4px;background:transparent;color:inherit;font-size:18px;line-height:1;}
+.wc-archive-tag-chip button:hover{background:rgba(3,101,191,.1);}
+.wc-archive-tag-empty-selected{line-height:32px;color:#607b95;}
+.wc-archive-tag-search{display:flex;align-items:center;gap:8px;min-height:44px;margin-bottom:12px;padding:0 11px;border:1px solid #cbdceb;border-radius:8px;background:#fff;color:#8b9bab;}
+.wc-archive-tag-search:focus-within{border-color:#0365bf;box-shadow:0 0 0 3px rgba(3,101,191,.12);}
+.wc-archive-tag-search input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#173c61;font-size:15px;}
+.wc-archive-tag-options{display:grid;max-height:min(44vh,360px);overflow:auto;border:1px solid #dce5ed;border-radius:8px;background:#fff;}
+.wc-archive-tag-option{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:center;gap:10px;width:100%;min-height:60px;padding:10px 12px;border:0;border-bottom:1px solid #e5e8ec;background:#fff;color:#173c61;text-align:left;}
+.wc-archive-tag-option:last-of-type{border-bottom:0;}
+.wc-archive-tag-option:hover,.wc-archive-tag-option:focus-visible,.wc-archive-tag-option.is-selected{background:#eef7ff;}
+.wc-archive-tag-check{display:grid;place-items:center;width:16px;height:16px;border:1px solid #c9d2dc;border-radius:3px;background:#fff;color:#fff;font-size:11px;font-weight:700;}
+.wc-archive-tag-option.is-selected .wc-archive-tag-check{border-color:#0365bf;background:#0365bf;}
+.wc-archive-tag-option-copy{display:grid;gap:2px;min-width:0;}
+.wc-archive-tag-option-copy strong{font-size:15px;line-height:1.45;font-weight:600;}
+.wc-archive-tag-option-copy span{color:#607b95;font-size:12px;line-height:1.45;}
+.wc-archive-tag-empty{grid-column:1/-1;margin:8px 0;color:#8193a6;font-size:13px;text-align:center;}
+.wc-archive-tag-hint{margin:0;color:#607b95;font-size:12px;line-height:1.5;}
+.wc-archive-tag-footer{display:flex;justify-content:flex-end;gap:10px;padding:12px 18px max(12px,env(safe-area-inset-bottom));border-top:1px solid #e5edf4;background:#fff;}
+.wc-archive-tag-footer button{min-height:42px;padding:8px 18px;border-radius:8px;font-size:15px;}
+.wc-archive-tag-cancel{border:1px solid #cbdceb;background:#fff;color:#1d5585;}
+.wc-archive-tag-save{border:1px solid #0365bf;background:#0365bf;color:#fff;box-shadow:0 4px 10px rgba(3,101,191,.2);}
+@media(max-width:600px){
+  .wc-archive-tag-modal{max-height:94%;border-radius:16px 16px 0 0;}
+  .wc-archive-tag-header{padding:12px 14px 10px;}
+  .wc-archive-tag-kicker{margin-bottom:2px;font-size:10px;}
+  .wc-archive-tag-header h2{font-size:16px;}
+  .wc-archive-tag-close{width:30px;height:30px;flex-basis:30px;font-size:19px;}
+  .wc-archive-tag-body{padding:10px;}
+  .wc-archive-tag-selected-block{margin-bottom:10px;padding:10px;border-radius:9px;}
+  .wc-archive-tag-body h3{font-size:12px;}
+  .wc-archive-tag-chip{min-height:28px;font-size:11px;}
+  .wc-archive-tag-picker-heading{gap:8px;}
+  .wc-archive-tag-picker{padding:10px;border-radius:9px;}
+  .wc-archive-tag-scope-tabs{width:100%;}
+  .wc-archive-tag-scope-tab{min-height:30px;padding:0 7px;font-size:10px;}
+  .wc-archive-tag-search{min-height:38px;margin-bottom:8px;padding-inline:9px;}
+  .wc-archive-tag-search input{font-size:12px;}
+  .wc-archive-tag-option{min-height:52px;padding:8px 10px;}
+  .wc-archive-tag-option-copy strong{font-size:13px;}
+  .wc-archive-tag-option-copy span{font-size:10px;}
+  .wc-archive-tag-hint{font-size:10px;}
+  .wc-archive-tag-footer{padding:9px 14px max(9px,env(safe-area-inset-bottom));}
+  .wc-archive-tag-footer button{min-height:36px;padding:6px 16px;font-size:13px;}
+}
+@media(max-width:380px){.wc-archive-tag-footer{padding-inline:14px}.wc-archive-tag-footer button{flex:1 1 0}}
+
+/* WeCom-style horizontal quick-entry rail above the composer. */
+.wc-plugin-nav{display:flex;flex:0 0 auto;align-items:center;gap:12px;padding:12px 14px;background:#f3f4f6;border:0;overflow-x:auto;overflow-y:hidden;white-space:nowrap;touch-action:pan-x;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.wc-plugin-nav::-webkit-scrollbar{display:none}
+.wc-plugin-nav button{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;gap:8px;min-height:44px;min-width:116px;padding:0 16px;border:0!important;border-radius:22px;background:#fff;color:#17212b;font-size:16px;font-weight:500;white-space:nowrap}
+.wc-plugin-nav button:focus-visible{outline-offset:-3px}
+.wc-plugin-nav .wc-entry-icon{display:inline-grid;place-items:center;width:25px;height:25px;flex:0 0 25px;font-size:23px;color:#4eb7a0}
+.wc-plugin-nav .wc-entry-icon--summary{color:#6d80d7}.wc-plugin-nav .wc-entry-icon--reply{color:#efb52c}.wc-plugin-nav .wc-entry-icon--followup{color:#29b45c}.wc-plugin-nav .wc-entry-icon--handoff{color:#3186d9}
+
+.wc-plugin-nav,.wc-plugin-nav button{user-select:none;cursor:grab}
+.wc-plugin-nav.is-dragging,.wc-plugin-nav.is-dragging button{cursor:grabbing}

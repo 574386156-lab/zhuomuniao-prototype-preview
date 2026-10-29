@@ -1,0 +1,8 @@
+/* Font Awesome Free 6.7.2 — Fonticons, Inc. Font: SIL OFL 1.1; icons: CC BY 4.0. https://fontawesome.com/license/free */
+@font-face{font-family:WecomEntryIcons;src:url(./wecom-entry-icons.woff2) format("woff2");font-weight:900;font-display:block}
+.wc-entry-icon{font-family:WecomEntryIcons!important;font-style:normal;font-weight:900;line-height:1}
+.wc-entry-icon--archive::before{content:""}
+.wc-entry-icon--summary::before{content:""}
+.wc-entry-icon--reply::before{content:""}
+.wc-entry-icon--followup::before{content:""}
+.wc-entry-icon--handoff::before{content:""}

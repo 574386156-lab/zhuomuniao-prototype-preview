@@ -1,0 +1,38 @@
+.ho-panel { min-width:0; padding:16px; color:#173c61; font:400 16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+.ho-panel * { box-sizing:border-box; }
+.ho-heading h3 { margin:0; font-size:18px; }
+.ho-heading span,.ho-card small { color:#607b95; font-size:14px; }
+.ho-actions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 16px; }
+#ops-shell .ho-actions button { min-height:44px; padding:8px 14px; border:1px solid #b9d5ef; border-radius:6px; background:#eef6ff; color:#0365bf; font-size:16px; }
+#ops-shell .ho-actions button:disabled { opacity:.45; cursor:default; }
+.ho-timeline { padding:0 0 0 14px; margin:0; list-style:none; border-left:2px solid #d8e8f5; }
+.ho-timeline > li { position:relative; margin-bottom:16px; }
+.ho-timeline > li::before { content:''; position:absolute; left:-20px; top:20px; width:10px; height:10px; border:2px solid #fff; border-radius:50%; background:#0365bf; }
+.ho-card { padding:12px; border:1px solid #dce6f0; border-radius:8px; background:#fff; }
+.ho-card header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; }
+.ho-card time { font-size:14px; }
+.ho-status { padding:2px 6px; border-radius:4px; background:#fff5df; color:#906315; font-size:13px; }
+.ho-status.is-succeeded { background:#eaf7ef; color:#27704f; }
+.ho-status.is-timed_out { background:#fff0ed; color:#ab5141; }
+.ho-card dl { display:grid; grid-template-columns:70px minmax(0,1fr); gap:8px; margin:14px 0; font-size:14px; }
+.ho-card dt { color:#607b95; }
+.ho-card dd { margin:0; overflow-wrap:anywhere; }
+.ho-card h4 { margin:12px 0 4px; font-size:16px; }
+.ho-summary { margin:0 0 6px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.ho-card footer { margin-top:12px; padding-top:10px; border-top:1px solid #e5edf4; color:#607b95; font-size:14px; }
+.ho-empty { padding:24px 4px; color:#607b95; text-align:center; }
+.ho-transfer-form { display:grid; gap:14px; min-width:0; }
+.ho-transfer-form [hidden] { display:none!important; }
+.ho-scene { margin:0; color:#607b95; font-size:14px; overflow-wrap:anywhere; }
+.ho-routing { padding:12px; border-radius:6px; color:#315c83; background:#eef6ff; }
+.ho-member-list { display:grid; gap:8px; max-height:240px; overflow-y:auto; }
+.ho-member-list > label { display:flex; align-items:center; gap:10px; min-height:54px; padding:10px 12px; border:1px solid #dce6f0; border-radius:6px; cursor:pointer; }
+#ops-shell .ho-member-list input { flex:0 0 18px; width:18px; height:18px; min-height:0; margin:0; }
+.ho-member-list span { display:grid; }
+.ho-member-list small { color:#607b95; font-size:14px; }
+#ops-shell .ho-transfer-form textarea { width:100%; min-height:88px; padding:10px 12px; border:1px solid #d7e2ed; border-radius:6px; font:inherit; font-size:16px; resize:vertical; }
+#ops-shell .ho-transfer-form .ui-select-trigger { min-height:44px; font-size:16px; }
+.ho-form-error { margin:0; color:#b3473f; font-size:14px; }
+.ho-form-error:empty { display:none; }
+.ops-workbench-tabs { overflow-x:auto; }
+@media(max-width:600px) { .ops-modal-backdrop:has(.ho-transfer-form) { padding:8px; } .ops-modal:has(.ho-transfer-form) { max-width:100%; max-height:calc(100dvh - 16px); } }

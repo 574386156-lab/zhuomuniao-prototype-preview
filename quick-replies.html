@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>快捷回复</title>
+</head>
+<body>
+  <p><a id="quick-replies-entry" href="卓睦鸟患管平台-交互原型.html?standalone=quick-replies#aggregate-chat">打开快捷回复</a></p>
+  <script>
+    // All hosts use the same material renderer and local interaction controller.
+    (function () {
+      var params = new URLSearchParams(location.search);
+      var target = new URL('卓睦鸟患管平台-交互原型.html', location.href);
+      target.searchParams.set('v', '20261026-quick-replies-rows-v13');
+      target.searchParams.set('standalone', 'quick-replies');
+      ['patient', 'doctor', 'scene', 'embedded', 'host', 'sidebarEnv', 'tenantId', 'tenant'].forEach(function (key) {
+        if (params.has(key)) target.searchParams.set(key, params.get(key));
+      });
+      target.hash = 'aggregate-chat';
+      document.getElementById('quick-replies-entry').href = target.href;
+      location.replace(target.href);
+    })();
+  </script>
+</body>
+</html>
