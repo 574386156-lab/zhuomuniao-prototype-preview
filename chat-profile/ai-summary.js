@@ -1145,7 +1145,7 @@
     var actionLabel = state.status === 'loading' ? '重新总结中…' : state.data ? '重新总结' : '调用智能体';
     var sceneOptions = SCENE_OPTIONS.slice();
     if (ctx && ctx.sceneName && !sceneOptions.some(function (scene) { return scene.name === ctx.sceneName; })) sceneOptions.push({ name: ctx.sceneName, code: ctx.sceneCode || ctx.sceneName });
-    var sceneSelect = '<label class="cp-ai-summary-scene"><span>场景码</span><select data-change-action="chat-ai-summary-scene" aria-label="切换场景码">' + sceneOptions.map(function (scene) { return '<option value="' + esc(scene.name) + '" ' + (ctx && ctx.sceneName === scene.name ? 'selected' : '') + '>' + esc(scene.name) + '（' + esc(scene.code) + '）</option>'; }).join('') + '</select></label>';
+    var sceneSelect = '';
     var actionMarkup = button(actionLabel, state.status === 'loading', 'chat-ai-summary-generate');
     var content = '';
     if (state.status === 'loading') {
