@@ -1931,7 +1931,7 @@
           chatAiAutoStartedKey: "",
           chatArchiveTabsExpanded: false,
           chatPatientPhoneVisible: false,
-          chatPatientBasic: { name: "王德华", gender: "男", phone: "138****5605", birthDate: "", height: "", diagnosis: "2型糖尿病" },
+          chatPatientBasic: { name: "王德华", gender: "男", phone: "138****5605", birthDate: "1968-06-15", height: "", diagnosis: "2型糖尿病" },
           chatArchiveScene: "慢病随访",
           chatDoctorSearch: "",
           chatDoctorFilterOpen: true,
@@ -2008,7 +2008,7 @@
         function selectArchivePatient(name) {
           if (state.chatPatientBasic) chatPatientBasics[state.chatSelected] = state.chatPatientBasic;
           state.chatSelected = name;
-          state.chatPatientBasic = chatPatientBasics[name] || { name:name, gender:"男", phone:"138****5605", birthDate:"", height:"", diagnosis:"2型糖尿病" };
+          state.chatPatientBasic = chatPatientBasics[name] || { name:name, gender:"男", phone:"138****5605", birthDate:name === "王德华" ? "1968-06-15" : "", height:"", diagnosis:"2型糖尿病" };
           state.chatPatientPhoneVisible = false;
         }
         if (patientProfileStandalone || aiSummaryStandalone || quickRepliesStandalone || patientFollowupsStandalone) {
