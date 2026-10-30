@@ -1701,6 +1701,14 @@
         .ops-diagnosis-control { grid-template-columns: 1fr; }
         .ops-patient-profile-main { grid-template-columns: 1fr; }
       }
+      .ops-doctor-todo-page{display:grid;gap:18px;padding-bottom:28px}
+      .ops-todo-hero{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:24px 28px;border:1px solid #dbe5f1;border-radius:14px;background:linear-gradient(135deg,#f4f8ff 0%,#fff 72%);box-shadow:0 8px 24px rgba(36,79,168,.05)}
+      .ops-todo-hero h1{margin:0 0 7px;font-size:25px;letter-spacing:-.3px;color:#173b5f}.ops-todo-hero p{margin:0;color:#65758b}.ops-todo-hero-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.ops-todo-count{display:grid;place-items:center;min-width:66px;height:66px;border-radius:16px;background:#e9f1ff;color:#2556b2}.ops-todo-count strong{font-size:25px;line-height:1}.ops-todo-count span{font-size:11px}.ops-todo-sla{padding:9px 12px;border:1px solid #cfe0f7;border-radius:9px;background:#fff;color:#49627f;font-size:12px}
+      .ops-todo-summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.ops-todo-stat{display:grid;gap:5px;padding:16px 18px;border:1px solid #e1e8f2;border-radius:12px;background:#fff}.ops-todo-stat span{font-size:12px;color:#6d7d91}.ops-todo-stat strong{font-size:24px;line-height:1.1;color:#1d3555}.ops-todo-stat.is-urgent strong{color:#c24b4b}.ops-todo-stat.is-due strong{color:#b67820}.ops-todo-stat.is-done strong{color:#1d846e}
+      .ops-todo-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;padding:14px 16px;border:1px solid #e1e8f2;border-radius:12px;background:#fff}.ops-todo-tabs{display:flex;align-items:center;gap:5px}.ops-todo-tabs button{min-height:36px;padding:0 14px;border:0;border-radius:8px;background:transparent;color:#63748a;font:inherit;cursor:pointer}.ops-todo-tabs button:hover{background:#f2f6fb}.ops-todo-tabs button.is-active{background:#edf3ff;color:#2457b5;font-weight:700}.ops-todo-filters{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.ops-todo-filters select,.ops-todo-filters input{min-height:36px;padding:0 10px;border:1px solid #d5dfeb;border-radius:8px;background:#fff;color:#304663;font:inherit}.ops-todo-filters input{width:180px}.ops-todo-filters input:focus,.ops-todo-filters select:focus{outline:3px solid #dce8ff;border-color:#6e96e4}
+      .ops-todo-list{display:grid;gap:10px}.ops-todo-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:16px;padding:18px 20px;border:1px solid #e0e7f0;border-radius:12px;background:#fff;transition:box-shadow .18s,border-color .18s}.ops-todo-row:hover{border-color:#b9cdf1;box-shadow:0 7px 18px rgba(38,77,133,.08)}.ops-todo-row.is-urgent{border-left:4px solid #d45a5a;padding-left:17px}.ops-todo-row.is-due{border-left:4px solid #c99042;padding-left:17px}.ops-todo-priority{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:#fff3f0;color:#c85d4e}.ops-todo-priority.is-due{background:#fff8e9;color:#b77a20}.ops-todo-priority.is-normal{background:#edf5ff;color:#4778bd}.ops-todo-main{display:grid;gap:7px;min-width:0}.ops-todo-title{display:flex;align-items:center;gap:9px;flex-wrap:wrap;color:#1f3858}.ops-todo-title strong{font-size:15px}.ops-todo-title small{color:#73839a}.ops-todo-excerpt{overflow:hidden;color:#566a83;text-overflow:ellipsis;white-space:nowrap}.ops-todo-meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;color:#8190a3;font-size:12px}.ops-todo-tag{display:inline-flex;align-items:center;min-height:22px;padding:0 8px;border-radius:5px;background:#f1f4f8;color:#5e718a;font-size:11px}.ops-todo-tag.is-urgent{background:#fff0ee;color:#bf5549}.ops-todo-tag.is-due{background:#fff7e4;color:#9f6c19}.ops-todo-action{display:grid;justify-items:end;gap:8px}.ops-todo-deadline{font-size:12px;color:#9b6b27}.ops-todo-open{min-height:38px;padding:0 14px;border:1px solid #b9cdf1;border-radius:8px;background:#fff;color:#2457b5;font:inherit;font-weight:650;cursor:pointer}.ops-todo-open:hover{background:#edf3ff}.ops-todo-empty{padding:54px 24px;border:1px dashed #ced9e7;border-radius:12px;color:#728198;text-align:center;background:#fbfcfe}.ops-todo-note{display:flex;align-items:flex-start;gap:9px;padding:13px 16px;border-radius:10px;background:#f3f7fc;color:#61748b;font-size:12px;line-height:1.6}.ops-todo-note .ops-icon{margin-top:2px;color:#4f79bb}
+      @media(max-width:900px){.ops-todo-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.ops-todo-hero{padding:20px}.ops-todo-row{grid-template-columns:auto minmax(0,1fr)}.ops-todo-action{grid-column:2;justify-items:start;display:flex;align-items:center;gap:12px}.ops-todo-deadline{order:2}}
+      @media(max-width:600px){.ops-todo-summary{grid-template-columns:1fr 1fr}.ops-todo-hero{display:grid}.ops-todo-hero-meta{justify-content:space-between}.ops-todo-toolbar{align-items:stretch}.ops-todo-tabs{overflow:auto}.ops-todo-filters{display:grid;grid-template-columns:1fr 1fr;width:100%}.ops-todo-filters input{width:100%;grid-column:1/-1}.ops-todo-filters select{width:100%}.ops-todo-row{gap:12px;padding:15px}.ops-todo-row.is-urgent,.ops-todo-row.is-due{padding-left:12px}.ops-todo-excerpt{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}.ops-todo-action{grid-column:1/-1;justify-content:space-between;width:100%}}
     </style>
     <script id="ops-v3-script">
       (function () {
@@ -1850,6 +1858,12 @@
           { side: "self", name: "随访医助发送", time: "2026-08-24 09:16", text: "已记录您反馈的轻微头晕。是否停药或调整用药需要医生结合情况判断，我先转交医助复核；如不适明显加重，请使用合规就医入口。" },
           { side: "other", name: "王德华", time: "2026-08-24 09:18", text: "好的，谢谢医生。" }
         ];
+        var doctorTodoItems = [
+          { id: "todo-1", patient: "刘德华", doctor: "张医生", project: "广德慢病项目", type: "用药咨询", priority: "urgent", due: "今天 16:30 前", time: "刚刚", excerpt: "昨天的降压药忘记吃了一次，今天需要补服吗？", reason: "涉及用药判断，需医生确认后回复", unread: true, status: "待回复" },
+          { id: "todo-2", patient: "孙大伟", doctor: "张医生", project: "广德慢病项目", type: "指标异常", priority: "due", due: "今天 18:00 前", time: "昨天 14:22", excerpt: "血糖记录已经上传，请医生查看今日空腹血糖。", reason: "AI 已完成记录，等待医生复核", unread: true, status: "待回复" },
+          { id: "todo-3", patient: "王德华", doctor: "张医生", project: "广德慢病项目", type: "症状反馈", priority: "normal", due: "明天 10:00 前", time: "昨天 09:18", excerpt: "偶尔有点头晕，昨天没休息好。", reason: "患者补充症状，建议医生跟进", unread: false, status: "处理中" },
+          { id: "todo-4", patient: "陈建军", doctor: "张医生", project: "广德慢病项目", type: "复诊准备", priority: "normal", due: "周五前", time: "周一 08:20", excerpt: "下周复诊前需要准备哪些资料？", reason: "需要确认项目内复诊准备口径", unread: false, status: "待回复" }
+        ];
         var chatHistoryRecords = [
           { role: "患者", groupSender: "林女士", kind: "文本", daysAgo: 0, time: "09:15", text: "今早的测量记录已经补充到健康档案，请帮我确认是否收到。" },
           { role: "医生", kind: "文本", daysAgo: 0, time: "09:28", text: "已经收到，建议继续按原计划监测，复诊时一并带上记录。" },
@@ -1882,6 +1896,9 @@
           labelApplied: "",
           labelCollapsed: {},
           messageStatus: "全部",
+          doctorTodoTab: "待回复",
+          doctorTodoPriority: "全部优先级",
+          doctorTodoSearch: "",
           messageFilterDraft: { taskName: "", creator: "", sendType: "全部", createdStart: "", createdEnd: "", sentStart: "", sentEnd: "" },
           messageFilterApplied: { taskName: "", creator: "", sendType: "全部", createdStart: "", createdEnd: "", sentStart: "", sentEnd: "" },
           messageTask: { name: "糖尿病饮食宣教", content: "请查阅糖尿病饮食指南", audience: "诊断含糖尿病", target: 12, success: 8, failed: 2, sendType: "立即", status: "进行中", sentAt: "2026-08-01 10:30", createdAt: "2026-08-01 10:00", creator: "张医生" },
@@ -2576,6 +2593,17 @@
           var body = '<div class="ops-page-scroll"><h1 class="ops-page-title">新建消息任务</h1><div class="ops-message-create-stack">' + basic + filters + queryResult + '</div></div>';
           return '<section class="ops-page">' + toolbar(["首页", "运营管理", "消息触达", "新建消息任务"], "") + body + '<footer class="ops-form-footer">' + button("取消", "", "message-create-cancel") + button("确定发送", "primary", "message-send") + "</footer></section>";
         }
+        function renderDoctorTodosPage() {
+          var tab = state.doctorTodoTab || "待回复", priority = state.doctorTodoPriority || "全部优先级", query = String(state.doctorTodoSearch || "").trim().toLowerCase();
+          var visible = doctorTodoItems.filter(function (item) { var tabMatch = tab === "全部" || (tab === "待回复" ? item.status !== "已完成" : item.status === "已完成"); var priorityMatch = priority === "全部优先级" || (priority === "高优先级" && item.priority === "urgent") || (priority === "今日到期" && item.priority === "due") || (priority === "普通" && item.priority === "normal"); var searchMatch = !query || (item.patient + item.type + item.excerpt + item.reason).toLowerCase().indexOf(query) >= 0; return tabMatch && priorityMatch && searchMatch; });
+          var pending = doctorTodoItems.filter(function (item) { return item.status !== "已完成"; }).length, urgent = doctorTodoItems.filter(function (item) { return item.status !== "已完成" && item.priority === "urgent"; }).length, due = doctorTodoItems.filter(function (item) { return item.status !== "已完成" && item.priority === "due"; }).length, done = doctorTodoItems.filter(function (item) { return item.status === "已完成"; }).length;
+          var stats = '<div class="ops-todo-summary"><div class="ops-todo-stat"><span>待回复</span><strong>' + pending + '</strong></div><div class="ops-todo-stat is-urgent"><span>高优先级</span><strong>' + urgent + '</strong></div><div class="ops-todo-stat is-due"><span>今日到期</span><strong>' + due + '</strong></div><div class="ops-todo-stat is-done"><span>本周已完成</span><strong>' + done + '</strong></div></div>';
+          var tabs = ["待回复", "全部", "已完成"].map(function (value) { return '<button type="button" class="' + (tab === value ? 'is-active' : '') + '" data-action="doctor-todo-tab" data-value="' + value + '">' + value + (value === "待回复" ? ' <span>(' + pending + ')</span>' : '') + '</button>'; }).join("");
+          var filters = '<div class="ops-todo-toolbar"><div class="ops-todo-tabs" role="tablist" aria-label="待办状态">' + tabs + '</div><div class="ops-todo-filters"><input type="search" aria-label="搜索待办" placeholder="搜索患者或消息" data-bind="doctorTodo.search" value="' + escapeHtml(state.doctorTodoSearch) + '"><select aria-label="优先级筛选" data-bind="doctorTodo.priority"><option>全部优先级</option><option' + (priority === "高优先级" ? ' selected' : '') + '>高优先级</option><option' + (priority === "今日到期" ? ' selected' : '') + '>今日到期</option><option' + (priority === "普通" ? ' selected' : '') + '>普通</option></select></div></div>';
+          var rows = visible.length ? visible.map(function (item) { var priorityLabel = item.priority === "urgent" ? "高优先级" : item.priority === "due" ? "今日到期" : "普通", iconName = item.priority === "urgent" ? "fa-triangle-exclamation" : item.priority === "due" ? "fa-clock" : "fa-message", statusClass = item.priority === "urgent" ? "is-urgent" : item.priority === "due" ? "is-due" : ""; return '<article class="ops-todo-row ' + statusClass + '"><div class="ops-todo-priority ' + statusClass + '" aria-label="' + priorityLabel + '">' + icon(iconName) + '</div><div class="ops-todo-main"><div class="ops-todo-title"><strong>' + escapeHtml(item.patient) + '</strong><small>' + escapeHtml(item.project) + '</small>' + (item.unread ? '<span class="ops-todo-tag is-urgent">未读</span>' : '') + '</div><div class="ops-todo-excerpt">' + escapeHtml(item.excerpt) + '</div><div class="ops-todo-meta"><span class="ops-todo-tag ' + statusClass + '">' + priorityLabel + '</span><span>' + escapeHtml(item.type) + '</span><span>' + escapeHtml(item.reason) + '</span><span>' + escapeHtml(item.time) + '</span></div></div><div class="ops-todo-action"><span class="ops-todo-deadline">' + escapeHtml(item.due) + '</span><button class="ops-todo-open" type="button" data-action="doctor-todo-open" data-id="' + item.id + '">打开对话</button></div></article>'; }).join("") : '<div class="ops-todo-empty">当前筛选条件下没有待办。<br><span>新的人工回复任务会在需要医生判断时自动出现。</span></div>';
+          return '<section class="ops-page ops-doctor-todo-page">' + toolbar(["首页", "会话管理", "医生待办"], renderIconActions("", "")) + '<div class="ops-todo-hero"><div><h1>医生待办</h1><p>集中处理需要医生手动回复或复核的患者消息，打开任务后可直接进入对应对话。</p></div><div class="ops-todo-hero-meta"><div class="ops-todo-count"><strong>' + pending + '</strong><span>条待处理</span></div><div class="ops-todo-sla">优先级依据：消息风险 · 截止时间 · 未读状态</div></div></div>' + stats + filters + '<div class="ops-todo-list" aria-live="polite">' + rows + '</div><div class="ops-todo-note">' + icon("fa-circle-info") + '<span>待办只承接需要人工判断的例外消息；常规提醒和已获准的自动动作继续在后台运行。完成回复后，任务由对话状态回写并可追溯。</span></div></section>';
+        }
+
         function renderFollowupRulesPage() {
           var rows = followupRules.map(function (rule, index) {
             return '<tr><td>' + (index + 1) + '</td><td class="ops-cell-strong">' + escapeHtml(rule.name) + '</td><td>' + escapeHtml(rule.trigger) + '</td><td><span class="ops-tag is-blue">命中后自动创建</span><br><span class="ops-cell-summary">' + escapeHtml(rule.task) + '</span></td><td><span class="ops-cell-summary">' + escapeHtml(rule.reply) + '</span></td><td><span class="ops-tag ' + (rule.status === "已启用" ? "is-green" : "is-gray") + '">' + escapeHtml(rule.status) + '</span></td><td><button class="ops-link" type="button" data-action="followup-rule-preview" data-id="' + (index + 1) + '">查看链路</button></td></tr>';
@@ -3231,7 +3259,7 @@
           var ctx=getHandoffContext();
           if(!ctx.patientId||!ctx.sceneCode){toast('请先选择明确的患者和场景码');return;}
           if(window.PatientHandoffs.getRecords(ctx).some(function(item){return item.status==='pending_reply';})){toast('已有转接等待回复，请勿重复转接');return;}
-          openModal({type:'transfer',mode:mode,context:ctx,requestId:'handoff-request-'+Date.now()+'-'+(++handoffRequestSequence),reason:'',reasonDetail:'',summary:handoffSummary(ctx),toId:''},trigger);
+          openModal({type:'transfer',mode:mode,context:ctx,requestId:'handoff-request-'+Date.now()+'-'+(++handoffRequestSequence),reason:'',reasonDetail:'',summary:handoffSummary(ctx),toId:'',recipientType:'assistant'},trigger);
         }
         function captureHandoffInput(target) {
           if(!state.modal||state.modal.type!=='transfer')return false;
@@ -3519,7 +3547,7 @@
           }
           if (modal.type === "transfer") {
             var context=modal.context||getHandoffContext();
-            return modalFrame(modal.mode==='ai'?'AI转医助':'人工转接',window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save'),'sm');
+            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save'),'sm');
           }
           if (modal.type === "member-view") {
             var row = memberRows.filter(function (item) { return item.id === modal.id; })[0] || memberRows[0];
@@ -3992,12 +4020,12 @@
             return;
           }
           if (modal.type === "transfer") {
-            var request={requestId:modal.requestId,reason:readModalValue('transferReason'),reasonDetail:readModalValue('transferReasonDetail'),summary:readModalValue('transferSummary')};
+            var request={requestId:modal.requestId,reason:readModalValue('transferReason'),reasonDetail:readModalValue('transferReasonDetail'),summary:readModalValue('transferSummary')||readModalValue('transferReasonDetail'),toKind:modal.recipientType||'assistant'};
             var selected=shell.querySelector('[data-modal="transferTo"]:checked');
             var result=modal.mode==='ai'?window.PrototypeAiActions.transfer_to_assistant.invoke(request,modal.context):window.PatientHandoffs.transfer(modal.context,Object.assign({},request,{toId:selected?selected.value:''}),'manual');
             if(!result.ok){modal.error=result.message;var message=shell.querySelector('[data-handoff-error]');if(message)message.textContent=result.message;return;}
             state.modal=null;state.chatWorkbenchTab='患者交接';state.chatWorkbenchCollapsed=false;
-            toast('已发起转接，等待转入医助首次回复');return;
+            toast('已发起转接，等待转入方首次回复');return;
           }
           if (modal.type === "member-add") {
             var assistant = readModalValue("assistant");
@@ -4231,6 +4259,21 @@
             var menu = actionTarget.getAttribute("data-menu");
             state.openMenus[menu] = !state.openMenus[menu];
             render();
+          } else if (action === "doctor-todo-tab") {
+            state.doctorTodoTab = actionTarget.getAttribute("data-value") || "待回复";
+            render();
+          } else if (action === "doctor-todo-open") {
+            var todo = doctorTodoItems.filter(function (item) { return item.id === actionTarget.getAttribute("data-id"); })[0];
+            if (!todo) return;
+            todo.status = "处理中";
+            todo.unread = false;
+            state.chatDoctorSelected = todo.doctor;
+            selectArchivePatient(todo.patient);
+            state.chatArchiveTab = "病例时间轴";
+            state.chatWorkbenchTab = "患者档案";
+            state.chatHistoryOpen = false;
+            state.chatWorkbenchCollapsed = false;
+            navigate("aggregate-chat");
           } else if (action === "focus-search") {
             var input = shell && shell.querySelector("input:not([type=checkbox]):not([type=radio])");
             if (input) input.focus();
@@ -4995,8 +5038,14 @@
             sendChatMessage();
           } else if (action === "chat-transfer") {
             openHandoff("manual",actionTarget);
+          } else if (action === "handoff-recipient-type") {
+            if (!state.modal || state.modal.type !== "transfer") return;
+            state.modal.recipientType = actionTarget.getAttribute("data-value") || "assistant";
+            state.modal.toId = "";
+            render();
           } else if (action === "chat-transfer-ai") {
-            openHandoff("ai",actionTarget);
+            openHandoff("manual",actionTarget);
+            if (state.modal && state.modal.type === "transfer") { state.modal.recipientType = "ai"; render(); }
           } else if (action === "chat-unread") {
             toast("已标记为未读");
           } else if (action === "member-add") {
@@ -5188,6 +5237,7 @@
           if (bind) {
             var parts = bind.split(".");
             if (bind === "material.search") state.materialSearch = event.target.value;
+            else if (bind === "doctorTodo.search") state.doctorTodoSearch = event.target.value;
             else if (parts[0] === "material") {
               state.materialDraft[parts[1]] = event.target.value;
               var materialCounter = document.getElementById("ops-material-count-" + parts[1]);
@@ -5300,7 +5350,10 @@
             return;
           }
           var changedBind = event.target.getAttribute("data-bind") || "";
-          if (changedBind === "message.sendType") {
+          if (changedBind === "doctorTodo.priority") {
+            state.doctorTodoPriority = event.target.value || "全部优先级";
+            render();
+          } else if (changedBind === "message.sendType") {
             state.messageDraft.sendType = event.target.value;
             if (event.target.value === "立即发送") state.messageDraft.sendAt = "";
             render();
@@ -5502,6 +5555,11 @@
             var firstArchiveTagOption = shell && shell.querySelector("[data-patient-archive-tag-option]:not([hidden])");
             if (firstArchiveTagOption) selectPatientArchiveTag(firstArchiveTagOption.getAttribute("data-tag"));
             else toast("暂无匹配的标签名称");
+            return;
+          }
+          if (event.key === "Enter" && event.target.matches('[data-bind="doctorTodo.search"]')) {
+            event.preventDefault();
+            render();
             return;
           }
           if (event.key === "Escape" && state.messageMaterialOpen && !state.modal) {

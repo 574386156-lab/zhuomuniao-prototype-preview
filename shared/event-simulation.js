@@ -54,6 +54,9 @@
         if(activeRun!==run)return;
         if(result.error){finishRun(run);setStatus('提醒已显示，浏览器未允许播放提示音。','blocked');var replay=document.querySelector('[data-replay-transfer-sound]');if(replay)replay.hidden=false;return;}
         try{
+          // Event simulation is an explicit user action and must always play its reminder.
+          // Reset the one-shot conversation guard used by normal patient entry navigation.
+          if(window.ClinicAudio&&window.ClinicAudio.reset)window.ClinicAudio.reset();
           var played=window.ClinicAudio&&window.ClinicAudio.playNewPatientEntry(run.id,result.context);
           var finishAudio=function(sharedPlayed){
             if(!sharedPlayed)playChime(result.context);
@@ -67,7 +70,7 @@
     }
     deliver();
   }
-  function replaySound(){var button=document.querySelector('[data-replay-transfer-sound]');if(button)button.disabled=true;unlockAudio().then(function(ctx){var replayId='replay-'+Date.now().toString(36);var played=window.ClinicAudio&&window.ClinicAudio.playNewPatientEntry(replayId,ctx);var finish=function(sharedPlayed){if(!sharedPlayed)playChime(ctx);setStatus('正在播放约 1.5 秒提示音。','playing');setTimeout(function(){setStatus('提示音播放完成。','complete');if(button){button.hidden=true;button.disabled=false;}},1500);};if(played&&typeof played.then==='function')played.then(finish).catch(function(){finish(false);});else finish(!!played);},function(){setStatus('浏览器仍未允许播放声音，请检查站点声音设置。','blocked');if(button)button.disabled=false;});}
+  function replaySound(){var button=document.querySelector('[data-replay-transfer-sound]');if(button)button.disabled=true;unlockAudio().then(function(ctx){var replayId='replay-'+Date.now().toString(36);if(window.ClinicAudio&&window.ClinicAudio.reset)window.ClinicAudio.reset();var played=window.ClinicAudio&&window.ClinicAudio.playNewPatientEntry(replayId,ctx);var finish=function(sharedPlayed){if(!sharedPlayed)playChime(ctx);setStatus('正在播放约 1.5 秒提示音。','playing');setTimeout(function(){setStatus('提示音播放完成。','complete');if(button){button.hidden=true;button.disabled=false;}},1500);};if(played&&typeof played.then==='function')played.then(finish).catch(function(){finish(false);});else finish(!!played);},function(){setStatus('浏览器仍未允许播放声音，请检查站点声音设置。','blocked');if(button)button.disabled=false;});}
   function initialize(){
     if(mode==='launcher'){
       var trigger=document.querySelector('[data-simulate-transfer]');if(trigger)trigger.addEventListener('click',launch);

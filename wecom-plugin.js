@@ -6,11 +6,17 @@
     {id:'demo-sun',name:'孙大伟',doctor:'张医生',scene:'用药提醒',unread:1,time:'08:46',messages:[{text:'我的健康记录已经填写好了。',self:false}]},
     {id:'demo-chen',name:'陈建军',doctor:'张医生',scene:'慢病随访',unread:0,time:'昨天',messages:[{text:'我已收到复诊提醒。',self:false},{text:'收到，有其他问题可以在这里留言。',self:true}]}
   ];
+  var todoItems=[
+    {id:'todo-1',person:'demo-sun',reason:'患者连续补充了近一周的晨起与餐后记录，并反馈今天出现乏力、口渴和轻微头晕，希望医生结合近期记录判断是否需要调整后续随访安排，同时确认是否需要尽快到院复查。',referredBy:'AI 助手',referredAt:'10月29日 14:22',excerpt:'健康记录已经上传，请医生查看并回复。',startedAt:Date.now(),status:'pending'},
+    {id:'todo-2',person:'demo-wang',reason:'患者反馈头晕，需要医生确认后回复。',referredBy:'张医助',referredAt:'10月29日 09:18',excerpt:'偶尔有点头晕，昨天没休息好。',startedAt:Date.now(),status:'pending'},
+    {id:'todo-3',person:'demo-chen',reason:'患者咨询复诊准备，需要确认项目口径。',referredBy:'王医助',referredAt:'10月28日 08:20',excerpt:'下周复诊前需要准备哪些资料？',startedAt:Date.now(),status:'pending'}
+  ];
   var pages={'quick-replies':{title:'快捷回复',file:'quick-replies.html'},'patient-followups':{title:'患者跟进',file:'patient-followups.html'},'patient-profile':{title:'患者档案',file:'patient-profile.html'}};
   var app=document.getElementById('wecom-app'),pageHost=document.getElementById('plugin-pages'),phoneScreen=document.querySelector('.phone-screen');
   var phoneScaleBox=document.querySelector('.phone-scale-box'),phoneDevice=document.querySelector('.phone-device');
   var previewVersion='20261024-health-entry-v7';
-  var current=null,currentPage='',search='',drafts=Object.create(null),frames=Object.create(null),followupsMounted=false;
+  var current=null,currentPage='',search='',todoSearch='',todoTab='pending',drafts=Object.create(null),frames=Object.create(null),followupsMounted=false,activeTodoId=null,todoTicker=null,todoExpanded=Object.create(null);
+  var TODO_WINDOW_MS=5*60*1000;
   var archiveTab='病例时间轴',archiveTabsExpanded=false,archiveTimelineDetail=null,archiveTimelineScroll=0,archiveFocusDetail=false,archiveResetScroll=false,archiveEditMode=null,archiveFileOriginal=null,healthModal=null,healthReturnFocus=null,healthChartModal=null,healthChartReturnFocus=null,archiveTags=['慢病随访'],archiveTagModal=null,archiveTagReturnFocus=null,archiveBasicDraft=null;
   var archiveTagOptions=[
     {name:'慢病随访',level1:'个人健康管理',level2:'复诊随访',type:'个人标签'},
@@ -45,13 +51,49 @@
     filterMessages();document.title='消息 · 企微插件手机预览';
   }
   function filterMessages(){var shown=0;app.querySelectorAll('[data-wc-person]').forEach(function(row){row.hidden=row.textContent.toLowerCase().indexOf(search.trim().toLowerCase())<0;if(!row.hidden)shown++;});app.querySelector('.wc-empty').hidden=shown>0;}
+  function todoItemState(item,now){
+    if(item.status==='processed')return 'processed';
+    if(item.replied)return 'pending';
+    if(now-item.startedAt>=TODO_WINDOW_MS){item.status='expired';return 'expired';}
+    return 'pending';
+  }
+  function todoCountdown(item,now){
+    var seconds=Math.ceil(Math.max(0,TODO_WINDOW_MS-(now-item.startedAt))/1000),minutes=Math.floor(seconds/60),rest=String(seconds%60).padStart(2,'0');
+    return minutes+':'+rest;
+  }
+  function refreshTodoCountdowns(){
+    var now=Date.now(),expired=false,becameExpired=false;
+    app.querySelectorAll('[data-wc-todo-countdown]').forEach(function(node){var item=todoItems.filter(function(candidate){return candidate.id===node.getAttribute('data-wc-todo-countdown');})[0];if(!item)return;var state=todoItemState(item,now);if(state==='pending'&&!item.replied)node.textContent='剩余 '+todoCountdown(item,now);else{node.textContent=state==='expired'?'已过期':state==='processed'?'已处理':'已回复';node.classList.toggle('is-expired',state==='expired');node.classList.toggle('is-processed',state==='processed');node.classList.toggle('is-replied',!!item.replied);if(state==='expired'&&!node.classList.contains('is-expired'))becameExpired=true;if(state==='expired')expired=true;}});
+    if(becameExpired&&location.hash==='#todos')showTodos();
+  }
+  function ensureTodoTicker(){if(!todoTicker)todoTicker=window.setInterval(refreshTodoCountdowns,1000);}
+  function showTodos(){
+    ensureTodoTicker();
+    currentPage='';pageHost.hidden=true;if(phoneScreen)phoneScreen.classList.remove('wc-source-patient');
+    var now=Date.now();todoItems.forEach(function(item){todoItemState(item,now);});
+    var query=todoSearch.trim().toLowerCase(),visible=todoItems.filter(function(item){var person=people.filter(function(p){return p.id===item.person;})[0],state=todoItemState(item,now),tabMatch=todoTab==='all'||(todoTab==='pending'&&state==='pending')||(todoTab==='processed'&&state==='processed')||(todoTab==='expired'&&state==='expired');return tabMatch&&(!query||((person?person.name:'')+item.excerpt+item.reason+item.referredBy).toLowerCase().indexOf(query)>=0);});
+    var pending=todoItems.filter(function(item){return todoItemState(item,now)==='pending';}).length,processed=todoItems.filter(function(item){return todoItemState(item,now)==='processed';}).length,expired=todoItems.filter(function(item){return todoItemState(item,now)==='expired';}).length;
+    var tabs='<nav class="wc-todo-tabs" aria-label="待办状态">'+[['pending','待处理',pending],['processed','已处理',processed],['expired','已过期',expired],['all','全部',todoItems.length]].map(function(tab){return '<button type="button" class="'+(todoTab===tab[0]?'is-active':'')+'" data-wc-todo-tab="'+tab[0]+'">'+tab[1]+' <i>'+tab[2]+'</i></button>';}).join('')+'</nav>';
+    var rows=visible.length?visible.map(function(item){var person=people.filter(function(p){return p.id===item.person;})[0]||people[0],state=todoItemState(item,now),countdown=state==='pending'&&!item.replied?'剩余 '+todoCountdown(item,now):state==='expired'?'已过期':state==='processed'?'已处理':'已回复',longReason=item.reason.length>42,expanded=!!todoExpanded[item.id],reasonClass=longReason&&!expanded?'wc-todo-reason is-collapsed':'wc-todo-reason';return '<article class="wc-todo-row is-'+state+(item.replied?' is-replied':'')+'"><span class="wc-todo-icon" aria-hidden="true">↗</span><span class="wc-todo-copy"><span class="wc-todo-heading"><strong>'+esc(person.name)+'</strong>'+(item.replied?'<i class="wc-todo-replied">已回复</i>':'')+'</span><p class="'+reasonClass+'"><b>转诊理由：</b>'+esc(item.reason)+(longReason?'<button type="button" class="wc-todo-expand" data-wc-todo-expand="'+item.id+'">'+(expanded?'收起':'展开')+'</button>':'')+'</p><small>由 '+esc(item.referredBy)+' 转诊 · '+esc(item.referredAt)+'</small></span><span class="wc-todo-action"><time class="wc-todo-countdown '+(state==='expired'?'is-expired':'')+' '+(state==='processed'?'is-processed':'')+' '+(item.replied?'is-replied':'')+'" data-wc-todo-countdown="'+item.id+'">'+countdown+'</time><button type="button" '+(state==='expired'||state==='processed'?'disabled':'')+' data-wc-todo-person="'+esc(item.person)+'" data-wc-todo-id="'+item.id+'">打开对话</button></span></article>';}).join(''):'<p class="wc-empty wc-todo-empty">当前没有匹配的医生待办</p>';
+    app.innerHTML=header('医生待办','messages')+'<section class="wc-todo-summary"><strong>'+pending+'</strong><span>条待处理 · 每条待办 5 分钟内处理</span></section>'+tabs+'<label class="wc-search"><span aria-hidden="true">⌕</span><input type="search" id="wc-todo-search" placeholder="搜索患者或消息" aria-label="搜索患者或消息" value="'+esc(todoSearch)+'"></label><section class="wc-todo-list" aria-label="医生待办列表">'+rows+'</section><p class="wc-todo-note">5 分钟内打开对话并发送一条回复后，待办标记为已处理；超时自动标记为已过期。</p>';
+    document.title='医生待办 · 企微插件手机预览';
+  }
   function configContext(){var doctor=window.SidebarConfig.catalog.doctors.filter(function(d){return current&&d.name===current.doctor;})[0];return {projectId:doctor?doctor.projectId:'',doctorId:doctor?doctor.id:'',patientName:current?current.name:'',doctorName:current?current.doctor:'',sceneName:current?current.scene:''};}
   function availableTabs(){return window.SidebarConfig.visible(configContext(),window.SidebarConfig.environment(),'wecom');}
   function showChat(){
     currentPage='';pageHost.hidden=true;if(phoneScreen)phoneScreen.classList.remove('wc-source-patient');
     if(!current){showMessages();return;}
-    app.innerHTML=header(current.name,'messages')+'<section class="wc-thread" aria-label="与'+esc(current.name)+'的1v1对话"><time>09:18</time>'+current.messages.map(function(message){return '<article class="wc-message'+(message.self?' is-self':'')+'"><span class="wc-avatar" aria-hidden="true">'+(message.self?'我':esc(current.name[0]))+'</span><p class="wc-bubble">'+esc(message.text)+'</p></article>';}).join('')+'</section><nav class="wc-plugin-nav" aria-label="会话快捷入口">'+availableTabs().map(function(tab){return '<button type="button" data-wc-page="'+tab.id+'">'+'<i class="wc-entry-icon wc-entry-icon--'+({'patient-profile':'archive','ai-summary':'summary','quick-replies':'reply','patient-followups':'followup','patient-handoffs':'handoff'}[tab.builtin||tab.id]||'archive')+'" aria-hidden="true"></i><span>'+esc(tab.name)+'</span></button>';}).join('')+'</nav><form class="wc-composer"><textarea maxlength="500" rows="1" aria-label="消息内容" placeholder="输入消息">'+esc(drafts[current.id]||'')+'</textarea><button type="submit"'+((drafts[current.id]||'').trim()?'':' disabled')+'>发送</button></form><p class="wc-message-feedback" role="status" hidden></p>';
+    app.innerHTML=header(current.name,'messages')+'<section class="wc-thread" aria-label="与'+esc(current.name)+'的1v1对话"><time>09:18</time>'+current.messages.map(function(message){return '<article class="wc-message'+(message.self?' is-self':'')+'"><span class="wc-avatar" aria-hidden="true">'+(message.self?'我':esc(current.name[0]))+'</span><p class="wc-bubble">'+esc(message.text)+'</p></article>';}).join('')+'</section><nav class="wc-plugin-nav" aria-label="会话快捷入口"><button type="button" data-wc-action="todos"><i class="wc-entry-icon wc-entry-icon--todo" aria-hidden="true">✓</i><span>医生待办</span></button>'+availableTabs().map(function(tab){return '<button type="button" data-wc-page="'+tab.id+'">'+'<i class="wc-entry-icon wc-entry-icon--'+({'patient-profile':'archive','ai-summary':'summary','quick-replies':'reply','patient-followups':'followup','patient-handoffs':'handoff'}[tab.builtin||tab.id]||'archive')+'" aria-hidden="true"></i><span>'+esc(tab.name)+'</span></button>';}).join('')+'</nav><form class="wc-composer"><textarea maxlength="500" rows="1" aria-label="消息内容" placeholder="输入消息">'+esc(drafts[current.id]||'')+'</textarea><button type="submit"'+((drafts[current.id]||'').trim()?'':' disabled')+'>发送</button></form><p class="wc-message-feedback" role="status" hidden></p>';
     var thread=app.querySelector('.wc-thread');thread.scrollTop=thread.scrollHeight;document.title=current.name+' · 企微插件手机预览';
+  }
+  function renderHandoffsPage(){
+    var events=[
+      {type:'AI 接手',from:'患者消息入口',to:'AI 助手',time:'10月29日 14:00',reason:'患者通过企微发起咨询，AI 先行接待并完成基础信息收集。',summary:'已记录患者本次咨询内容，并完成初步整理。',status:'已完成'},
+      {type:'转医助',from:'AI 助手',to:'张医助',time:'10月29日 14:06',reason:'患者反馈持续不适，需要医助补充询问并跟进。',summary:'AI 已暂停自动回复，向医助交接症状、已问问题和待确认事项。',status:'已完成'},
+      {type:'转医生',from:'张医助',to:current.doctor||'张医生',time:'10月29日 14:18',reason:'涉及用药判断和症状变化，需要医生结合患者情况确认回复口径。',summary:'医助已完成基础信息核对，保留原始对话和患者近期反馈供医生复核。',status:'待医生处理'}
+    ];
+    pageHost.innerHTML='<section class="wc-handoff-page" aria-label="患者交接时间轴"><div class="wc-handoff-patient"><span class="wc-avatar">'+esc(current.name[0])+'</span><div><strong>'+esc(current.name)+'</strong><small>'+esc(current.scene)+' · 当前接待：'+esc(events[events.length-1].to)+'</small></div><button type="button" class="wc-handoff-ai-button">转AI</button></div><ol class="wc-handoff-timeline">'+events.map(function(item){return '<li><article class="wc-handoff-card"><header><div><strong>'+item.type+'</strong><time>'+item.time+'</time></div><span class="wc-handoff-status '+(item.status==='已完成'?'is-done':'is-pending')+'">'+item.status+'</span></header><div class="wc-handoff-route"><span>'+esc(item.from)+'</span><b>→</b><span>'+esc(item.to)+'</span></div><section class="wc-handoff-reason"><h3>转接理由</h3><p>'+esc(item.reason)+'</p></section><section class="wc-handoff-summary"><h3>交接摘要</h3><p>'+esc(item.summary)+'</p></section></article></li>';}).join('')+'</ol></section>';
+    document.title='患者交接 · 企微插件手机预览';
   }
   function openPage(key){
     if(!current)return;
@@ -62,6 +104,7 @@
     pageHost.querySelectorAll('.wc-patient-archive').forEach(function(panel){panel.remove();});
     currentPage=key;app.innerHTML=header(selectedTab.name,'chat');pageHost.hidden=false;
     if(phoneScreen)phoneScreen.classList.remove('wc-source-patient');
+    if(key==='patient-handoffs'){renderHandoffsPage();return;}
     if(key==='patient-profile'){renderPatientArchive();return;}
     Object.keys(frames).forEach(function(k){frames[k].hidden=k!==key;});
     if(!frames[key]){
@@ -207,11 +250,13 @@
   function navigate(hash){if(location.hash===hash)route();else location.hash=hash;}
   function route(){
     var parts=location.hash.replace(/^#/,'').split('/'),person=people.filter(function(p){return p.id===parts[1];})[0];
-    if((parts[0]==='chat'||parts[0]==='page')&&person){if(current!==person){clearFrames();current=person;if(window.ClinicAudio)window.ClinicAudio.playNewPatientEntry(person.id);}person.unread=0;if(parts[0]==='page'&&parts[2])openPage(parts[2]);else showChat();}
+    if((parts[0]==='chat'||parts[0]==='page')&&person){if(current!==person){clearFrames();current=person;}person.unread=0;if(parts[0]==='page'&&parts[2])openPage(parts[2]);else showChat();}
+    else if(parts[0]==='todos'){showTodos();}
     else{showMessages();}
   }
-  app.addEventListener('click',function(event){var person=event.target.closest('[data-wc-person]'),page=event.target.closest('[data-wc-page]'),action=event.target.closest('[data-wc-action]');if(person)navigate('#chat/'+person.getAttribute('data-wc-person'));else if(page&&current)navigate('#page/'+current.id+'/'+page.getAttribute('data-wc-page'));else if(action)navigate(action.getAttribute('data-wc-action')==='chat'&&current?'#chat/'+current.id:'#messages');});
+  app.addEventListener('click',function(event){var person=event.target.closest('[data-wc-person]'),todo=event.target.closest('[data-wc-todo-person]'),expand=event.target.closest('[data-wc-todo-expand]'),todoTabButton=event.target.closest('[data-wc-todo-tab]'),page=event.target.closest('[data-wc-page]'),action=event.target.closest('[data-wc-action]');if(person)navigate('#chat/'+person.getAttribute('data-wc-person'));else if(expand){var expandId=expand.getAttribute('data-wc-todo-expand');todoExpanded[expandId]=!todoExpanded[expandId];showTodos();}else if(todoTabButton){todoTab=todoTabButton.getAttribute('data-wc-todo-tab')||'pending';showTodos();}else if(todo){activeTodoId=todo.getAttribute('data-wc-todo-id')||'';navigate('#chat/'+todo.getAttribute('data-wc-todo-person'));}else if(page&&current)navigate('#page/'+current.id+'/'+page.getAttribute('data-wc-page'));else if(action){var actionName=action.getAttribute('data-wc-action');navigate(actionName==='chat'&&current?'#chat/'+current.id:actionName==='todos'?'#todos':'#messages');}});
   pageHost.addEventListener('click',function(event){
+    if(currentPage==='patient-handoffs'&&event.target.closest('.wc-handoff-ai-button')){var handoffTodo=todoItems.filter(function(item){return item.person===current.id&&item.status!=='processed';})[0];if(handoffTodo){handoffTodo.status='processed';handoffTodo.replied=false;activeTodoId=null;}navigate('#todos');return;}
     if(currentPage!=='patient-profile')return;
     if(event.target.classList&&event.target.classList.contains('wc-archive-tag-backdrop')){closeArchiveTagModal();return;}
     if(event.target.classList&&event.target.classList.contains('wc-health-modal-backdrop')){closeHealthModal();return;}
@@ -332,8 +377,8 @@
     if(event.deltaMode===1)delta*=16;else if(event.deltaMode===2)delta*=rail.clientWidth;
     event.preventDefault();rail.scrollLeft+=delta;
   },{passive:false});
-  app.addEventListener('input',function(event){if(event.target.id==='wc-search'){search=event.target.value;filterMessages();}else if(event.target.matches('.wc-composer textarea')&&current){drafts[current.id]=event.target.value;app.querySelector('.wc-composer button').disabled=!event.target.value.trim();}});
-  app.addEventListener('submit',function(event){if(!event.target.matches('.wc-composer')||!current)return;event.preventDefault();var text=(drafts[current.id]||'').trim();if(!text||text.length>500)return;current.messages.push({text:text,self:true});drafts[current.id]='';current.time='刚刚';showChat();app.querySelector('textarea').focus();});
+  app.addEventListener('input',function(event){if(event.target.id==='wc-search'){search=event.target.value;filterMessages();}else if(event.target.id==='wc-todo-search'){todoSearch=event.target.value;showTodos();}else if(event.target.matches('.wc-composer textarea')&&current){drafts[current.id]=event.target.value;app.querySelector('.wc-composer button').disabled=!event.target.value.trim();}});
+  app.addEventListener('submit',function(event){if(!event.target.matches('.wc-composer')||!current)return;event.preventDefault();var text=(drafts[current.id]||'').trim();if(!text||text.length>500)return;current.messages.push({text:text,self:true});drafts[current.id]='';current.time='刚刚';current.unread=1;var todo=todoItems.filter(function(item){return item.id===activeTodoId&&item.person===current.id;})[0];if(todo&&todoItemState(todo,Date.now())==='pending')todo.replied=true;showChat();app.querySelector('textarea').focus();});
   window.addEventListener('message',function(event){
     if(event.origin!==location.origin||!current||!currentPage||!frames[currentPage]||event.source!==frames[currentPage].contentWindow)return;
     if(new URL(frames[currentPage].src).pathname.split('/').pop()!=='quick-replies.html')return;
