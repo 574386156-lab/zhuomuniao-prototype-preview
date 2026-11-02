@@ -163,7 +163,8 @@
   function render(ctx,tab,metric,expanded,allTabsExpanded,phoneVisible,basicInfo,timelineDetailIndex,actionPrefix,contentOverride) {
     var found=resolve(ctx),visibleTabs=tabsFor(found.record,ctx.sceneName),selected=visibleTabs.indexOf(tab)>=0?tab:'病例时间轴';
     var sceneOptions = ['慢病随访','用药提醒','健康宣教'];
-    var scenePicker = '<label class="cp-scene-picker"><span class="cp-field-label">场景</span><select data-change-action="chat-archive-scene" aria-label="切换场景名称">'+sceneOptions.map(function(scene){return '<option value="'+esc(scene)+'" '+(scene===ctx.sceneName?'selected':'')+'>'+esc(scene)+'</option>';}).join('')+'</select></label>';
+    var sceneUsage = {'慢病随访':'当前使用','用药提醒':'历史使用','健康宣教':'历史使用'};
+    var scenePicker = '<label class="cp-scene-picker"><span class="cp-field-label">场景</span><select data-change-action="chat-archive-scene" aria-label="切换场景名称">'+sceneOptions.map(function(scene){var status=sceneUsage[scene]||'历史使用';return '<option value="'+esc(scene)+'" '+(scene===ctx.sceneName?'selected':'')+'>'+esc(scene)+' · '+esc(status)+'</option>';}).join('')+'</select><small class="cp-scene-usage '+(sceneUsage[ctx.sceneName]==='当前使用'?'is-current':'is-history')+'" data-scene-usage="'+esc(sceneUsage[ctx.sceneName]||'历史使用')+'">'+esc(sceneUsage[ctx.sceneName]||'历史使用')+'</small></label>';
     var identity='<header class="cp-identity"><button class="cp-close" type="button" data-action="chat-workbench-panel-toggle" aria-label="收起患者档案">×</button><div><strong>'+esc(ctx.patientName || '患者档案')+'</strong>'+(ctx.group?'<span class="cp-badge">群聊</span>':'')+'</div></header>';
     if(!found.record) return '<section class="cp-panel" aria-label="患者档案">'+identity+(found.reason==='当前医生下暂无患者档案'?unfiledEmpty():empty(found.reason,found.hint))+'</section>';
     var r=found.record;
