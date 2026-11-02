@@ -4744,6 +4744,14 @@
           } else if (action === "chat-patient-phone-toggle") {
             state.chatPatientPhoneVisible = !state.chatPatientPhoneVisible;
             render();
+          } else if (action === "chat-archive-scene-toggle") {
+            var sceneSelect = actionTarget.closest(".cp-scene-select");
+            if (sceneSelect) {
+              var sceneOpen = !sceneSelect.classList.contains("is-open");
+              sceneSelect.classList.toggle("is-open", sceneOpen);
+              var sceneTrigger = sceneSelect.querySelector(".cp-scene-trigger");
+              if (sceneTrigger) sceneTrigger.setAttribute("aria-expanded", String(sceneOpen));
+            }
           } else if (action === "chat-archive-scene") {
             state.chatArchiveScene = actionTarget.getAttribute("data-value") || "慢病随访";
             state.chatArchiveTab = "病例时间轴";
