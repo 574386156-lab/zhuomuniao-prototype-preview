@@ -676,8 +676,20 @@ html.ops-ai-summary-standalone .ops-workspace { grid-template-rows:minmax(0,1fr)
 .ops-health-modal .hm-form select { width:100%; min-width:0; max-width:100%; min-height:48px; box-sizing:border-box; }
 .ops-health-modal .hm-form-values > label { min-width:0; }
 
-/* Scene switcher status: make the active code and retained historical codes explicit. */
-.cp-scene-picker { position:relative; }
-.cp-scene-picker .cp-scene-usage { display:inline-flex; width:max-content; align-items:center; margin-top:5px; padding:2px 7px; border:1px solid #cfe2f5; border-radius:4px; background:#f4f9fe; color:#547390; font-size:11px; line-height:1.35; }
-.cp-scene-picker .cp-scene-usage.is-current { border-color:#f3c98f; background:#fff8ed; color:#c87516; }
-.cp-scene-picker .cp-scene-usage.is-history { border-color:#d7e1ea; background:#f6f8fa; color:#70859a; }
+
+/* Custom scene selector with status badges inside each option. */
+.cp-scene-select { position:relative; min-width:0; }
+.cp-scene-trigger { display:flex; width:100%; min-height:44px; align-items:center; gap:7px; padding:8px 10px; border:1px solid #d7e2ed; border-radius:6px; background:#fff; color:#173c61; font:inherit; font-size:16px; text-align:left; cursor:pointer; }
+.cp-scene-trigger:hover,.cp-scene-select:focus-within .cp-scene-trigger { border-color:#6fa9e6; box-shadow:0 0 0 2px rgba(30,122,211,.12); }
+.cp-scene-selected-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cp-scene-chevron { margin-left:auto; color:#6d849a; font-size:16px; line-height:1; transition:transform .16s ease; }
+.cp-scene-select.is-open .cp-scene-chevron { transform:rotate(180deg); }
+.cp-scene-menu { position:absolute; z-index:20; top:calc(100% + 5px); left:0; right:0; display:none; max-height:220px; overflow:auto; padding:5px; border:1px solid #cbdceb; border-radius:8px; background:#fff; box-shadow:0 10px 24px rgba(22,61,95,.16); }
+.cp-scene-select.is-open .cp-scene-menu { display:grid; gap:3px; }
+.cp-scene-option { display:flex; width:100%; min-height:38px; align-items:center; gap:7px; padding:7px 8px; border:0; border-radius:6px; background:#fff; color:#315878; font:inherit; font-size:13px; text-align:left; cursor:pointer; }
+.cp-scene-option:hover,.cp-scene-option.is-selected { background:#f0f7ff; color:#075fae; }
+.cp-scene-option-name { min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.cp-scene-badge { display:inline-flex; flex:0 0 auto; align-items:center; padding:2px 6px; border:1px solid #d7e1ea; border-radius:4px; background:#f6f8fa; color:#70859a; font-size:11px; line-height:1.3; white-space:nowrap; }
+.cp-scene-badge.is-current { border-color:#f3c98f; background:#fff8ed; color:#c87516; }
+.cp-scene-check { width:14px; flex:0 0 14px; color:#0872ca; font-weight:700; text-align:center; }
+@media (max-width:480px) { .cp-scene-trigger { min-height:38px; padding:6px 8px; font-size:14px; } .cp-scene-menu { max-height:190px; } .cp-scene-option { min-height:35px; padding:6px 7px; font-size:12px; } }
