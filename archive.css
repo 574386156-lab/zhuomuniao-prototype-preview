@@ -675,3 +675,9 @@ html.ops-ai-summary-standalone .ops-workspace { grid-template-rows:minmax(0,1fr)
 .ops-health-modal .hm-form input,
 .ops-health-modal .hm-form select { width:100%; min-width:0; max-width:100%; min-height:48px; box-sizing:border-box; }
 .ops-health-modal .hm-form-values > label { min-width:0; }
+
+/* Scene switcher status: make the active code and retained historical codes explicit. */
+.cp-scene-picker { position:relative; }
+.cp-scene-picker .cp-scene-usage { display:inline-flex; width:max-content; align-items:center; margin-top:5px; padding:2px 7px; border:1px solid #cfe2f5; border-radius:4px; background:#f4f9fe; color:#547390; font-size:11px; line-height:1.35; }
+.cp-scene-picker .cp-scene-usage.is-current { border-color:#f3c98f; background:#fff8ed; color:#c87516; }
+.cp-scene-picker .cp-scene-usage.is-history { border-color:#d7e1ea; background:#f6f8fa; color:#70859a; }
