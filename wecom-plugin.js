@@ -309,6 +309,8 @@
     }
     else if(action==='chat-archive-tab'){archiveTab=target.getAttribute('data-value')||'病例时间轴';archiveTabsExpanded=false;archiveTimelineDetail=null;archiveEditMode=null;archiveFileOriginal=null;archiveFocusDetail=true;renderPatientArchive();}
     else if(action==='chat-archive-tabs-toggle'){archiveTabsExpanded=!archiveTabsExpanded;renderPatientArchive();}
+    else if(action==='chat-archive-scene-toggle'){var sceneSelect=target.closest('.cp-scene-select');if(sceneSelect){var sceneOpen=!sceneSelect.classList.contains('is-open');sceneSelect.classList.toggle('is-open',sceneOpen);var sceneTrigger=sceneSelect.querySelector('.cp-scene-trigger');if(sceneTrigger)sceneTrigger.setAttribute('aria-expanded',String(sceneOpen));}}
+    else if(action==='chat-archive-scene'){if(current){current.scene=target.getAttribute('data-value')||'慢病随访';archiveTab='病例时间轴';archiveTimelineDetail=null;archiveFocusDetail=true;renderPatientArchive();}}
     else if(action==='wecom-archive-timeline-detail'){archiveTimelineDetail=Number(target.getAttribute('data-event-index'));archiveTab='病例时间轴';archiveFocusDetail=true;archiveEditMode=null;archiveFileOriginal=null;renderPatientArchive();}
     else if(action==='wecom-archive-timeline-back'){archiveTimelineDetail=null;archiveTab='病例时间轴';archiveEditMode=null;archiveFileOriginal=null;renderPatientArchive();}
     else if(action==='wecom-archive-file-original'){archiveFileOriginal={eventIndex:Number(target.getAttribute('data-event-index')),fileIndex:Number(target.getAttribute('data-file-index'))};archiveTab='病例时间轴';archiveFocusDetail=true;renderPatientArchive();}
