@@ -2209,6 +2209,107 @@
           var control = multiline ? '<textarea' + attributes + '>' + escapeHtml(value) + '</textarea>' : '<input' + attributes + ' value="' + escapeHtml(value) + '">';
           return '<span class="ops-material-counted-control' + (multiline ? ' is-textarea' : '') + '">' + control + '<span class="ops-material-char-count" id="ops-material-count-' + key + '">' + value.length + '/' + limit + '</span></span>';
         }
+        // 动参唯一数据源：新增/下线动参只改这里，插入菜单、文本标签、各处提示文案自动联动。
+        var MATERIAL_PARAMETERS = [
+          { token: "{{doctor_name}}", label: "医生姓名", short: "医生姓名" },
+          { token: "{{patient_name}}", label: "患者姓名", short: "患者姓名" },
+          { token: "{{gender}}", label: "先生/女士", short: "先生/女士" },
+          { token: "{{pid}}", label: "患者 ID（pid）", short: "pid" },
+          { token: "{{doctor_id}}", label: "医生 ID", short: "医生 ID" }
+        ];
+        var materialTokenPatternCache = null;
+        function materialTokenPattern() {
+          if (!materialTokenPatternCache) {
+            materialTokenPatternCache = new RegExp("(" + MATERIAL_PARAMETERS.map(function (item) { return item.token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|") + ")", "g");
+          }
+          return materialTokenPatternCache;
+        }
+        function materialParameterByToken(token) {
+          for (var i = 0; i < MATERIAL_PARAMETERS.length; i++) { if (MATERIAL_PARAMETERS[i].token === token) return MATERIAL_PARAMETERS[i]; }
+          return null;
+        }
+        function materialTokenHintText() {
+          return MATERIAL_PARAMETERS.map(function (item) { return "【" + item.short + "】"; }).join("");
+        }
+        function materialHelpMarkup(options) {
+          var markup = '<span class="ops-material-help-line">现在仅支持动态拼接：<span class="ops-material-help-tokens">' + materialTokenHintText() + "</span></span>";
+          if (options && options.example) markup += '<span class="ops-material-help-line">拼接示例：<code class="ops-material-help-example">' + escapeHtml(options.example) + "</code></span>";
+          if (options && options.note) markup += '<span class="ops-material-help-note">' + escapeHtml(options.note) + "</span>";
+          return markup;
+        }
+        function materialLinkHelp(kind) {
+          if (kind === "mini") return { markup: materialHelpMarkup({ example: "pages/health/index?doctor=【医生姓名】&pid=【pid】", note: "页面路径无需以斜杠开头，如 pages/health/index。" }), label: "查看小程序路径动参说明" };
+          return { markup: materialHelpMarkup({ example: "https://example.com/health?name=【患者姓名】&pid=【pid】", note: "链接需以 http:// 或 https:// 开头，保存前会校验格式。" }), label: "查看网页链接动参说明" };
+        }
+        function materialParameterControl() {
+          var items = MATERIAL_PARAMETERS.map(function (item) {
+            return '<button type="button" class="ops-material-parameter" data-action="material-param-insert" data-value="' + item.token + '"><strong>' + item.label + '</strong><code>' + item.token + '</code></button>';
+          }).join("");
+          return '<div class="ops-material-parameters" aria-label="插入动参"><button type="button" class="ops-material-parameter-trigger" data-action="material-param-toggle" aria-expanded="false" aria-controls="ops-material-parameter-menu">插入动参' + icon("fa-chevron-down") + '</button><small>共 ' + MATERIAL_PARAMETERS.length + ' 个动参可插入</small><div class="ops-material-parameter-menu" id="ops-material-parameter-menu" hidden>' + items + '</div></div>';
+        }
+        function materialHelpIcon(markup, id, label) {
+          return '<span class="ops-material-help"><button type="button" class="ops-material-help-trigger" data-action="material-help-toggle" aria-expanded="false" aria-describedby="' + id + '" aria-label="' + escapeHtml(label || "查看说明") + '">' + icon("fa-circle-question") + '</button><span class="ops-material-help-popover" id="' + id + '" role="tooltip" hidden>' + markup + '</span></span>';
+        }
+        function closeMaterialHelpPopovers() {
+          document.querySelectorAll(".ops-material-help-popover").forEach(function (item) { item.hidden = true; });
+          document.querySelectorAll(".ops-material-help-trigger").forEach(function (item) { item.setAttribute("aria-expanded", "false"); });
+          document.querySelectorAll(".ops-material-parameter-menu").forEach(function (item) { item.hidden = true; });
+          document.querySelectorAll('[data-action="material-param-toggle"]').forEach(function (item) { item.setAttribute("aria-expanded", "false"); item.classList.remove("is-open"); });
+        }
+        function positionMaterialFloating(trigger, panel, alignRight) {
+          panel.hidden = false;
+          var anchor = trigger.getBoundingClientRect();
+          var width = panel.offsetWidth || 200, height = panel.offsetHeight || 0;
+          var left = alignRight ? anchor.right - width : anchor.left;
+          left = Math.max(12, Math.min(left, window.innerWidth - width - 12));
+          var top = anchor.bottom + 6;
+          if (top + height > window.innerHeight - 12) top = Math.max(12, anchor.top - height - 6);
+          panel.style.left = Math.round(left) + "px";
+          panel.style.top = Math.round(top) + "px";
+        }
+        function positionMaterialHelpPopover(trigger, popover) {
+          popover.hidden = false;
+          var anchor = trigger.getBoundingClientRect();
+          var width = popover.offsetWidth || 272, height = popover.offsetHeight || 0;
+          var center = anchor.left + anchor.width / 2;
+          var left = Math.max(12, Math.min(center - width / 2, window.innerWidth - width - 12));
+          var top = anchor.bottom + 8;
+          if (top + height > window.innerHeight - 12) top = Math.max(12, anchor.top - height - 8);
+          popover.style.left = Math.round(left) + "px";
+          popover.style.top = Math.round(top) + "px";
+          popover.style.setProperty("--ops-help-arrow-x", Math.round(center - left) + "px");
+        }
+        var materialHelpDismissBound = false;
+        function bindMaterialHelpDismiss() {
+          if (materialHelpDismissBound) return;
+          materialHelpDismissBound = true;
+          document.addEventListener("scroll", closeMaterialHelpPopovers, true);
+          window.addEventListener("resize", closeMaterialHelpPopovers);
+          document.addEventListener("click", function (event) {
+            if (event.target.closest && (event.target.closest(".ops-material-help") || event.target.closest('[data-action="material-param-toggle"]'))) return;
+            closeMaterialHelpPopovers();
+          }, true);
+        }
+        function materialRichTextMarkup(value) {
+          return String(value || "").split(materialTokenPattern()).map(function (part) {
+            var parameter = materialParameterByToken(part);
+            if (parameter) return '<span class="ops-material-token" contenteditable="false" data-material-token="' + parameter.token + '">' + parameter.label + '</span>';
+            return escapeHtml(part).replace(/\n/g, "<br>");
+          }).join("");
+        }
+        function materialRichTextValue(editor) {
+          var clone = editor.cloneNode(true);
+          clone.querySelectorAll("[data-material-token]").forEach(function (token) { token.replaceWith(document.createTextNode(token.getAttribute("data-material-token") || "")); });
+          return (clone.innerText || clone.textContent || "").replace(/\u00a0/g, " ");
+        }
+        function materialRichTextValueFromRange(range) {
+          var wrapper = document.createElement("div");
+          wrapper.appendChild(range.cloneContents());
+          return materialRichTextValue(wrapper);
+        }
+        function materialRichTextControl(value, limit) {
+          return '<div class="ops-material-rich-control"><div class="ops-material-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-material-rich-text data-placeholder="请输入文本话术">' + materialRichTextMarkup(value) + '</div><textarea hidden data-bind="material.text" maxlength="' + limit + '">' + escapeHtml(value || "") + '</textarea><span class="ops-material-char-count" id="ops-material-count-text">' + String(value || "").length + '/' + limit + '</span></div>';
+        }
         function materialUploadSpec(slot) {
           var image = {extensions:["jpg","jpeg","png"], accept:".jpg,.jpeg,.png", max:10, hint:"支持 JPG、PNG 格式，最大 10MB"};
           if (slot !== "upload" || state.materialDraft.type === "图片") return image;
@@ -2237,10 +2338,10 @@
         }
         function renderMaterialTypeContent() {
           var draft=state.materialDraft;
-          if (draft.type === "文本") return '<label class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>素材内容</span>'+materialCountedControl("text","请输入文本话术",200,true)+'</label>';
-          function field(key,label,required,placeholder) {return '<label class="ops-field"><span class="ops-field-label">'+(required?'<span class="ops-required">*</span>':'')+label+'</span><input data-bind="material.'+key+'" value="'+escapeHtml(draft[key]||'')+'" placeholder="'+escapeHtml(placeholder||'请输入'+label)+'"></label>';}
-          if (draft.type === "网页") return '<div class="ops-form-grid">'+field("webTitle","网页标题",true)+field("webUrl","网页链接",true)+materialUploadField("webCover","封面图",false)+'<label class="ops-field ops-full-span"><span class="ops-field-label">网页描述</span>'+materialCountedControl("webDescription","请输入网页描述",200,true)+'</label></div>';
-          if (draft.type === "小程序") return '<div class="ops-form-grid">'+field("miniTitle","小程序标题",true)+field("appId","AppID",true)+field("path","页面路径",true)+field("originalId","原始 ID",true,"请输入小程序原始 ID（gh_ 开头）")+'<label class="ops-field ops-full-span"><span class="ops-field-label"><span class="ops-required">*</span>描述</span>'+materialCountedControl("miniDescription","请输入小程序描述",200,true)+'</label>'+materialUploadField("miniIcon","Icon 图标",true)+materialUploadField("miniImage","上传图片",true)+'</div>';
+          if (draft.type === "文本") { return '<label class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>素材内容</span>'+materialRichTextControl(draft.text,200)+materialParameterControl()+'</label>'; }
+          function field(key,label,required,placeholder,help) {return '<label class="ops-field"><span class="ops-field-label">'+(required?'<span class="ops-required">*</span>':'')+label+(help?materialHelpIcon(help.markup,help.id||('ops-material-help-'+key),help.label):'')+'</span><input data-bind="material.'+key+'" value="'+escapeHtml(draft[key]||'')+'" placeholder="'+escapeHtml(placeholder||'请输入'+label)+'"></label>';}
+          if (draft.type === "网页") return '<div class="ops-form-grid">'+field("webTitle","网页标题",true)+field("webUrl","网页链接",true,"请输入网页链接",materialLinkHelp("web"))+materialUploadField("webCover","封面图",false)+'<label class="ops-field ops-full-span"><span class="ops-field-label">网页描述</span>'+materialCountedControl("webDescription","请输入网页描述",200,true)+'</label></div>';
+          if (draft.type === "小程序") return '<div class="ops-form-grid">'+field("miniTitle","小程序标题",true)+field("appId","AppID",true)+field("path","页面路径",true,"请输入页面路径",materialLinkHelp("mini"))+field("originalId","原始 ID",true,"请输入小程序原始 ID（gh_ 开头）")+'<label class="ops-field ops-full-span"><span class="ops-field-label"><span class="ops-required">*</span>描述</span>'+materialCountedControl("miniDescription","请输入小程序描述",200,true)+'</label>'+materialUploadField("miniIcon","Icon 图标",true)+materialUploadField("miniImage","上传图片",true)+'</div>';
           return materialUploadField("upload","素材内容",true);
         }
         function saveMaterialDraft() {
@@ -4331,6 +4432,62 @@
             if(nextType!==state.materialDraft.type){state.materialDraft.uploadName="";state.materialDraft.uploadUrl="";state.materialDraft.uploadSize=0;}
             state.materialDraft.type = nextType;
             render();
+          } else if (action === "material-param-toggle") {
+            var parameterMenu = shell && shell.querySelector("#ops-material-parameter-menu");
+            var parameterTrigger = actionTarget;
+            if (parameterMenu) {
+              var parameterOpen = parameterMenu.hidden;
+              closeMaterialHelpPopovers();
+              if (parameterOpen) {
+                bindMaterialHelpDismiss();
+                positionMaterialFloating(parameterTrigger, parameterMenu, false);
+                parameterTrigger.setAttribute("aria-expanded", "true");
+                parameterTrigger.classList.add("is-open");
+              }
+            }
+          } else if (action === "material-help-toggle") {
+            var helpPopover = actionTarget.parentElement && actionTarget.parentElement.querySelector(".ops-material-help-popover");
+            if (helpPopover) {
+              var helpOpen = helpPopover.hidden;
+              closeMaterialHelpPopovers();
+              if (helpOpen) {
+                bindMaterialHelpDismiss();
+                positionMaterialHelpPopover(actionTarget, helpPopover);
+                actionTarget.setAttribute("aria-expanded", "true");
+              }
+            }
+          } else if (action === "material-param-insert") {
+            var parameterToken = actionTarget.getAttribute("data-value") || "";
+            var richEditor = shell && shell.querySelector('[data-material-rich-text]');
+            if (!parameterToken || !richEditor) return;
+            var currentText = materialRichTextValue(richEditor), selection = window.getSelection(), range = selection && selection.rangeCount ? selection.getRangeAt(0) : null;
+            var nextText = currentText + parameterToken;
+            if (range && richEditor.contains(range.commonAncestorContainer)) {
+              var beforeRange = document.createRange(); beforeRange.selectNodeContents(richEditor); beforeRange.setEnd(range.startContainer, range.startOffset);
+              var afterRange = document.createRange(); afterRange.selectNodeContents(richEditor); afterRange.setStart(range.endContainer, range.endOffset);
+              nextText = materialRichTextValueFromRange(beforeRange) + parameterToken + materialRichTextValueFromRange(afterRange);
+            }
+            if (nextText.length > 200) {
+              toast("素材内容不能超过 200 字");
+              richEditor.focus();
+              return;
+            }
+            richEditor.innerHTML = materialRichTextMarkup(nextText);
+            state.materialDraft.text = nextText;
+            var hiddenTextInput = shell && shell.querySelector('[data-bind="material.text"]');
+            if (hiddenTextInput) hiddenTextInput.value = nextText;
+            var textCounter = document.getElementById("ops-material-count-text");
+            if (textCounter) textCounter.textContent = nextText.length + "/200";
+            richEditor.focus();
+            var lastToken = richEditor.querySelector('[data-material-token]:last-of-type');
+            if (lastToken) {
+              var caretRange = document.createRange(); caretRange.selectNodeContents(lastToken); caretRange.collapse(false);
+              selection = window.getSelection(); selection.removeAllRanges(); selection.addRange(caretRange);
+            }
+            var openParameterMenu = shell && shell.querySelector("#ops-material-parameter-menu");
+            var openParameterTrigger = shell && shell.querySelector('[data-action="material-param-toggle"]');
+            if (openParameterMenu) openParameterMenu.hidden = true;
+            if (openParameterTrigger) { openParameterTrigger.setAttribute("aria-expanded", "false"); openParameterTrigger.classList.remove("is-open"); }
           } else if (action === "material-file-pick") {
             var picker=shell.querySelector('[data-material-file="'+actionTarget.getAttribute('data-slot')+'"]');if(picker)picker.click();
           } else if (action === "material-form-new-group") {
@@ -5233,6 +5390,15 @@
         function handleInput(event) {
           if(captureHandoffInput(event.target))return;
           if (updateInlinePatientBasic(event.target)) return;
+          if (event.target.matches && event.target.matches('[data-material-rich-text]')) {
+            var richTextValue = materialRichTextValue(event.target);
+            state.materialDraft.text = richTextValue;
+            var richTextField = shell && shell.querySelector('[data-bind="material.text"]');
+            if (richTextField) richTextField.value = richTextValue;
+            var richTextCounter = document.getElementById('ops-material-count-text');
+            if (richTextCounter) richTextCounter.textContent = richTextValue.length + '/200';
+            return;
+          }
           if (state.modal && state.modal.type === "health-add" && event.target.closest && event.target.closest('[data-health-entry]')) { syncHealthEntryModal(); updateHealthEntryModalProgress(); return; }
           if (state.modal && (state.modal.type === "material-groups" || state.modal.type === "material-new-group" || state.modal.type === "chat-material-create")) {
             if (event.target.matches('[data-modal="newGroup"]')) state.modal.newGroup = event.target.value;
@@ -5788,7 +5954,7 @@ Error generating stack: `+a.message+`
   <link rel="stylesheet" href="./chat-profile/followups.css?v=20261029-followups-selected-v5">
   <link rel="stylesheet" href="./chat-profile/diagnoses.css">
   <link rel="stylesheet" href="./shared/image-preview.css">
-    <link rel="stylesheet" href="./chat-profile/quick-replies.css?v=20261026-quick-replies-rows-v13">
+    <link rel="stylesheet" href="./chat-profile/quick-replies.css?v=20261104-material-help-v2">
     <link rel="stylesheet" href="./chat-profile/handoffs.css">
   <link rel="stylesheet" href="./shared/date-time.css">
     <link rel="stylesheet" href="./shared/select-control.css">

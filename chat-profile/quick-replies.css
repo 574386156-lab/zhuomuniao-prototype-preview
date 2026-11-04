@@ -1148,3 +1148,39 @@ html #ops-shell .ops-quick-reply-page .qr-summary-row .ops-material-row-copy { f
 html #ops-shell .ops-quick-reply-page .qr-summary-row .ops-material-visual { width:44px; height:44px; flex:0 0 44px; border-radius:9px; }
 html #ops-shell .ops-quick-reply-page .qr-summary-row .ops-material-visual svg { width:24px; height:24px; }
 html #ops-shell .ops-quick-reply-page .qr-summary-row .ops-material-row-meta:first-child { margin-top:0; }
+
+/* Dynamic parameters are compact controls below the editor, while inserted
+   values render as non-editable chips inside the text surface. */
+.ops-material-rich-control { position:relative; min-width:0; }
+.ops-material-rich-editor { min-height:168px; padding:12px 14px 32px; border:1px solid #cfdde9; border-radius:8px; background:#fff; color:#173c61; font:inherit; line-height:1.65; outline:none; white-space:pre-wrap; overflow-wrap:anywhere; cursor:text; }
+.ops-material-rich-editor:focus { border-color:#0365bf; box-shadow:0 0 0 2px rgba(3,101,191,.1); }
+.ops-material-rich-editor:empty::before { content:attr(data-placeholder); color:#9ab0c5; pointer-events:none; }
+.ops-material-token { display:inline-flex; align-items:center; margin:0 2px; padding:0 6px; border:1px solid #a9cbe8; border-radius:5px; background:#eaf5ff; color:#0365bf; font-size:.92em; font-weight:600; line-height:1.55; vertical-align:baseline; }
+.ops-material-rich-control .ops-material-char-count { position:absolute; right:14px; bottom:8px; color:#8c8c8c; font-size:12px; line-height:20px; pointer-events:none; }
+.ops-material-parameters { position:relative; display:flex; align-items:center; gap:8px; margin-top:8px; color:#7189a5; font-size:12px; }
+#ops-shell .ops-material-parameter-trigger { display:inline-flex; align-items:center; gap:6px; min-height:32px; padding:4px 10px; border:1px solid #c9dbea; border-radius:8px; background:#fff; color:#244e73; font-size:12px; cursor:pointer; }
+#ops-shell .ops-material-parameter-trigger .ops-icon { font-size:11px; transition:transform .16s ease; }
+#ops-shell .ops-material-parameter-trigger.is-open .ops-icon { transform:rotate(180deg); }
+#ops-shell .ops-material-parameter-trigger:hover, #ops-shell .ops-material-parameter-trigger:focus-visible { border-color:#0365bf; background:#eef7ff; color:#0365bf; }
+.ops-material-parameters small { color:#8aa2b8; }
+.ops-material-parameter-menu { position:fixed; top:0; left:0; z-index:60; display:grid; box-sizing:border-box; gap:4px; min-width:190px; padding:6px; border:1px solid #d5e3ef; border-radius:9px; background:#fff; box-shadow:0 8px 24px rgba(23,60,97,.16); }
+#ops-shell .ops-material-parameter { display:flex; align-items:center; justify-content:space-between; gap:12px; width:100%; min-height:34px; padding:5px 8px; border:0; border-radius:6px; background:#fff; color:#244e73; text-align:left; cursor:pointer; }
+#ops-shell .ops-material-parameter:hover, #ops-shell .ops-material-parameter:focus-visible { background:#eef7ff; color:#0365bf; }
+.ops-material-parameter strong { font-size:12px; font-weight:600; }
+.ops-material-parameter code { color:#8aa2b8; font:11px/1.2 ui-monospace,SFMono-Regular,Menlo,monospace; }
+.ops-material-help { position:relative; display:inline-flex; margin-left:5px; vertical-align:middle; }
+#ops-shell .ops-material-help-trigger { display:inline-grid; place-items:center; width:20px; height:20px; padding:0; border:0; border-radius:50%; background:transparent; color:#7d9bb8; cursor:pointer; }
+#ops-shell .ops-material-help-trigger:hover, #ops-shell .ops-material-help-trigger:focus-visible { background:#eaf5ff; color:#0365bf; }
+.ops-material-help-trigger .ops-icon { font-size:14px; }
+.ops-material-help-popover { position:fixed; top:0; left:0; z-index:60; width:272px; box-sizing:border-box; padding:9px 10px; border:1px solid #cfe0ee; border-radius:8px; background:#173c61; color:#fff; font-size:12px; font-weight:400; line-height:1.55; text-align:left; white-space:normal; box-shadow:0 8px 22px rgba(23,60,97,.2); }
+.ops-material-help-popover::before { position:absolute; top:-5px; left:var(--ops-help-arrow-x,50%); width:9px; height:9px; transform:translateX(-50%) rotate(45deg); border-top:1px solid #cfe0ee; border-left:1px solid #cfe0ee; background:#173c61; content:""; }
+.ops-material-help-line { display:block; }
+.ops-material-help-line + .ops-material-help-line { margin-top:5px; }
+.ops-material-help-tokens { color:#a8d3ff; font-weight:600; }
+.ops-material-help-example { display:block; margin-top:4px; padding:4px 7px; border-radius:5px; background:rgba(255,255,255,.13); color:#fff; font:11px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; white-space:normal; word-break:break-all; }
+.ops-material-help-note { display:block; margin-top:5px; color:#c3d6e6; font-size:11px; }
+@media (max-width:420px) {
+  .ops-material-parameters { gap:6px; }
+  .ops-material-parameters small { flex:1; }
+  .ops-material-help-popover { width:min(272px,calc(100vw - 32px)); }
+}
