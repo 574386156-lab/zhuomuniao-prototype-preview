@@ -1,0 +1,5 @@
+.agentbuddy-host{height:100%;min-height:0;width:100%;background:#f5f8fb}
+.agentbuddy-host[hidden]{display:none!important}
+.agentbuddy-frame{display:block;width:100%;height:100%;min-height:0;border:0;background:#f5f8fb}
+/* The native workspace already owns navigation; keep the prototype shortcut off its controls. */
+body:has(.agentbuddy-host:not([hidden])) .prototype-index-fab{display:none!important}

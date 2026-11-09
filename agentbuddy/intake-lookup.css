@@ -1,0 +1,25 @@
+.grid2 .field{align-content:start}
+.ab-lookup{position:relative;min-width:0}
+.ab-lookup-control{display:flex;align-items:center;border:1px solid #d2e1ee;border-radius:8px;background:#fff;min-width:0}
+.ab-lookup-control:focus-within{border-color:#41a2d2;box-shadow:0 0 0 3px #45a4d614}
+.field .ab-lookup-control input{border:0;background:transparent;box-shadow:none;outline:none;flex:1;min-width:0;width:0;padding:10px 12px}
+.ab-lookup-control button{border:0;background:transparent;color:#7791ab;font:inherit;flex:none;padding:7px 9px;border-radius:6px;font-size:18px;line-height:1}
+.ab-lookup-control button:hover{color:#147eae;background:#edf6fc}
+.ab-lookup-control button[hidden]{display:none}
+.field.invalid .ab-lookup-control{border-color:#d87570}
+.ab-lookup-popup{position:absolute;z-index:20;top:calc(100% - 23px);left:0;right:0;min-width:100%;background:#fff;border:1px solid #d6e3ef;border-radius:10px;box-shadow:0 9px 30px #173b5f24;overflow:hidden}
+.ab-lookup-popup[hidden]{display:none}
+.ab-lookup-heading{padding:10px 12px;font-size:11px;font-weight:600;color:#8296aa;background:#f7fafc;border-bottom:1px solid #edf2f7}
+.ab-lookup-options{max-height:248px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.ab-lookup-options button{display:flex;flex-direction:column;gap:3px;width:100%;padding:10px 12px;border:0;border-bottom:1px solid #f0f4f8;text-align:left;font:inherit;background:#fff;color:#2e506e}
+.ab-lookup-options button strong{font-size:13px;font-weight:500;overflow-wrap:anywhere}
+.ab-lookup-options button small{color:#8398ad;font-size:11px}
+.ab-lookup-options button:hover,.ab-lookup-options button[aria-selected=true]{background:#eaf5fd;color:#107faf}
+.ab-lookup-options button:focus-visible{outline:2px solid #70bce4;outline-offset:-2px}
+.ab-lookup-footer{display:flex;flex-direction:column;max-height:105px;overflow:auto}
+.ab-lookup-footer button{border:0;background:#f4f9fd;color:#2188b6;font:inherit;font-size:12px;padding:10px 12px;text-align:left;overflow-wrap:anywhere}
+.ab-lookup-footer button:hover{background:#e8f4fc}
+.ab-lookup-empty{margin:0;padding:18px 12px;font-size:12px;color:#8799ad;line-height:1.7}
+.ab-lookup-status{min-height:16px;font-size:11px;line-height:1.5;color:#8298ad;margin:7px 0 0;overflow-wrap:anywhere}
+.field .doctor-title-hint{margin:0;color:#8298ad;font-size:11px;line-height:1.5}
+@media(max-width:600px){.ab-lookup-popup{position:relative;top:auto;margin-top:6px}.ab-lookup-options{max-height:240px}.ab-lookup-control button{padding:10px}.ab-lookup-control input{min-height:44px}}

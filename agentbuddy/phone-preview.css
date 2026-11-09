@@ -1,0 +1,94 @@
+/* The patient trial is a phone-sized conversation; the feedback workspace stays on the left. */
+.ab-desk .ab-columns { grid-template-columns: minmax(0, 1fr) minmax(320px, .82fr); }
+.ab-desk .ab-pane.preview-pane { background: transparent; border: 0; overflow: visible; }
+.ab-desk .preview-pane > .ab-pane-head { padding: 6px 9px 12px; background: transparent; border: 0; }
+.ab-preview-head-actions .ab-restart-conversation { padding: 6px 10px; font-size: 12px; white-space: nowrap; }
+.ab-restart-conversation svg { width: 15px; height: 15px; }
+.ab-phone-stage { display: flex; align-items: center; justify-content: center; flex: 1; min-height: 0; padding: 4px 14px 12px; }
+.ab-phone {
+  position: relative; width: min(370px, 100%); height: 100%; max-height: 780px; min-height: 0;
+  padding: 8px; border: 1px solid #51545a; border-radius: 44px; background: #191b1e;
+  box-shadow: 0 0 0 1px #a5a8ae, inset 0 0 0 2px #3c3e42, 0 18px 34px -20px #1c283c66;
+}
+.ab-phone::before, .ab-phone::after { content: ""; position: absolute; width: 3px; border-radius: 2px; background: #44474c; }
+.ab-phone::before { left: -3px; top: 112px; height: 54px; }
+.ab-phone::after { right: -3px; top: 148px; height: 42px; }
+.ab-phone-screen { display: flex; flex-direction: column; height: 100%; overflow: hidden; border-radius: 35px; background: #ededed; color: #191919; }
+.wx-statusbar { height: 38px; flex: none; display: flex; align-items: center; justify-content: space-between; position: relative; padding: 9px 23px 0; background: #f7f7f7; font-size: 11px; font-weight: 650; color: #111; }
+.wx-statusbar > div { width: 51px; }
+.wx-statusbar svg { display: block; width: 51px; height: 14px; fill: currentColor; }
+.wx-island { position: absolute; width: 88px; height: 24px; top: 9px; left: 50%; transform: translateX(-50%); background: #080808; border-radius: 18px; }
+.wx-island::after { content: ""; position: absolute; width: 7px; height: 7px; right: 10px; top: 8px; background: #111a2b; box-shadow: inset 1px 1px 2px #2c3a56; border-radius: 50%; }
+.wx-navigation { position: relative; display: flex; align-items: center; gap: 12px; height: 46px; flex: none; padding: 0 14px; background: #f7f7f7; border-bottom: 1px solid #dedede; }
+.wx-navigation > strong { text-align: center; flex: 1; min-width: 0; font-size: 14px; font-weight: 600; white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.wx-back { width: 22px; font: 29px/1 Arial, sans-serif; margin-top: -3px; }
+.wx-navigation::after { content: ""; width: 22px; flex: none; }
+.wx-notice { flex: none; padding: 8px 14px; background: #fff7df; color: #937033; font-size: 11px; text-align: center; }
+.ab-phone .ab-preview-body { margin: 0; border-radius: 0; }
+.ab-desk .ab-phone .wx-chat { padding: 20px 12px 12px; border-radius: 0; overflow-x: hidden; background: #ededed; scrollbar-color: #d1d1d1 transparent; }
+.ab-phone .wx-message { display: flex; align-items: flex-start; gap: 8px; margin: 0 0 18px; font-size: 14px; line-height: 1.65; }
+.ab-phone .wx-message.user { flex-direction: row-reverse; margin-left: 26px; }
+.ab-phone .wx-message.ab-preview-message { margin-right: 26px; }
+.wx-avatar { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border-radius: 5px; }
+.wx-avatar svg { width: 20px; height: 20px; }
+.wx-avatar.assistant { background: #fff; color: #398bb1; }
+.wx-avatar.patient { background: #7a9a8d; color: #fff; }
+.wx-message-main { min-width: 0; max-width: calc(100% - 38px); }
+.ab-phone .wx-message .ab-prose { position: relative; margin: 0; border: 0; background: #fff; color: #202020; padding: 9px 11px; border-radius: 4px; font-size: 14px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.ab-phone .wx-message .ab-prose::before { content: ""; position: absolute; width: 8px; height: 8px; background: inherit; transform: rotate(45deg); left: -4px; top: 12px; }
+.ab-phone .wx-message.user .ab-prose { background: #95ec69; color: #172417; }
+.ab-phone .wx-message.user .ab-prose::before { left: auto; right: -4px; }
+.ab-phone .wx-message.user .wx-message-main { display: flex; flex-direction: column; align-items: flex-end; }
+.ab-phone .wx-message .ab-before-change { display: inline-block; margin: 0 0 6px; background: #dedede; color: #777; font-size: 10px; }
+.ab-phone .wx-reply-actions { gap: 12px; margin: 5px 0 0; }
+.ab-phone .wx-reply-actions button { font-size: 10px; color: #8a8f95; padding: 2px 0; line-height: 1.4; }
+.ab-phone .wx-reply-actions button:hover:enabled { color: #2b6b4b; }
+.ab-phone .wx-reply-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.ab-phone .wx-reply-actions .ab-icon { margin: 0; width: 17px; height: 18px; }
+.ab-phone .wx-reply-actions svg { width: 13px; height: 13px; }
+.ab-phone .wx-typing { margin: 0 0 12px 38px; color: #919191; font-size: 10px; }
+.ab-phone .wx-typing i { background: #a5aca4; }
+.wx-empty { min-height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 12px 0 30px; color: #999; }
+.wx-empty-icon svg { width: 32px; height: 32px; color: #bbb; }
+.wx-empty p { font-size: 12px; margin: 10px 0 19px; }
+.ab-phone .wx-suggestions { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 0; }
+.ab-phone .wx-suggestions button { background: #f9f9f9; border: 1px solid #ddd; border-radius: 5px; color: #5e6a61; font-size: 11px; padding: 8px 13px; }
+.ab-phone .wx-suggestions button:hover:enabled { background: #fff; border-color: #adcaaf; }
+.ab-phone .wx-compose-wrap { padding: 0; margin-top: 0; background: #f7f7f7; border-top: 1px solid #ddd; }
+.ab-phone .wx-composer { padding: 9px 7px 5px; background: transparent; border: 0; box-shadow: none; border-radius: 0; }
+.ab-phone .wx-composer:focus-within { background: transparent; border: 0; box-shadow: none; }
+.ab-phone .wx-composer.dragging { background: #dcefdc; box-shadow: inset 0 0 0 2px #6caa72; }
+.wx-input-row { display: flex; align-items: flex-end; gap: 6px; }
+.ab-phone .wx-input-row textarea { flex: 1; min-width: 0; min-height: 36px; max-height: 100px; padding: 7px 8px; font-size: 13px; line-height: 22px; background: #fff; color: #202020; border-radius: 4px; overflow-y: auto; }
+.ab-phone .wx-input-row textarea::placeholder { color: #aaa; font-size: 12px; }
+.ab-phone .wx-input-row .ab-icon { flex: none; width: 24px; height: 36px; padding: 6px 0; color: #555; }
+.ab-phone .wx-input-row .ab-icon svg { width: 22px; height: 22px; }
+.ab-phone .wx-input-row .wx-send { margin: 0; flex: none; width: 44px; height: 34px; border-radius: 4px; background: #07c160; color: #fff; font-size: 12px; font-weight: 550; box-shadow: none; }
+.ab-phone .wx-input-row .wx-send:hover:enabled { background: #06ad56; }
+.ab-phone .wx-input-row .wx-send:disabled { background: #e6e6e6; color: #b6b6b6; opacity: 1; }
+.ab-phone .wx-input-row .ab-icon:disabled { opacity: .35; }
+.ab-phone .ab-attachments { gap: 5px; margin-top: 8px; }
+.ab-phone .wx-composer .ab-attachments { margin: 0 0 8px; max-height: 90px; }
+.ab-phone .ab-attachment { background: #fff; color: #666; border-radius: 5px; padding: 4px; }
+.ab-phone .ab-attachment-open > span { color: #555; max-width: 150px; }
+.ab-phone .wx-message .ab-attachment.image .ab-attachment-open { flex-direction: column; align-items: flex-end; gap: 3px; }
+.ab-phone .wx-message .ab-attachment.image img { width: auto; max-width: 170px; height: auto; max-height: 220px; object-fit: contain; }
+.ab-phone .wx-message .ab-attachment.image .ab-attachment-open > span { font-size: 10px; }
+.ab-phone .ab-file-error { margin: 0; padding: 3px 12px 7px; font-size: 10px; }
+.wx-home { flex: none; height: 21px; background: #f7f7f7; display: flex; align-items: center; justify-content: center; }
+.wx-home span { width: 108px; height: 4px; border-radius: 5px; background: #171717; }
+.ab-phone button:focus-visible, .ab-phone textarea:focus-visible { outline: 2px solid #4a9a63; outline-offset: 2px; }
+@media (max-width: 1100px) {
+  .ab-phone-stage { padding: 3px 6px 10px; }
+  .ab-desk .ab-columns { grid-template-columns: minmax(0, 1fr) minmax(310px, .85fr); }
+}
+@media (max-width: 760px) {
+  .ab-desk .ab-columns { grid-template-columns: 1fr; }
+  .ab-desk .ab-pane.preview-pane { height: 710px; }
+  .ab-phone-stage { padding: 4px 8px 12px; }
+}
+@media (max-height: 820px) and (min-width: 761px) {
+  .wx-statusbar { height: 34px; }
+  .wx-navigation { height: 42px; }
+  .ab-desk .ab-phone .wx-chat { padding-top: 14px; }
+}
