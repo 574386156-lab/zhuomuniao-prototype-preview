@@ -16,7 +16,7 @@
       if (knowledgeSkipped) stage.tasks.knowledge = "skipped";
       return stage;
     });
-    let stopped = false, timer, next = 0;
+    let stopped = false, timer, next = 0,stopParsing=null;
     function schedule() { timer = window.setTimeout(tick, 1800); }
     function tick() {
       if (stopped) return;
@@ -38,8 +38,15 @@
         options.onError(error);
       }
     }
-    schedule();
-    return () => { stopped = true; window.clearTimeout(timer); };
+    if(!snapshot.knowledge.attachments.length){schedule();return ()=>{stopped=true;window.clearTimeout(timer);};}
+    stopParsing=window.AgentBuddyParsing.run({files:snapshot.knowledge.attachments,known:[],
+      onProgress:progress=>{if(stopped)return;const active=progress.files.find(f=>f.parseStatus==='parsing');
+        options.onProgress({status:'running',tasks:{prompt:'pending',knowledge:'running',workspace:'pending'},
+          detail:active?'正在解析 '+active.name+(active.pages?' · '+(active.page || 0)+' / '+active.pages+' 页':''):'正在准备知识资料'});},
+      onComplete:files=>{if(stopped)return;snapshot.knowledge.attachments=files;options.onProgress({status:'running',tasks:{prompt:'running',knowledge:knowledgeSkipped?'skipped':'running',workspace:'pending'},detail:'附件解析完成，正在整理问答与适用条件'});schedule();},
+      onError:error=>{if(stopped)return;stopped=true;options.onError(error);}
+    });
+    return () => { stopped = true; window.clearTimeout(timer);if(stopParsing)stopParsing(); };
   }
   window.AgentBuddyGeneration = { runLocal };
 })();

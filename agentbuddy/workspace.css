@@ -306,3 +306,12 @@
 @media(max-width:1050px){.ab-loop-caption{display:none}.ab-loop{gap:10px}.ab-loop-summary{gap:10px}.ab-columns{gap:12px}.ab-scroll{padding:18px}.ab-pane-head{padding:16px}.ab-loop-nav .ab-button{padding:8px 10px}}
 @media(max-width:760px){.shell.workspace-shell{padding:14px 12px;height:auto;min-height:100dvh}.ab-workspace{height:auto}.ab-top{align-items:flex-start;gap:10px}.ab-top-actions{justify-content:flex-end}.ab-top-actions .ab-link{display:none}.ab-brand h1{font-size:18px}.ab-logo{width:34px;height:34px}.ab-loop{align-items:stretch;flex-direction:column}.ab-loop-summary{justify-content:space-between}.ab-loop-nav{justify-content:flex-end}.ab-columns{grid-template-columns:1fr;height:auto;flex:none}.ab-pane.builder-pane{height:480px}.ab-pane.preview-pane{height:600px}.ab-overlay{padding:12px}.ab-dialog-body{padding:16px}.ab-message{font-size:13px}.ab-top-actions .ab-button{font-size:11px;padding:6px 8px}.ab-brand p{max-width:150px}.ab-draft-status{font-size:11px}.ab-submit-action{flex:none}}
 @media(max-width:390px){.ab-loop-nav .ab-button{font-size:11px}.ab-phase-switch button{padding:6px 12px}}
+.ab-parsing-task{margin:14px 0 10px 32px;padding:16px;border:1px solid #dfe7f3;border-radius:12px;background:#f7faff}
+.ab-parsing-task h3{display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:13px;color:#3a587c}
+.ab-parsing-spinner{width:13px;height:13px;border:2px solid #d3e1f6;border-top-color:#326de3;border-radius:50%;animation:ab-parsing-spin 1s linear infinite}
+.ab-parsing-file{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:7px 0;font-size:12px;color:#506784}
+.ab-parsing-file>span{min-width:0;overflow-wrap:anywhere}.ab-parsing-file small{white-space:nowrap;color:#8596ac}.ab-parsing-file.completed small{color:#288367}
+.ab-parsing-task>.ab-button{margin-top:10px;font-size:12px;padding:5px 10px}
+@keyframes ab-parsing-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.ab-parsing-spinner{animation:none}}
+.ab-knowledge-sources small.ab-source-parsed{color:#258265}

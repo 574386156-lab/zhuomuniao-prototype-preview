@@ -1,5 +1,6 @@
 (function () {
   "use strict";
+  const originals = new Map();
   function bytes(file) {
     if (file.arrayBuffer) return file.arrayBuffer();
     return new Promise((resolve, reject) => {
@@ -19,7 +20,8 @@
       try {text=new TextDecoder("utf-8", {fatal:true}).decode(data);extraction="plain-text";}
       catch (_) {extraction="unsupported-encoding";}
     }
-    return {hash, hashStatus:"ready", text, extraction};
+    originals.set(hash,file);
+    return {hash, hashStatus:"ready", text, extraction,parseStatus:text && text.trim()?"completed":"queued"};
   }
   function inspect(file, callback) {
     fingerprint(file).then(callback, error=>callback({hash:null, hashStatus:"error", extraction:"not-parsed", error:error.message}));
@@ -36,5 +38,5 @@
     });
   }
   const labels = {new:"新附件",duplicate:"重复附件",changed:"内容已变化",unverified:"待核对",checking:"正在核对",error:"核对失败"};
-  window.AgentBuddyAttachments = {fingerprint,inspect,classify,labels};
+  window.AgentBuddyAttachments = {fingerprint,inspect,classify,labels,bytes,original:file=>originals.get(file.hash)};
 })();

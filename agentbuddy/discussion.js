@@ -61,6 +61,7 @@
     else if (!resolvedNoChange && !knowledge && !prompt) question="你想改善哪一处？可以描述希望达到的效果，我来判断需要调整回答规则还是知识内容。";
     if (!resolvedNoChange && files.some(f=>f.hashStatus==="checking" || f.hashStatus==="error")) question="附件内容尚未核对完成，请先处理附件。";
     if (review && review.unresolved) question="发现 " + review.unresolved + " 处相同条件下的答案分歧。先确定采用哪种说法，再应用本轮方案。";
+    if(knowledgeFiles.some(f=>typeof f.text!=='string' || !f.text.trim() || f.extraction==='not-parsed' || f.parseStatus==='failed'))question='附件解析未完成，请先完成解析再整理方案。';
     const ready=!question && !resolvedNoChange;
     const actions=[], tasks=[];
     function task(id,skill,title,dependsOn) {tasks.push({id,skill,title,dependsOn:dependsOn || [],status:"planned"});}
@@ -94,7 +95,7 @@
     if (review && review.duplicates.length) response+="\n已识别 "+review.duplicates.length+" 条相同问答，不重复增加。";
     if (review && review.gaps.some(g=>g.gapReason==="image-dependent")) response+="\n有内容依赖图片，先不进入文字知识库。";
     if (review && review.gaps.some(g=>g.gapReason==="unclear-scope")) response+="\n有条目的适用条件尚未明确，保留为待核实，不作为通用答案。";
-    if (knowledgeFiles.some(f=>f.extraction!=="plain-text")) response+="\n这些资料尚未形成可用问答，请补充文字内容或重新上传。";
+    if (!question && knowledgeFiles.length) response+="\n附件已解析完成，将基于读取的内容整理问答并检查知识分歧。";
     if (ready && conversationOnly(compact(last.text)) && /为什么|怎么|解释|方案/.test(last.text)) response="先定位问题属于回答规则还是知识内容，再核对适用条件和资料分歧。\n\n当前方案仍聚焦"+target+"。";
     const instruction=["本轮范围："+(prompt ? "调整提示词" : "提示词不变")+"；"+(knowledge ? knowledgeMode+"知识资料" : "知识库不变")+"。",
       "用户要求：\n"+requests.map(m=>intentText(m.text)).join("\n"),

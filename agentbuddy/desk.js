@@ -173,7 +173,7 @@
             (job.status==="failed" && job.error ? '<p class="ab-task-alert" role="status">'+esc(job.error)+'</p>' : '') +
             '<div class="generation-tasks">' + [["prompt", "提示词"], ["knowledge", "知识库"], ["workspace", "调试工作区"]].map(function (item) {
               var status = job.tasks[item[0]];
-              return '<article class="generation-task ' + status + ' ' + item[0] + '" data-generation-task="' + item[0] + '"><span class="generation-mark" aria-hidden="true">' + (status === "completed" ? "✓" : status === "failed" ? "!" : ["cancelled", "skipped"].indexOf(status) >= 0 ? "−" : "") + '</span><h2>' + item[1] + '</h2><span>' + (!busy && status === "pending" ? "未开始" : taskLabels[status]) + '</span></article>';
+              return '<article class="generation-task ' + status + ' ' + item[0] + '" data-generation-task="' + item[0] + '"><span class="generation-mark" aria-hidden="true">' + (status === "completed" ? "✓" : status === "failed" ? "!" : ["cancelled", "skipped"].indexOf(status) >= 0 ? "−" : "") + '</span><h2>' + item[1] + '</h2><span>' + (item[0]==='knowledge' && busy && job.detail ? esc(job.detail) : !busy && status === "pending" ? "未开始" : taskLabels[status]) + '</span></article>';
             }).join("") + '</div>' +
             (job.status === "completed" ? '<div class="generation-version">提示词 v' + job.result.version + ' · ' + (job.tasks.knowledge === "skipped" ? '知识库已跳过' : '知识库 kb-v' + job.result.kbVersion) + '</div>' : '') +
             '<footer class="generation-actions">' + (busy ? '<button class="btn" data-act="cancel-build">取消生成</button>' : '') +
@@ -251,7 +251,7 @@
               snapshot: JSON.parse(JSON.stringify(job.config)),
               onProgress: function (progress) {
                 if (!active()) return;
-                job.status = progress.status; job.tasks = Object.assign({}, progress.tasks); refreshGeneration(job);
+                job.status = progress.status; job.tasks = Object.assign({}, progress.tasks);job.detail=progress.detail || ''; refreshGeneration(job);
               },
               onComplete: function (result) {
                 if (!active()) return;

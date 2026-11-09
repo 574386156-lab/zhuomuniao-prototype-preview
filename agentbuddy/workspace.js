@@ -58,7 +58,7 @@
       Object.keys(state).forEach(key=>{if(Object.hasOwn(restored,key))state[key]=clone(restored[key]);});
       seq=Number(options.snapshot.seq) || 0;
       state.dialog=null;
-      if(state.discussion) {state.discussion=null;state.proposal=null;state.discussionError="上次方案整理已中断，可重试。反馈和附件记录已保留。";}
+      if(state.discussion) {const parsing=state.discussion.stage==='parsing';state.discussion=null;state.proposal=null;state.discussionError=parsing?"上次附件解析已中断，可重试或重新上传文件。":"上次方案整理已中断，可重试。反馈和附件记录已保留。";}
       if(state.submitting) {state.submitting=null;state.notice="上次应用已中断，已应用内容未改变，可重新应用方案。";}
       if(state.previewRequest) {if(!state.testDraft)state.testDraft=state.previewRequest.question;state.previewRequest=null;state.notice="上次试问已中断，可以重新发送。";}
       if(state.testJob && ["queued","running","reporting"].includes(state.testJob.status)) {state.testJob.status="failed";state.notice="上次测试已中断，可以重新开始测试。";}
@@ -146,16 +146,22 @@
     function knowledgeView() {
       const entries = state.knowledgeEntries.filter(e => e.status === "现行");
       const pendingIds = new Set((config.knowledge.pendingAttachments || []).map(f => f.id));
-      const sources = config.knowledge.attachments.filter(f => !pendingIds.has(f.id)).concat(state.revisions.flatMap(r => r.knowledgeFiles || []))
-        .filter((f, i, all) => all.findIndex(other => (other.hash || other.id || other.name) === (f.hash || f.id || f.name)) === i);
-      const materials = sources.length ? '<section class="ab-knowledge-section"><h3>知识资料 <span>' + sources.length + '</span></h3><ul class="ab-knowledge-sources">' + sources.map(f =>
-        '<li>' + icon("file") + '<span>' + esc(f.name) + '</span>' + (f.extraction !== "plain-text" ? '<small>待解析</small>' : '') + '</li>').join('') + '</ul></section>' : '';
+      const sourceMap=new Map();
+      config.knowledge.attachments.filter(f => !pendingIds.has(f.id)).concat(state.revisions.flatMap(r => r.knowledgeFiles || [])).forEach(f=>{
+        const key=f.hash || f.id || f.name;
+        if(!sourceMap.has(key) || window.AgentBuddyParsing.completed(f))sourceMap.set(key,f);
+      });
+      const sources=Array.from(sourceMap.values());
+      const usable=sources.filter(window.AgentBuddyParsing.completed),unfinished=sources.filter(f=>!window.AgentBuddyParsing.completed(f));
+      const materials = usable.length ? '<section class="ab-knowledge-section"><h3>知识资料 <span>' + usable.length + '</span></h3><ul class="ab-knowledge-sources">' + usable.map(f =>
+        '<li>' + icon("file") + '<span>' + esc(f.name) + '</span><small class="ab-source-parsed">已解析'+(f.pages?' · '+f.pages+' 页':'')+'</small></li>').join('') + '</ul></section>' : '';
+      const incomplete=unfinished.length?'<section class="ab-knowledge-section"><h3>需处理的资料 <span>'+unfinished.length+'</span></h3><ul class="ab-knowledge-sources">'+unfinished.map(f=>'<li>'+icon('file')+'<span>'+esc(f.name)+'</span>'+button('reupload-source','重新上传并解析',false,false,' data-id="'+esc(f.id)+'"')+'</li>').join('')+'</ul></section>':'';
       const questions = '<section class="ab-knowledge-section"><h3>可用问答 <span>' + entries.length + '</span></h3>' + entries.map(e =>
         '<article class="ab-knowledge-answer"><h4>' + esc(e.question) + '</h4><p>' + esc(e.answer) + '</p>' +
         (Object.keys(e.conditions || {}).length ? '<div class="ab-knowledge-scope">适用条件：' + esc(Object.entries(e.conditions).map(([k,v])=>k+'：'+v).join('；')) + '</div>' : '') +
         '<small>来源：' + esc(Array.from(new Set((e.sourceRefs || [{source:e.source}]).map(s=>s.source || '对话补充'))).join('、')) + '</small></article>').join('') +
         (!entries.length ? '<p class="ab-knowledge-empty">' + (sources.length ? '这些资料尚未形成可用问答。' : '暂无知识资料，可在对话中上传附件或补充内容。') + '</p>' : '') + '</section>';
-      return '<div class="ab-knowledge-reader">' + materials + questions + '</div>';
+      return '<div class="ab-knowledge-reader">' + materials + questions + incomplete + '</div>';
     }
     function openIssues() { return state.issues.filter(i => i.status !== "verified"); }
     function currentTestReport() {
@@ -267,8 +273,9 @@
         attachmentList(m.files || []) +
         (index === resourceIndex && m.role === "assistant" ? '<div class="ab-message-resources"><button type="button" data-ab="artifact" data-key="prompt">' + icon("file") + '查看提示词</button><button type="button" data-ab="artifact" data-key="knowledge">' + icon("book") + '查看知识库</button></div>' : '') + '</div>' +
         (index === 0 ? "" : '<div class="ab-message-actions"><span>' + esc(m.stamp) + "</span>" + (m.role === "assistant" ? '<button class="ab-icon" data-ab="copy-builder" data-id="' + m.id + '" aria-label="复制对话内容">' + icon("copy") + "</button>" : "") + "</div>") + "</div></article>"
-      ).join("") + (state.discussion ? '<div class="ab-reply-pending ab-discussion-pending" role="status"><i></i><i></i><i></i><span>正在理解需求、整理方案…</span></div>' : '') +
-        (state.discussionError ? '<div class="ab-discussion-error" role="alert">' + esc(state.discussionError) + button('retry-discussion','重试整理方案',false,hasUnsent()) + '</div>' : '') +
+      ).join("") + (state.discussion && state.discussion.stage==='parsing' ? parsingView(state.discussion) : state.discussion ? '<div class="ab-reply-pending ab-discussion-pending" role="status"><i></i><i></i><i></i><span>正在理解需求、整理方案…</span></div>' : '') +
+        (state.discussionError ? '<div class="ab-discussion-error" role="alert">' + esc(state.discussionError) + button('retry-discussion',/附件解析/.test(state.discussionError)?'重试解析':'重试整理方案',false,hasUnsent()) +
+          (state.pending.some(m=>(m.files || []).some(f=>f.parseStatus==='failed'))?button('remove-failed-files','移除失败附件',false):'')+'</div>' : '') +
         (state.submitting ? '<div class="ab-running-tasks" role="status">'+state.submitting.tasks.map(t=>'<div class="'+t.status+'"><span>'+(t.status==='completed' ? '✓' : t.status==='running' ? '◌' : '·')+'</span>'+esc(t.title)+'</div>').join('')+'</div>' : '');
     }
     function feedbackReferences(refs, removable) {
@@ -325,7 +332,7 @@
       if (state.submitting) return "正在应用方案…";
       if (!filesReady("builder")) return state.files.some(f=>f.hashStatus==="missing") ? "附件需重新上传" : state.files.some(f=>f.hashStatus==="error") ? "附件核对失败" : "正在核对附件";
       if (hasUnsent()) return "有未发送的补充";
-      if (state.discussion) return "正在讨论";
+      if (state.discussion) return state.discussion.stage==='parsing'?"正在解析附件":"正在讨论";
       if (state.discussionError) return "方案未完成";
       if (state.proposal) return state.proposal.resolvedNoChange ? "无需改动" : state.proposal.knowledgeReview && state.proposal.knowledgeReview.unresolved ? "有知识分歧待处理" : state.proposal.ready ? "方案待应用" : "待补充信息";
       return "";
@@ -496,6 +503,8 @@
     function collectBuilder() {
       const text = state.builderDraft.trim();
       if (!text && !state.files.length && !state.feedbackRefs.length) return false;
+      // Keep the failed upload in the conversation, but replace it in the next task when re-uploaded.
+      state.pending=state.pending.map(m=>Object.assign({},m,{files:(m.files || []).filter(f=>!(f.parseStatus==='failed' && state.files.some(next=>next.name===f.name && next.id!==f.id)))}));
       if (!state.pending.length && state.revisions.some(r => r.round === state.round)) state.round++;
       state.phase = "tune"; state.notice = "";
       const message = { id: id(), role: "user", text: text || (state.feedbackRefs.length ? "请调整引用的这条回复。" : state.files.some(f => f.image) ? "请根据截图调整智能体。" : "请根据本条附件更新知识库。"), attachmentOnly: !text, feedback: clone(state.feedbackRefs), files: clone(state.files), stamp: stamp() };
@@ -525,9 +534,27 @@
     function discussRound() {
       if (builderLocked() || !state.pending.length) return;
       if (stopDiscussion) stopDiscussion();
-      const task = {id:id(),snapshot:buildSubmission(),issueSignature:issueSignature()};
+      const task = {id:id(),snapshot:buildSubmission(),issueSignature:issueSignature(),stage:'parsing',files:[]};
       state.discussion=task;state.proposal=null;state.discussionError="";
       render("builder", '[data-ab-draft="builder"]');
+      let finished=false;
+      const stop=window.AgentBuddyParsing.run({files:window.AgentBuddyParsing.knowledgeFiles(task.snapshot.messages),known:task.snapshot.sources,
+        onProgress: progress=>{if(state.discussion!==task)return;task.files=progress.files;mergeParsedFiles(progress.files);refreshDiscussion();},
+        onComplete: files=>{finished=true;if(state.discussion!==task)return;mergeParsedFiles(files);task.snapshot=buildSubmission();task.stage='planning';refreshDiscussion();planDiscussion(task);},
+        onError: (error,files)=>{finished=true;if(state.discussion!==task)return;mergeParsedFiles(files);state.discussion=null;state.discussionError='附件解析失败：'+error.message;stopDiscussion=null;refreshDiscussion();}
+      });
+      if(!finished)stopDiscussion=stop;
+    }
+    function mergeParsedFiles(files) {
+      files.forEach(parsed=>{
+        state.pending.concat(state.builder).forEach(m=>(m.files || []).forEach(file=>{if(file.id===parsed.id && file.hash===parsed.hash)Object.assign(file,clone(parsed));}));
+        if(receivedFiles.has(parsed.id))receivedFiles.set(parsed.id,clone(parsed));
+      });
+    }
+    function parsingView(task) {
+      return '<section class="ab-parsing-task" role="status" aria-label="附件解析进度"><h3><span class="ab-parsing-spinner" aria-hidden="true"></span>正在解析附件</h3>'+task.files.map(f=>'<div class="ab-parsing-file '+f.parseStatus+'"><span>'+esc(f.name)+'</span><small>'+esc(f.parseStatus==='completed'?'已解析':f.parseStatus==='parsing'?f.pages?'第 '+(f.page || 0)+' / '+f.pages+' 页':'解析中':'排队中')+'</small></div>').join('')+button('cancel-parsing','取消解析',false)+'</section>';
+    }
+    function planDiscussion(task) {
       stopDiscussion=window.AgentBuddyDiscussion.runLocal({snapshot:clone(task.snapshot),
         onComplete: plan => {
           if (state.discussion !== task) return;
@@ -542,7 +569,7 @@
       });
     }
     function submitRound(proposalId) {
-      if (builderLocked() || state.previewRequest || !proposalReady() || proposalId !== state.proposal.id) return;
+      if (builderLocked() || state.previewRequest || !proposalReady() || proposalId !== state.proposal.id || state.proposal.knowledgeFiles.some(f=>!window.AgentBuddyParsing.completed(f))) return;
       const p=state.proposal, proposal=clone(p);
       delete proposal.snapshot;
       state.submitting=Object.assign(clone(p.snapshot),{instruction:p.instruction,prompt:p.prompt,knowledge:p.knowledge,proposal,knowledgeFiles:clone(p.knowledgeFiles || []),tasks:clone(p.tasks).map((t,i)=>Object.assign(t,{status:i ? "pending" : "running"})),
@@ -740,7 +767,8 @@
       if (c.prompt) state.version++;
       if (c.knowledge) state.kbVersion++;
       if (c.proposal.knowledgeReview) state.knowledgeEntries=clone(c.proposal.knowledgeReview.entries);
-      if (c.knowledge) {config.knowledge.pendingAttachments=[];config.knowledge.entries=clone(state.knowledgeEntries);}
+      if (c.knowledge) {config.knowledge.pendingAttachments=[];config.knowledge.entries=clone(state.knowledgeEntries);
+        config.knowledge.attachments.forEach(file=>{const parsed=c.knowledgeFiles.find(f=>f.hash && f.hash===file.hash);if(parsed)Object.assign(file,clone(parsed));});}
       state.contentModifiedAt=new Date().toISOString();state.restorePoint=null;
       const changes=releases.summaries(c);
       state.releaseChanges.push(...changes);state.editHistory.push(...changes.map(text=>({text,modifiedAt:state.contentModifiedAt})));
@@ -904,6 +932,9 @@
         return;
       }
       if (action === "retry-discussion") {if (!hasUnsent()) discussRound();return;}
+      if (action === "remove-failed-files") {if(builderLocked() || state.discussion)return;state.pending=state.pending.map(m=>Object.assign({},m,{files:(m.files || []).filter(f=>f.parseStatus!=='failed')}));state.discussionError='失败附件已移除，可继续补充。';if(!hasUnsent())discussRound();else refreshDiscussion();return;}
+      if (action === "cancel-parsing") {if(state.discussion && state.discussion.stage==='parsing'){if(stopDiscussion)stopDiscussion();mergeParsedFiles(state.discussion.files.map(f=>window.AgentBuddyParsing.completed(f)?f:Object.assign({},f,{parseStatus:'failed',parseError:'已取消'})));stopDiscussion=null;state.discussion=null;state.discussionError='附件解析已取消，可重试。';refreshDiscussion();}return;}
+      if (action === "reupload-source") {if(builderLocked())return;closeDialog();attach('builder',false);return;}
       if (action === "resolve-knowledge") {resolveKnowledge(t);return;}
       if (action === "send-test") { sendTest(); return; }
       if (action === "suggest") { sendTest(t.dataset.question); return; }
