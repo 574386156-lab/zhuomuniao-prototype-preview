@@ -51,7 +51,7 @@
       (release.legacy?'<p class="ab-release-legacy">原始测试结果；发布时的复核结果未留存。</p>':'')+
       report.results.map(row=>'<details class="ab-release-case"><summary><span>'+esc(row.caseName || row.question)+'</span>'+window.AgentBuddyEvaluation.badge(row)+'</summary><div><h4>问题</h4><p>'+esc(row.question)+'</p>'+
         ((row.history || []).length?'<h4>前序对话</h4>'+row.history.map(m=>'<p>'+esc((m.role==='assistant'?'智能体：':'患者：')+m.content)+'</p>').join(''):'')+
-        '<div class="ab-release-answer"><section><h4>预期行为</h4><p>'+esc(row.expect || '未提供')+'</p></section><section><h4>实际回答</h4><p>'+esc(window.AgentBuddyUI.generatedText(row.answer) || '未生成回答')+'</p></section></div><h4>评分理由</h4><p>'+esc(window.AgentBuddyUI.generatedText(row.finding) || '未记录')+'</p>'+
+        '<div class="ab-release-answer"><section><h4>预期行为</h4><p>'+esc(row.expect || '未提供')+'</p>'+(row.criteria?'<h4>评分口径</h4><p>'+esc(row.criteria)+'</p>':'')+'</section><section><h4>实际回答</h4><p>'+esc(window.AgentBuddyUI.generatedText(row.answer) || '未生成回答')+'</p></section></div><h4>评分理由</h4><p>'+esc(window.AgentBuddyUI.generatedText(row.finding) || '未记录')+'</p>'+
         (row.reviewed?'<p>人工复核通过</p>':'')+'</div></details>').join('')+'</div>';
   }
   window.AgentBuddyReleases={date,validContent,label,summaries,legacy,list,report};

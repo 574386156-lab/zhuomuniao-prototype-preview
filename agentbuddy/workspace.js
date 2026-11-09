@@ -51,6 +51,7 @@
       notice: "", error: "", published: null, testSession: 1,
       releases: [], releaseChanges: [], editHistory: [], restoredFrom: null, restorePoint: null,
       contentModifiedAt: options.snapshot ? null : new Date().toISOString(),
+      testPlanVersion:1,testOverrides:[],testPolicyHistory:[],testIntroShown:false,retestFromReportId:null,
       scroll: { builder: 0, preview: 0 }
     };
     if (options.snapshot && options.snapshot.state) {
@@ -84,12 +85,12 @@
     function issueSignature() { return JSON.stringify(openIssues().filter(i=>i.status==="open")); }
     function proposalReady() {
       const p = state.proposal;
-      return !!p && p.ready && !state.discussion && !hasUnsent() && p.messageIds.join('|') === state.pending.map(m=>m.id).join('|') && p.issueSignature === issueSignature();
+      return !!p && p.ready && !state.discussion && !hasUnsent() && (!p.testContext || p.testPlanVersion===state.testPlanVersion) && p.messageIds.join('|') === state.pending.map(m=>m.id).join('|') && p.issueSignature === issueSignature();
     }
     function testRunning() { return !!state.testJob && ["queued", "running", "reporting"].includes(state.testJob.status); }
     function previewLocked() { return !!state.submitting || testRunning() || !!state.previewRequest || !!state.scoring; }
     function formalTestLocked() { return hasPending() || previewLocked(); }
-    function builderLocked() { return !!state.submitting || testRunning() || !!state.scoring || state.phase === "test"; }
+    function builderLocked() { return !!state.submitting || testRunning() || !!state.scoring; }
     function activeReport() { return state.testReports.find(r => r.id === state.activeReportId) || null; }
     function reportState(report) { return state.reportViews[report.id] || (state.reportViews[report.id] = window.AgentBuddyEvaluation.newView()); }
     function evaluatedRows(report, includeReviews = true) {
@@ -105,7 +106,8 @@
         return result;
       });
     }
-    function testPlan() { return window.AgentBuddyTesting.createPlan(config, openIssues(), state.testCases); }
+    function testPlan() { return window.AgentBuddyTestPlanning.overrides(window.AgentBuddyTesting.createPlan(config, openIssues(), state.testCases),state.testOverrides); }
+    function reportCurrent(report) {return report.round===state.round && report.version===state.version && report.kbVersion===state.kbVersion && (report.testPlanVersion || 1)===state.testPlanVersion;}
     function composerFiles(kind) { return kind === "builder" ? state.files : state.testFiles; }
     function filesReady(kind) { return kind === "test" ? state.testFiles.every(f=>f.hashStatus!=="missing") : state.files.every(f=>f.hashStatus==="ready"); }
     function attachmentLocked(kind) { return kind === "test" ? previewLocked() : builderLocked(); }
@@ -165,17 +167,18 @@
     }
     function openIssues() { return state.issues.filter(i => i.status !== "verified"); }
     function currentTestReport() {
-      return state.testReports.slice().reverse().find(r => r.round === state.round && r.version === state.version && r.kbVersion === state.kbVersion);
+      return state.testReports.slice().reverse().find(reportCurrent);
     }
     function isPublished() {
-      return !!state.published && state.published.version === state.version && state.published.kbVersion === state.kbVersion && !hasPending();
+      return !!state.published && state.published.version === state.version && state.published.kbVersion === state.kbVersion && (state.published.testPlanVersion || 1)===state.testPlanVersion && !hasPending();
     }
     function contentSnapshot() {
-      return clone({config,prompt:promptText(),revisions:state.revisions,knowledgeEntries:state.knowledgeEntries,kbVersion:state.kbVersion});
+      return clone({config,prompt:promptText(),revisions:state.revisions,knowledgeEntries:state.knowledgeEntries,kbVersion:state.kbVersion,testOverrides:state.testOverrides});
     }
     function sameReleaseContent(release) {
       if (!releases.validContent(release.content)) return false;
       const current=contentSnapshot(), saved=clone(release.content);
+      saved.testOverrides=saved.testOverrides || [];
       delete current.kbVersion; delete saved.kbVersion;
       return JSON.stringify(current)===JSON.stringify(saved);
     }
@@ -192,6 +195,7 @@
       state.round++;
       Object.keys(config).forEach(key=>delete config[key]);Object.assign(config,clone(content.config));
       state.promptContent=content.prompt;state.revisions=clone(content.revisions);state.knowledgeEntries=clone(content.knowledgeEntries);
+      state.testOverrides=clone(content.testOverrides || []);state.testPlanVersion++;
       state.contentModifiedAt=new Date().toISOString();state.testSession++;
       state.phase="tune";state.activeReportId=null;state.testJob=null;state.proposal=null;state.dialog=null;
       state.discussionError="";state.issues.forEach(issue=>{if(issue.status!=="verified")issue.status="pending";});
@@ -229,7 +233,7 @@
       });
     }
     function verifyResolvedIssues(message) {
-      if (message.version !== state.version || message.kbVersion !== state.kbVersion) return;
+      if (message.version !== state.version || message.kbVersion !== state.kbVersion || (message.testPlanVersion || 1)!==state.testPlanVersion) return;
       state.issues.forEach(issue => {
         if (issue.status === "pending" && (issue.id === message.caseId || issue.caseKey && issue.caseKey === message.sourceCaseKey || !issue.caseKey && issue.question === message.question) &&
             (state.restoredFrom || state.revisions.some(revision => revision.issues.some(ref => ref.id === issue.id) && revision.version <= message.version && revision.kbVersion <= message.kbVersion))) {
@@ -251,16 +255,17 @@
       const p = message.proposal;
       if (!p || !p.actions.length || !p.ready && !(p.knowledgeReview && p.knowledgeReview.unresolved)) return "";
       const current = state.proposal && state.proposal.id === p.id;
-      const applied = state.revisions.some(r=>r.proposal && r.proposal.id===p.id);
+      const applied = state.revisions.concat(state.testPolicyHistory).some(r=>r.proposal && r.proposal.id===p.id);
       const scope = entry=>Object.keys(entry.conditions || {}).length ? Object.entries(entry.conditions).map(([k,v])=>k+'：'+v).join('；') : '未限定适用条件';
       return '<details class="ab-discussion-plan"' + (current ? ' open' : '') + '><summary>' + (applied ? '已应用的方案' : current ? '本轮方案' : '此前方案') + '</summary><ul>' +
-        p.actions.map(action=>'<li>' + esc(action.text) + '</li>').join('') + '</ul></details>' +
+        p.actions.map(action=>'<li>' + esc(action.text) + '</li>').join('') + '</ul>'+ (p.testing?'<div class="ab-test-changes">'+p.testChanges.map(c=>'<article><strong>'+esc(c.before.caseName || c.before.category)+'</strong>'+
+          (c.before.question!==c.after.question?'<p><span>测试问题</span>'+esc(c.after.question)+'</p>':'')+'<p><span>原预期</span>'+esc(c.before.expect)+'</p><p><span>调整后预期</span>'+esc(c.after.expect)+'</p><p><span>评分口径</span>'+esc(c.after.criteria)+'</p></article>').join('')+'</div>':'')+'</details>' +
         (current && p.knowledgeReview ? p.knowledgeReview.conflicts.filter(c=>!c.decision).map(c=>
           '<section class="ab-knowledge-conflict"><h3>' + esc(c.candidate.question) + '</h3><div class="ab-knowledge-compare"><div><b>现有答案</b><p>' + esc(c.existing.answer) + '</p><small>' + esc(c.existing.source) + '</small><p class="ab-conflict-scope">'+esc(scope(c.existing))+'</p></div><div><b>新资料</b><p>' + esc(c.candidate.answer) + '</p><small>' + esc(c.candidate.source) + '</small><p class="ab-conflict-scope">'+esc(scope(c.candidate))+'</p></div></div>' +
           '<div class="ab-conflict-actions">' + [["keep","保留现有"],["replace","采用新资料"],["defer","暂不纳入"]].map(([decision,label])=>button("resolve-knowledge",label,false,builderLocked() || !!state.discussion,
             ' data-proposal-id="'+p.id+'" data-conflict-id="'+esc(c.id)+'" data-decision="'+decision+'"')).join('') + '</div></section>').join('') : '') +
         (current && !applied ? '<div class="ab-proposal-actions" role="group" aria-label="本轮方案操作">' +
-          button("submit-round", state.submitting ? "正在应用…" : "应用本轮方案", true, builderLocked() || !!state.previewRequest || !proposalReady(), ' data-proposal-id="' + p.id + '"') +
+          button("submit-round", state.submitting ? "正在应用…" : p.testContext || p.testing ? "应用并重新测试" : "应用本轮方案", true, builderLocked() || !!state.previewRequest || !proposalReady(), ' data-proposal-id="' + p.id + '"') +
           button("supplement-plan", "继续补充", false, builderLocked() || !!state.discussion, ' data-proposal-id="' + p.id + '"') + '</div>' : '');
     }
     function builderMessages() {
@@ -321,7 +326,7 @@
       const files = composerFiles(kind);
       return '<div class="ab-composer-wrap"><div class="ab-composer" data-ab-composer="' + kind + '">' + (builder ? feedbackReferences(state.feedbackRefs, true) : '') + attachmentList(files, kind) +
         '<textarea data-ab-draft="' + kind + '" aria-label="' + (builder ? "向 AgentBuddy 描述调整需求" : "输入测试问题") +
-        '" placeholder="' + (builder ? "粘贴截图，或告诉我哪里需要改…" : formal ? "补充正式测试场景…" : "输入患者的问题…") + '"' + (disabled ? ' disabled' : '') + '>' + esc(value) + '</textarea><div class="ab-compose-tools">' +
+        '" placeholder="' + (builder ? formal ? "反馈测试结果，或调整用例与通过标准…" : "粘贴截图，或告诉我哪里需要改…" : formal ? "补充正式测试场景…" : "输入患者的问题…") + '"' + (disabled ? ' disabled' : '') + '>' + esc(value) + '</textarea><div class="ab-compose-tools">' +
         '<button class="ab-icon" data-ab="attach" data-kind="' + kind + '" aria-label="' + (builder ? '添加反馈附件' : '添加测试附件') + '" title="上传附件"' + (disabled ? ' disabled' : '') + '>' + icon("clip") + '</button>' +
         '<button class="ab-icon" data-ab="attach-image" data-kind="' + kind + '" aria-label="' + (builder ? '上传反馈截图' : '添加测试图片') + '" title="上传图片，也可直接粘贴或拖入"' + (disabled ? ' disabled' : '') + '>' + icon("image") + '</button>' +
         '<button class="ab-send" data-ab="send-' + kind + '" aria-label="' + (builder ? "发送调整需求" : formal ? "加入测试计划" : "发送试用问题") + '"' +
@@ -354,11 +359,13 @@
         '<div class="wx-home" aria-hidden="true"><span></span></div></div></div></div>';
     }
     function reportView(report) {
-      const current = report.round === state.round && report.version === state.version && report.kbVersion === state.kbVersion;
+      const current = reportCurrent(report);
       const ready = current && canPublish();
       const published = ready && state.published && state.published.version === report.version && state.published.kbVersion === report.kbVersion;
       return window.AgentBuddyEvaluation.render(Object.assign({}, report, {results:evaluatedRows(report)}), reportState(report), {
-        current, ready, published:!!published, publishedAt:published && state.published.publishedAt, busy:!!state.scoring, attachments:attachmentList
+        current, ready, published:!!published, publishedAt:published && state.published.publishedAt, busy:!!state.scoring, attachments:attachmentList,
+        pendingRetest:state.retestFromReportId===report.id && !current && !currentTestReport(),locked:formalTestLocked(),
+        baseline:state.testReports.find(r=>r.id===report.baselineReportId),feedbackLocked:!!state.submitting
       });
     }
     function testStageView() {
@@ -394,9 +401,9 @@
         '</p></div><span class="ab-workspace-state' + (published ? ' published' : '') + '">' + (published ? '已发布' : '调整中') + '</span></div><div class="ab-top-actions">' +
         topActions() + '</div></header>' +
         (state.notice ? '<div class="ab-notice" role="status">' + esc(state.notice) + (state.restorePoint?button("undo-restore","撤销恢复",false,!!restoreLockReason()):'') + '</div>' : '') +
-        (!tune ? testStageView() : '<div class="ab-columns"><section class="ab-pane builder-pane" aria-label="AgentBuddy 对话"><header class="ab-pane-head"><div class="ab-pane-title"><span class="ab-pane-symbol">' + icon("chat") + '</span><h2>反馈给 AgentBuddy</h2></div>' + info("反馈与附件", "支持粘贴、拖入或上传截图及文档；每条反馈最多 10 份附件，"+window.AgentBuddyAttachments.limitLabel+"。提示词与知识库由 AgentBuddy 根据反馈调整。", true) + '</header>' +
+        ('<div class="ab-columns'+(!tune?' ab-test-columns':'')+'"><section class="ab-pane builder-pane" aria-label="AgentBuddy 对话"><header class="ab-pane-head"><div class="ab-pane-title"><span class="ab-pane-symbol">' + icon("chat") + '</span><h2>'+(!tune?'讨论测试与反馈':'反馈给 AgentBuddy')+'</h2></div>' + info("反馈与附件", "支持粘贴、拖入或上传截图及文档；每条反馈最多 10 份附件，"+window.AgentBuddyAttachments.limitLabel+"。提示词与知识库由 AgentBuddy 根据反馈调整。", true) + '</header>' +
         '<div class="ab-scroll" data-ab-scroll="builder" id="ab-left-content" role="log" aria-label="与 AgentBuddy 的对话">' + builderMessages() +
-        '</div>' + composer("builder") + '</section><section class="ab-pane preview-pane" aria-label="患者端试用" aria-busy="' + busy + '">' + previewView() + '</section></div>') + '</div>' + dialogView();
+        '</div>' + composer("builder") + '</section><section class="ab-pane '+(!tune?'ab-test-results':'preview-pane')+'" aria-label="'+(!tune?'测试结果':'患者端试用')+'" aria-busy="' + busy + '">' + (!tune?testStageView():previewView()) + '</section></div>') + '</div>' + dialogView();
     }
     function dialogView() {
       const d = state.dialog;
@@ -496,6 +503,7 @@
         issues,
         sources:clone(config.knowledge.attachments.filter(f=>!(config.knowledge.pendingAttachments || []).some(p=>p.id===f.id)).concat(state.revisions.flatMap(r=>r.knowledgeFiles || []))),
         receivedFiles:clone(Array.from(receivedFiles.values())), knowledgeEntries:clone(state.knowledgeEntries),
+        testContext:state.phase==='test',testPlan:testPlan(),testPlanVersion:state.testPlanVersion,
         prompt: messages.some(m => m.feedback.length || m.files.some(f => f.image) || !m.attachmentOnly && !/^只.*(知识|资料)/.test(m.text)) || issues.some(i => i.fix !== "替换"),
         knowledge: messages.some(m => m.files.length || /知识|资料|数据|附件|图片/.test(m.text)) || issues.some(i => i.fix === "数据" || i.fix === "替换")
       };
@@ -505,8 +513,8 @@
       if (!text && !state.files.length && !state.feedbackRefs.length) return false;
       // Keep the failed upload in the conversation, but replace it in the next task when re-uploaded.
       state.pending=state.pending.map(m=>Object.assign({},m,{files:(m.files || []).filter(f=>!(f.parseStatus==='failed' && state.files.some(next=>next.name===f.name && next.id!==f.id)))}));
-      if (!state.pending.length && state.revisions.some(r => r.round === state.round)) state.round++;
-      state.phase = "tune"; state.notice = "";
+      if (state.phase==='tune' && !state.pending.length && state.revisions.some(r => r.round === state.round)) state.round++;
+      state.notice = "";
       const message = { id: id(), role: "user", text: text || (state.feedbackRefs.length ? "请调整引用的这条回复。" : state.files.some(f => f.image) ? "请根据截图调整智能体。" : "请根据本条附件更新知识库。"), attachmentOnly: !text, feedback: clone(state.feedbackRefs), files: clone(state.files), stamp: stamp() };
       state.builder.push(message);
       state.pending.push(message);
@@ -516,6 +524,12 @@
     }
     function sendBuilder() {
       if (builderLocked() || !filesReady("builder") || !collectBuilder()) return;
+      const last=state.pending.at(-1);
+      if(state.phase==='test' && window.AgentBuddyTestPlanning.agentIntent(last.text))state.pending.flatMap(m=>m.feedback || []).filter(r=>r.kind==='test-case').forEach(r=>{
+        const key=r.sourceCaseKey || r.caseKey,old=state.issues.find(i=>i.caseKey===key && i.status!=='verified');
+        if(old)Object.assign(old,{messageId:r.messageId,reply:r.reply,finding:r.finding,round:r.round,status:'open'});
+        else state.issues.push(Object.assign({},clone(r),{id:id(),caseKey:key,type:'未达测试预期',fix:'话术',status:'open'}));
+      });
       discussRound();
     }
     function refreshDiscussion() {
@@ -559,7 +573,7 @@
         onComplete: plan => {
           if (state.discussion !== task) return;
           if (!plan || !Array.isArray(plan.actions) || typeof plan.response !== 'string') throw new Error('Invalid discussion response');
-          const proposal=Object.assign({},clone(plan),{id:task.id});
+          const proposal=Object.assign({},clone(plan),{id:task.id,testContext:task.snapshot.testContext,testPlanVersion:task.snapshot.testPlanVersion});
           state.builder.push({id:id(),role:"assistant",text:proposal.response,proposal:clone(proposal),stamp:stamp()});
           state.proposal=Object.assign({},proposal,{snapshot:task.snapshot,messageIds:task.snapshot.messages.map(m=>m.id),issueSignature:task.issueSignature});
           if (proposal.resolvedNoChange) state.pending=[];
@@ -574,7 +588,7 @@
       delete proposal.snapshot;
       state.submitting=Object.assign(clone(p.snapshot),{instruction:p.instruction,prompt:p.prompt,knowledge:p.knowledge,proposal,knowledgeFiles:clone(p.knowledgeFiles || []),tasks:clone(p.tasks).map((t,i)=>Object.assign(t,{status:i ? "pending" : "running"})),
         conversation:clone(state.builder.slice(state.builder.findIndex(m=>m.id===p.messageIds[0])))});
-      state.phase = "tune"; state.notice = "";
+      state.notice = "";
       notifyChange(true);
       render("builder");
       // Local prototype: preserve the entire submitted conversation and file references.
@@ -662,6 +676,7 @@
       const files = question == null ? clone(state.testFiles) : [];
       if (!text && !files.length) return;
       state.testCases.push({ id: id(), text: text || "请核对所附资料或图片中的测试场景。", files });
+      state.testPlanVersion++;
       if (question == null) { state.testDraft = ""; state.testFiles = []; state.attachmentErrors.test = ""; }
       state.notice = "测试场景已加入计划，启动任务后统一执行。";
       render(undefined, '[data-ab-draft="test"]');
@@ -672,12 +687,16 @@
       const report = activeReport();
       if (report && (report.round !== state.round || report.version !== state.version || report.kbVersion !== state.kbVersion)) state.activeReportId = null;
       state.phase = "test"; state.dialog = null; state.notice = ""; render();
+      if(!state.testIntroShown){state.testIntroShown=true;assistant('正式测试会在右侧显示进度和结果。你可以在这里调整测试问题、预期和评分标准。\n\n未通过项可以直接反馈给我；我会先核对口径，再规划用例或智能体的改动。应用方案后重新测试，每次报告都会保留。');render('builder');}
     }
     function startTest() {
       if (state.phase !== "test" || formalTestLocked()) return;
       if (state.testDraft.trim() || state.testFiles.length) sendTest();
-      const snapshot = clone({ config, prompt: promptText(), revisions: state.revisions, knowledgeEntries:state.knowledgeEntries, version: state.version, kbVersion: state.kbVersion, round: state.round });
+      const snapshot = clone({ config, prompt: promptText(), revisions: state.revisions, knowledgeEntries:state.knowledgeEntries, version: state.version, kbVersion: state.kbVersion, round: state.round,testPlanVersion:state.testPlanVersion,testOverrides:state.testOverrides });
+      const baseline=state.testReports.find(r=>r.id===state.retestFromReportId);
       const job = { id: id(), status: "queued", round: state.round, version: state.version, kbVersion: state.kbVersion, snapshot,
+        baselineSummary:baseline?clone(window.AgentBuddyEvaluation.summarize(evaluatedRows(baseline))):null,
+        testPlanVersion:state.testPlanVersion,baselineReportId:state.retestFromReportId,
         cases: clone(testPlan()), progress: 0, completed: 0, detail: "已固定本轮版本，正在准备测试用例", logs: ["测试任务已提交，提示词与知识库版本已固定"] };
       state.testJob = job; state.activeReportId = null; state.notice = ""; state.dialog = null;
       render();
@@ -691,9 +710,9 @@
         onComplete: result => {
           if (state.testJob !== job || !testRunning()) return;
           job.status = "completed"; job.progress = 100; stopTest = null;
-          const report = Object.assign(result, { id: job.id, round: job.round, version: job.version, kbVersion: job.kbVersion, snapshot });
+          const report = Object.assign(result, { id: job.id, round: job.round, version: job.version, kbVersion: job.kbVersion,testPlanVersion:job.testPlanVersion,baselineReportId:job.baselineReportId,baselineSummary:job.baselineSummary, snapshot });
           report.results.forEach(r => {
-            const common = { round: job.round, version: job.version, kbVersion: job.kbVersion, jobId: job.id, session: state.testSession };
+            const common = { round: job.round, version: job.version, kbVersion: job.kbVersion,testPlanVersion:job.testPlanVersion, jobId: job.id, session: state.testSession };
             state.tests.push(Object.assign({ id: id(), role: "user", text: r.question, files: r.files || [] }, common));
             r.messageId = id();
             const reply = Object.assign({ id: r.messageId, role: "assistant", text: r.answer, question: r.question, caseId: r.issueId || null, sourceCaseKey:r.sourceCaseKey || r.key, rating: "" }, common);
@@ -713,29 +732,23 @@
       stopTest = null; state.testJob.status = "cancelled"; state.notice = ""; render();
     }
     function reportNext(keys) {
-      const report = activeReport();
-      if (!report || previewLocked() || hasPending()) return;
-      const selected = keys || reportState(report).selected;
-      const findings = evaluatedRows(report).filter(r => !/error/.test(window.AgentBuddyEvaluation.outcome(r)) &&
-        (selected.length ? selected.includes(r.key) : window.AgentBuddyEvaluation.outcome(r) !== "pass"));
-      findings.forEach(r => {
-        const message = state.tests.find(m => m.id === r.messageId), caseKey = r.sourceCaseKey || r.key;
-        const existing = state.issues.find(i => i.messageId === r.messageId || i.caseKey === caseKey && i.status !== "verified");
-        if (!existing) state.issues.push({ id:id(), messageId:r.messageId, caseKey, caseName:r.caseName, category:r.originalCategory || r.category,
-          question:r.question, reply:r.answer, reference:r.reference || "", history:clone(r.history || []), inputType:r.inputType, files:clone(r.files || []), finding:r.finding,
-          type:r.outcome === "fail" ? "未达测试预期" : "资料待核对", fix:r.rule === "review" ? "数据" : "话术", expect:r.expect, round:report.round, version:report.version, status:"open" });
-        else Object.assign(existing, {messageId:r.messageId,reply:r.answer,finding:r.finding,round:report.round,version:report.version,status:"open"});
-        if (message) message.rating = "issue";
-        state.feedbackRefs.push({kind:"test-case",messageId:r.messageId,caseKey,caseName:r.caseName,category:r.category,question:r.question,reply:r.answer,expect:existing ? existing.expect : r.expect,
-          reference:r.reference || "",history:clone(r.history || []),inputType:r.inputType,files:clone(r.files || []),finding:r.finding,round:report.round,version:report.version,kbVersion:report.kbVersion});
+      const report=activeReport();
+      if(!report || previewLocked())return;
+      const selected=keys || reportState(report).selected;
+      const findings=evaluatedRows(report).filter(r=>!/error/.test(window.AgentBuddyEvaluation.outcome(r)) &&
+        (selected.length?selected.includes(r.key):window.AgentBuddyEvaluation.outcome(r)!=='pass'));
+      if(!findings.length)return;
+      const unsent=!!(state.builderDraft.trim() || state.files.length || state.feedbackRefs.length);
+      findings.forEach(r=>{
+        if(state.feedbackRefs.some(ref=>ref.messageId===r.messageId))return;
+        state.feedbackRefs.push({kind:'test-case',reportId:report.id,messageId:r.messageId,caseKey:r.key,sourceCaseKey:r.sourceCaseKey || r.key,
+          caseName:r.caseName,category:r.originalCategory || r.category,question:r.question,reply:r.answer,expect:r.expect,criteria:r.criteria || r.expect,
+          reference:r.reference || '',history:clone(r.history || []),files:clone(r.files || []),inputType:r.inputType,finding:r.finding,
+          round:report.round,version:report.version,kbVersion:report.kbVersion});
       });
-      if(!findings.length) return;
-      state.dialog=null;
-      nextRound();
-      state.builderDraft = findings.length ? "请根据第 " + report.round + " 轮测试报告调整以下用例：\n\n" + findings.map((r, i) => (i + 1) + ". " + r.category + "：" + r.question + "\n预期：" + r.expect + "\n评分理由：" + generatedText(r.finding)).join("\n\n") : "";
-      state.notice = findings.length ? findings.length + " 项已带回调试。" : "";
-      if(findings.length) notifyChange(true);
-      render("builder", '[data-ab-draft="builder"]');
+      state.dialog=null;state.phase='test';state.retestFromReportId=report.id;notifyChange(true);
+      if(!unsent){state.builderDraft='请核对这 '+findings.length+' 项测试结果，规划测试口径与用例的调整方案。';sendBuilder();}
+      else render('builder','[data-ab-draft="builder"]');
     }
     function retryScores(key) {
       const report = activeReport();
@@ -769,15 +782,23 @@
       if (c.proposal.knowledgeReview) state.knowledgeEntries=clone(c.proposal.knowledgeReview.entries);
       if (c.knowledge) {config.knowledge.pendingAttachments=[];config.knowledge.entries=clone(state.knowledgeEntries);
         config.knowledge.attachments.forEach(file=>{const parsed=c.knowledgeFiles.find(f=>f.hash && f.hash===file.hash);if(parsed)Object.assign(file,clone(parsed));});}
+      if(c.proposal.testing){
+        c.proposal.testChanges.forEach(change=>{state.testOverrides=state.testOverrides.filter(old=>old.key!==change.key);state.testOverrides.push(clone(change));});
+        state.testPlanVersion++;
+        state.testPolicyHistory.push({modifiedAt:new Date().toISOString(),testPlanVersion:state.testPlanVersion,proposal:clone(c.proposal),reportId:state.retestFromReportId});
+      }
       state.contentModifiedAt=new Date().toISOString();state.restorePoint=null;
       const changes=releases.summaries(c);
       state.releaseChanges.push(...changes);state.editHistory.push(...changes.map(text=>({text,modifiedAt:state.contentModifiedAt})));
-      state.revisions.push(Object.assign(clone(c), { round: state.round, version: state.version, kbVersion: state.kbVersion, modifiedAt:state.contentModifiedAt }));
-      state.issues.forEach(i => { if (c.issues.some(c => c.id === i.id)) i.status = "pending"; });
-      state.pending = []; state.submitting = null; state.proposal=null; state.discussionError="";state.phase = "tune"; state.activeReportId = null; state.testJob = null;
-      assistant("本轮方案已应用。可以继续在右侧试问，有不满意的地方再一起调整。");
+      if(c.prompt || c.knowledge)state.revisions.push(Object.assign(clone(c), { round: state.round, version: state.version, kbVersion: state.kbVersion, modifiedAt:state.contentModifiedAt }));
+      if(c.prompt || c.knowledge)state.issues.forEach(i => { if (c.issues.some(c => c.id === i.id)) i.status = "pending"; });
+      const retest=!!c.proposal.testContext;
+      state.pending = []; state.submitting = null; state.proposal=null; state.discussionError="";state.phase = retest?"test":"tune"; state.activeReportId = retest?state.retestFromReportId:null; state.testJob = null;
+      if(retest)state.round++;
+      assistant(retest?"本轮方案已应用，正在按新方案重新测试。上次报告已保留。":"本轮方案已应用。可以继续在右侧试问，有不满意的地方再一起调整。");
       state.notice = "";
       render("builder");
+      if(retest)startTest();
     }
     function nextRound() {
       const results = state.tests.filter(m => m.role === "assistant" && m.round === state.round);
@@ -824,7 +845,7 @@
         });
       });
       state.attachmentErrors[kind] = Array.from(new Set(errors)).join("；");
-      if (kind !== "test" && files.length) state.phase = "tune";
+
       render(undefined, '[data-ab-draft="' + kind + '"]');
       if(kind==="builder" && files.length) notifyChange(true);
     }
@@ -901,9 +922,9 @@
         if (action === "eval-regrade") {retryScores(t.dataset.key);return;}
         render(); return;
       }
-      if (action === "prepare-test") { state.activeReportId = null; state.testJob = null; state.dialog=null; state.notice = ""; render(); return; }
+      if (action === "prepare-test") { if(formalTestLocked())return;state.activeReportId = null; state.testJob = null; state.dialog=null; state.notice = ""; render(); return; }
       if (action === "view-report") { if (hasPending() || !state.testReports.some(r => r.id === t.dataset.id)) return; state.activeReportId = t.dataset.id; state.phase = "test"; state.dialog = null; render(); return; }
-      if (action === "remove-test-case") { if (previewLocked()) return; state.testCases = state.testCases.filter(c => c.id !== t.dataset.id); render(); return; }
+      if (action === "remove-test-case") { if (previewLocked()) return; state.testCases = state.testCases.filter(c => c.id !== t.dataset.id);state.testPlanVersion++; render(); return; }
       if (action === "feedback-reply") {
         if (builderLocked()) return;
         const message = state.tests.find(m => m.id === t.dataset.id && m.source === "preview" && m.role === "assistant");
@@ -959,7 +980,7 @@
           version:state.version,kbVersion:state.kbVersion,changes:Array.from(new Set(state.releaseChanges)),content:contentSnapshot(),report:frozenReport,
           score:clone(window.AgentBuddyEvaluation.summarize(frozenReport.results))};
         state.releases.push(release);state.releaseChanges=[];state.restorePoint=null;
-        state.published = { releaseId:release.id,version: state.version, kbVersion: state.kbVersion, ratio: release.score.rate, reportId:report.id, publishedAt:release.publishedAt };
+        state.published = { releaseId:release.id,version: state.version, kbVersion: state.kbVersion,testPlanVersion:state.testPlanVersion, ratio: release.score.rate, reportId:report.id, publishedAt:release.publishedAt };
         notifyChange(true);
         state.activeReportId = report.id; state.phase = "test";
         state.dialog = null; state.notice = ""; render(); return;
@@ -1053,7 +1074,7 @@
         if (kind === "builder" ? builderLocked() : previewLocked()) return;
         const changed=state[kind === "builder" ? "builderDraft" : "testDraft"]!==t.value;
         state[kind === "builder" ? "builderDraft" : "testDraft"] = t.value;
-        if (kind === "builder") { if (hasPending()) state.phase = "tune"; syncWorkflow(changed); }
+        if (kind === "builder") { syncWorkflow(changed); }
         else notifyChange(false);
         const send = root.querySelector('[data-ab="send-' + kind + '"]');
         if (send) send.disabled = !filesReady(kind) || !t.value.trim() && !composerFiles(kind).length && !(kind === "builder" && state.feedbackRefs.length);
@@ -1064,7 +1085,7 @@
     function syncWorkflow(modified) {
       const pending = hasPending(), busy = previewLocked();
       const actions = root.querySelector('.ab-top-actions');
-      if (actions && state.phase === "tune") actions.innerHTML = topActions();
+      if (actions) actions.innerHTML = topActions();
       const submit = root.querySelector('[data-ab="submit-round"]');
       if (submit) submit.disabled = builderLocked() || !!state.previewRequest || !proposalReady() || submit.dataset.proposalId !== state.proposal.id;
       const status = root.querySelector('[data-ab-submit-status]');
@@ -1075,9 +1096,10 @@
       }
       const send = root.querySelector('[data-ab="send-builder"]');
       if (send) send.disabled = builderLocked() || !filesReady("builder") || !(state.builderDraft.trim() || state.files.length || state.feedbackRefs.length);
+      root.querySelectorAll('[data-ab="publish"],[data-ab="start-test"],[data-ab="prepare-test"]').forEach(b=>{b.disabled=formalTestLocked() || b.dataset.ab==='publish' && !canPublish();});
       const stateLabel = root.querySelector('.ab-workspace-state');
       if (stateLabel) {
-        const published = state.published && state.published.version === state.version && state.published.kbVersion === state.kbVersion && !pending;
+        const published = isPublished();
         stateLabel.textContent = published ? "已发布" : "调整中";
         stateLabel.classList.toggle("published", !!published);
       }
@@ -1129,7 +1151,7 @@
       }
     }
     function getSummary() {
-      const published = state.published && state.published.version === state.version && state.published.kbVersion === state.kbVersion;
+      const published = isPublished();
       const tested = state.testReports.some(r => r.version === state.version && r.kbVersion === state.kbVersion);
       const status = testRunning() ? "testing" : state.submitting ? "applying" : hasPending() ? "tuning" : published ? "published" : tested ? "review" : state.revisions.length ? "ready" : "draft";
       return { name, department: config.studio.department, version: state.version, kbVersion: state.kbVersion, status,
