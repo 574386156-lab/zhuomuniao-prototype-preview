@@ -1,6 +1,14 @@
 (function () {
   "use strict";
   const originals = new Map();
+  const limits=Object.freeze({documentBytes:100*1024*1024,imageBytes:20*1024*1024,pdfPages:1000});
+  const limitLabel='文档单份 100 MB，图片单份 20 MB';
+  let inspectionQueue=Promise.resolve();
+  function sizeError(file) {
+    const image=/\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name) || /^image\//.test(file.type || '');
+    const limit=image?limits.imageBytes:limits.documentBytes;
+    return file.size>limit?'超过 '+(limit/1024/1024)+' MB':'';
+  }
   function bytes(file) {
     if (file.arrayBuffer) return file.arrayBuffer();
     return new Promise((resolve, reject) => {
@@ -14,7 +22,7 @@
     const data = await bytes(file);
     if (!window.crypto || !window.crypto.subtle) throw new Error("当前环境无法核对附件内容");
     const hash = Array.from(new Uint8Array(await window.crypto.subtle.digest("SHA-256", data)), b=>b.toString(16).padStart(2,"0")).join("");
-    // Text extraction is intentionally limited. PDF, Office and OCR need the actual Skill adapter.
+    // Larger documents are extracted asynchronously by parsing.js after the fingerprint is ready.
     let text=null, extraction="not-parsed";
     if (/\.(txt|md)$/i.test(file.name) && data.byteLength <= 2 * 1024 * 1024) {
       try {text=new TextDecoder("utf-8", {fatal:true}).decode(data);extraction="plain-text";}
@@ -24,7 +32,10 @@
     return {hash, hashStatus:"ready", text, extraction,parseStatus:text && text.trim()?"completed":"queued"};
   }
   function inspect(file, callback) {
-    fingerprint(file).then(callback, error=>callback({hash:null, hashStatus:"error", extraction:"not-parsed", error:error.message}));
+    // Read one upload at a time so a batch of large files does not allocate all buffers together.
+    const job=inspectionQueue.then(()=>fingerprint(file));
+    inspectionQueue=job.catch(()=>{});
+    job.then(callback, error=>callback({hash:null, hashStatus:"error", extraction:"not-parsed", error:error.message}));
   }
   function classify(files, known) {
     const seen = (known || []).filter(Boolean).map(file=>Object.assign({},file));
@@ -38,5 +49,5 @@
     });
   }
   const labels = {new:"新附件",duplicate:"重复附件",changed:"内容已变化",unverified:"待核对",checking:"正在核对",error:"核对失败"};
-  window.AgentBuddyAttachments = {fingerprint,inspect,classify,labels,bytes,original:file=>originals.get(file.hash)};
+  window.AgentBuddyAttachments = {fingerprint,inspect,classify,labels,limits,limitLabel,sizeError,bytes,original:file=>originals.get(file.hash)};
 })();

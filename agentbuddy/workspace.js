@@ -394,7 +394,7 @@
         '</p></div><span class="ab-workspace-state' + (published ? ' published' : '') + '">' + (published ? '已发布' : '调整中') + '</span></div><div class="ab-top-actions">' +
         topActions() + '</div></header>' +
         (state.notice ? '<div class="ab-notice" role="status">' + esc(state.notice) + (state.restorePoint?button("undo-restore","撤销恢复",false,!!restoreLockReason()):'') + '</div>' : '') +
-        (!tune ? testStageView() : '<div class="ab-columns"><section class="ab-pane builder-pane" aria-label="AgentBuddy 对话"><header class="ab-pane-head"><div class="ab-pane-title"><span class="ab-pane-symbol">' + icon("chat") + '</span><h2>反馈给 AgentBuddy</h2></div>' + info("反馈与附件", "支持粘贴、拖入或上传截图及文档；每条反馈最多 10 份附件，单份不超过 20 MB。提示词与知识库由 AgentBuddy 根据反馈调整。", true) + '</header>' +
+        (!tune ? testStageView() : '<div class="ab-columns"><section class="ab-pane builder-pane" aria-label="AgentBuddy 对话"><header class="ab-pane-head"><div class="ab-pane-title"><span class="ab-pane-symbol">' + icon("chat") + '</span><h2>反馈给 AgentBuddy</h2></div>' + info("反馈与附件", "支持粘贴、拖入或上传截图及文档；每条反馈最多 10 份附件，"+window.AgentBuddyAttachments.limitLabel+"。提示词与知识库由 AgentBuddy 根据反馈调整。", true) + '</header>' +
         '<div class="ab-scroll" data-ab-scroll="builder" id="ab-left-content" role="log" aria-label="与 AgentBuddy 的对话">' + builderMessages() +
         '</div>' + composer("builder") + '</section><section class="ab-pane preview-pane" aria-label="患者端试用" aria-busy="' + busy + '">' + previewView() + '</section></div>') + '</div>' + dialogView();
     }
@@ -802,7 +802,8 @@
       Array.from(incoming || []).forEach(file => {
         const image = imageTypes.test(file.name) || /^image\/(png|jpeg|gif|webp|bmp|avif)$/.test(file.type);
         if (!image && !documentTypes.test(file.name)) { errors.push(file.name + "：暂不支持此格式"); return; }
-        if (file.size > 20 * 1024 * 1024) { errors.push(file.name + "：超过 20 MB"); return; }
+        const sizeError=window.AgentBuddyAttachments.sizeError(file);
+        if (sizeError) { errors.push(file.name + "："+sizeError); return; }
         if (files.some(f => fileStore.get(f.id) && fileStore.get(f.id).file === file)) return;
         if (files.length >= 10) { errors.push("每条消息最多添加 10 份附件"); return; }
         const fileId = id(), url = URL.createObjectURL(file);

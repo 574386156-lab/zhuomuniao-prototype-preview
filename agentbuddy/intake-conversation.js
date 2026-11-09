@@ -242,7 +242,7 @@
     function knowledgeView() {
       return '<section class="brief-window brief-knowledge' + (files.length ? ' has-files' : '') + (knowledgeError || uploadError ? ' has-error' : '') + '" data-brief-knowledge aria-labelledby="brief-knowledge-title"><header class="brief-knowledge-heading"><div><h2 id="brief-knowledge-title" tabindex="-1">添加知识库</h2>' +
         window.AgentBuddyUI.info("知识库资料", "知识库是智能体回答问题时参考的资料，可上传已有的知识文档、患者问答、服务说明和风险识别资料。支持拖入文件或粘贴图片。暂时跳过后，可在调整对话中补充。", true) + '</div><span class="brief-knowledge-status" data-brief-knowledge-status role="status"' + (!files.length ? ' hidden' : '') + '>' + knowledgeStatus() + '</span></header>' +
-        '<div class="brief-upload-area"><span class="brief-upload-symbol">' + icon("upload") + '</span><p class="brief-upload-title">拖入知识文档或图片</p><div class="brief-knowledge-actions"><button type="button" class="brief-knowledge-upload" data-brief-action="upload">' + icon("clip") + '<span data-brief-upload-label>' + (files.length ? '继续添加' : '选择文件') + '</span></button><button type="button" class="brief-knowledge-image" data-brief-action="image">' + icon("image") + '上传图片</button></div><p class="brief-upload-formats">PDF、Word、Excel、PPT、文本、图片 · 最多 10 份，单份 20 MB</p></div>' +
+        '<div class="brief-upload-area"><span class="brief-upload-symbol">' + icon("upload") + '</span><p class="brief-upload-title">拖入知识文档或图片</p><div class="brief-knowledge-actions"><button type="button" class="brief-knowledge-upload" data-brief-action="upload">' + icon("clip") + '<span data-brief-upload-label>' + (files.length ? '继续添加' : '选择文件') + '</span></button><button type="button" class="brief-knowledge-image" data-brief-action="image">' + icon("image") + '上传图片</button></div><p class="brief-upload-formats">PDF、Word、Excel、PPT、文本、图片 · 最多 10 份 · '+window.AgentBuddyAttachments.limitLabel+'</p></div>' +
         '<div class="brief-files" data-brief-files' + (!files.length ? ' hidden' : '') + '>' + attachments() + '</div><p class="brief-knowledge-feedback" data-brief-knowledge-feedback role="alert"' + (!knowledgeError && !uploadError ? ' hidden' : '') + '>' + esc([knowledgeError, uploadError].filter(Boolean).join(" ")) + '</p></section>';
     }
     function view() {
@@ -389,7 +389,8 @@
       Array.from(incoming || []).forEach(file => {
         if (!file || !file.name) return;
         if (files.length >= 10) { errors.push("最多添加 10 份附件。"); return; }
-        if (file.size > 20 * 1024 * 1024) { errors.push(file.name + " 超过 20 MB。"); return; }
+        const sizeError=window.AgentBuddyAttachments.sizeError(file);
+        if (sizeError) { errors.push(file.name + "："+sizeError); return; }
         if (!/\.(pdf|docx?|xlsx?|pptx?|txt|md|csv|png|jpe?g|webp|gif)$/i.test(file.name)) { errors.push("不支持此文件格式：" + file.name); return; }
         if (files.some(f => f.file === file)) return;
         const record={id:++nextFile,name:file.name,size:file.size,type:file.type || "",modified:file.lastModified,url:URL.createObjectURL(file),file,hashStatus:"checking"};

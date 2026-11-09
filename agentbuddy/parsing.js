@@ -61,7 +61,7 @@
     control.cancel=()=>loading.destroy();let pdf;
     try {
       pdf=await loading.promise;
-      if(pdf.numPages>500)throw new Error('PDF 超过 500 页，请拆分后上传');
+      if(pdf.numPages>window.AgentBuddyAttachments.limits.pdfPages)throw new Error('PDF 超过 '+window.AgentBuddyAttachments.limits.pdfPages+' 页，请拆分后上传');
       const pages=[];
       for(let n=1;n<=pdf.numPages;n++) {
         if(control.stopped())throw new Error('解析已取消');
