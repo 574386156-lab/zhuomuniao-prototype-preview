@@ -31,7 +31,8 @@
         function validSnapshot(s) {
           return s && validConfig(s.config) && s.state && typeof s.state.builderDraft==="string" && typeof s.state.testDraft==="string" &&
             ["files","testFiles","builder","tests","pending","issues","revisions","rounds","testReports","testCases","scoreRuns","knowledgeEntries","feedbackRefs"].every(function(k){return Array.isArray(s.state[k]);}) &&
-            s.state.scroll && s.state.attachmentErrors && s.state.reportViews && Array.isArray(s.receivedFiles);
+            s.state.scroll && s.state.attachmentErrors && s.state.reportViews && Array.isArray(s.receivedFiles) &&
+            ["releases","releaseChanges","editHistory"].every(function(k){return !Object.hasOwn(s.state,k) || Array.isArray(s.state[k]);});
         }
         try {
           var saved=JSON.parse(window.localStorage.getItem(storageKey) || "null");

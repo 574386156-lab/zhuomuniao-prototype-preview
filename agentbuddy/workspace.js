@@ -29,6 +29,7 @@
   const generatedText = window.AgentBuddyUI.generatedText;
   const workspaceOwners = new WeakMap();
   const knowledgeLabel = window.AgentBuddyUI.knowledgeLabel;
+  const releases = window.AgentBuddyReleases;
   function formatSize(size) { return size < 1024 ? size + " B" : size < 1024 * 1024 ? Math.ceil(size / 1024) + " KB" : (size / 1024 / 1024).toFixed(1) + " MB"; }
   function button(action, text, primary, disabled, extra) {
     return '<button type="button" class="ab-button' + (primary ? " primary" : "") + '" data-ab="' + action + '"' + (extra || "") + (disabled ? " disabled" : "") + ">" + text + "</button>";
@@ -48,6 +49,8 @@
       testJob: null, testReports: [], activeReportId: null, testCases: [], reportViews: {}, scoreRuns: [], scoring: null,
       attachmentErrors: { builder: "", test: "" },
       notice: "", error: "", published: null, testSession: 1,
+      releases: [], releaseChanges: [], editHistory: [], restoredFrom: null, restorePoint: null,
+      contentModifiedAt: options.snapshot ? null : new Date().toISOString(),
       scroll: { builder: 0, preview: 0 }
     };
     if (options.snapshot && options.snapshot.state) {
@@ -161,6 +164,53 @@
     function isPublished() {
       return !!state.published && state.published.version === state.version && state.published.kbVersion === state.kbVersion && !hasPending();
     }
+    function contentSnapshot() {
+      return clone({config,prompt:promptText(),revisions:state.revisions,knowledgeEntries:state.knowledgeEntries,kbVersion:state.kbVersion});
+    }
+    function sameReleaseContent(release) {
+      if (!releases.validContent(release.content)) return false;
+      const current=contentSnapshot(), saved=clone(release.content);
+      delete current.kbVersion; delete saved.kbVersion;
+      return JSON.stringify(current)===JSON.stringify(saved);
+    }
+    function restoreLockReason() {
+      if (previewLocked()) return "当前任务完成后可恢复";
+      if (hasPending()) return "请先处理当前未提交的反馈和方案";
+      if (state.testDraft.trim() || state.testFiles.length) return "请先处理未发送的试问内容";
+      return "";
+    }
+    function applyRestoredContent(content) {
+      // Restoration starts a new working revision; historical reports cannot authorize publication.
+      state.version=Math.max(state.version,...state.testReports.map(r=>r.version),...state.releases.map(r=>r.version))+1;
+      state.kbVersion=content.kbVersion===0?0:Math.max(state.kbVersion,...state.testReports.map(r=>r.kbVersion),...state.releases.map(r=>r.kbVersion))+1;
+      state.round++;
+      Object.keys(config).forEach(key=>delete config[key]);Object.assign(config,clone(content.config));
+      state.promptContent=content.prompt;state.revisions=clone(content.revisions);state.knowledgeEntries=clone(content.knowledgeEntries);
+      state.contentModifiedAt=new Date().toISOString();state.testSession++;
+      state.phase="tune";state.activeReportId=null;state.testJob=null;state.proposal=null;state.dialog=null;
+      state.discussionError="";state.issues.forEach(issue=>{if(issue.status!=="verified")issue.status="pending";});
+    }
+    function restoreRelease(releaseId) {
+      const release=state.releases.find(r=>r.id===releaseId);
+      if (!release || !releases.validContent(release.content) || restoreLockReason() || sameReleaseContent(release)) return;
+      state.restorePoint={content:contentSnapshot(),changes:clone(state.releaseChanges),issues:clone(state.issues),restoredFrom:state.restoredFrom};
+      applyRestoredContent(release.content);
+      state.restoredFrom=release.id;
+      const text="恢复"+releases.label(release)+"的提示词与知识库";
+      state.releaseChanges=[text];state.editHistory.push({text,modifiedAt:state.contentModifiedAt});
+      assistant("已恢复"+releases.label(release)+"的内容。可以在右侧试问，正式测试通过后再发布。当前线上发布内容保持不变。");
+      state.notice="已恢复为草稿，重新测试通过后可发布。";
+      notifyChange(true);render("builder");
+    }
+    function undoRestore() {
+      if (!state.restorePoint || restoreLockReason()) return;
+      const previous=clone(state.restorePoint);
+      applyRestoredContent(previous.content);
+      state.releaseChanges=previous.changes;state.issues=previous.issues;state.restoredFrom=previous.restoredFrom;state.restorePoint=null;
+      state.editHistory.push({text:"撤销历史内容恢复",modifiedAt:state.contentModifiedAt});
+      assistant("已撤销恢复，保留恢复前的提示词和知识库。正式测试通过后可发布。");
+      state.notice="已撤销恢复。";notifyChange(true);render("builder");
+    }
     function testResults() {
       const report = currentTestReport();
       return report ? state.tests.filter(m => m.role === "assistant" && m.jobId === report.id) : [];
@@ -176,7 +226,7 @@
       if (message.version !== state.version || message.kbVersion !== state.kbVersion) return;
       state.issues.forEach(issue => {
         if (issue.status === "pending" && (issue.id === message.caseId || issue.caseKey && issue.caseKey === message.sourceCaseKey || !issue.caseKey && issue.question === message.question) &&
-            state.revisions.some(revision => revision.issues.some(ref => ref.id === issue.id) && revision.version <= message.version && revision.kbVersion <= message.kbVersion)) {
+            (state.restoredFrom || state.revisions.some(revision => revision.issues.some(ref => ref.id === issue.id) && revision.version <= message.version && revision.kbVersion <= message.kbVersion))) {
           issue.status = "verified";
         }
       });
@@ -325,7 +375,7 @@
     }
     function topActions() {
       const ready = canPublish(), published = isPublished();
-      return button("history", "迭代记录", false) + (state.phase === "tune" ?
+      return button("history", "发布记录", false) + (state.phase === "tune" ?
         button("next", ready || published ? "查看测试报告" : "正式测试" + icon("arrow"), !ready && !published, formalTestLocked()) +
         (ready && !published ? button("publish", "发布智能体", true) : "") :
         button("previous", icon("back") + "返回调试", false, previewLocked()));
@@ -336,7 +386,7 @@
       return '<div class="ab-workspace"' + (state.dialog ? ' inert' : '') + '><header class="ab-top"><div class="ab-brand"><span class="ab-logo">✦</span><div><h1>AgentBuddy</h1><p>' + esc(name) +
         '</p></div><span class="ab-workspace-state' + (published ? ' published' : '') + '">' + (published ? '已发布' : '调整中') + '</span></div><div class="ab-top-actions">' +
         topActions() + '</div></header>' +
-        (state.notice ? '<div class="ab-notice" role="status">' + esc(state.notice) + '</div>' : '') +
+        (state.notice ? '<div class="ab-notice" role="status">' + esc(state.notice) + (state.restorePoint?button("undo-restore","撤销恢复",false,!!restoreLockReason()):'') + '</div>' : '') +
         (!tune ? testStageView() : '<div class="ab-columns"><section class="ab-pane builder-pane" aria-label="AgentBuddy 对话"><header class="ab-pane-head"><div class="ab-pane-title"><span class="ab-pane-symbol">' + icon("chat") + '</span><h2>反馈给 AgentBuddy</h2></div>' + info("反馈与附件", "支持粘贴、拖入或上传截图及文档；每条反馈最多 10 份附件，单份不超过 20 MB。提示词与知识库由 AgentBuddy 根据反馈调整。", true) + '</header>' +
         '<div class="ab-scroll" data-ab-scroll="builder" id="ab-left-content" role="log" aria-label="与 AgentBuddy 的对话">' + builderMessages() +
         '</div>' + composer("builder") + '</section><section class="ab-pane preview-pane" aria-label="患者端试用" aria-busy="' + busy + '">' + previewView() + '</section></div>') + '</div>' + dialogView();
@@ -369,12 +419,21 @@
           '</select><label for="ab-issue-expect">期望如何回答 *</label><textarea id="ab-issue-expect" data-ab-field="expect" placeholder="写下需要改正的内容或期望回答">' + esc(d.expect) + "</textarea>" +
           (state.error ? '<p class="ab-error" role="alert">' + esc(state.error) + "</p>" : "");
         footer = button("close-dialog", "取消") + button("save-issue", "保存问题", true);
+      } else if (d.kind === "release-report") {
+        const release=state.releases.find(r=>r.id===d.id);
+        if (!release || !release.report) return "";
+        title=releases.label(release)+" · 测试报告";
+        body=releases.report(release);
+        footer=button("close-dialog","返回发布记录");
       } else if (d.kind === "history") {
-        title = "迭代记录";
-        body = '<p>当前：' + stamp() + "</p>" + state.rounds.map(r => '<div class="ab-history-item"><b>第 ' + r.round + " 轮</b><span>" + r.tests + " 条回复 · " + r.passed + " 条确认符合预期<br><small>v" + r.version + " / " + knowledgeLabel(r.kbVersion) + "</small></span></div>").join("") +
-          state.revisions.map(r => '<div class="ab-review-line"><b>第 ' + r.round + " 轮 · 已应用到 v" + r.version + " / " + knowledgeLabel(r.kbVersion) + "</b><p>" + esc(r.instruction) + "</p></div>").join("") +
+        title = "发布记录";
+        body = releases.list(state.releases,{currentId:state.published && state.published.releaseId,published:isPublished(),sameContent:sameReleaseContent,lockReason:restoreLockReason()})+
+          '<details class="ab-debug-history"><summary>调试记录</summary>'+state.rounds.map(r => '<div class="ab-history-item"><b>第 ' + r.round + " 轮</b><span>" + r.tests + " 条回复 · " + r.passed + " 条确认符合预期</span></div>").join("") +
+          state.editHistory.map(r=>'<div class="ab-review-line"><small>'+esc(releases.date(r.modifiedAt))+'</small><p>'+esc(r.text)+'</p></div>').join('')+
+          (!state.editHistory.length?state.revisions.map(r => '<div class="ab-review-line"><b>第 ' + r.round + " 轮</b><p>" + esc(r.instruction) + "</p></div>").join(""):'') +
           state.testReports.map(r => '<div class="ab-review-line"><b>第 ' + r.round + ' 轮测试报告 · v' + r.version + ' / ' + knowledgeLabel(r.kbVersion) + '</b><p>' + r.totals.total + ' 项用例 · ' + r.totals.failed + ' 项需改进 · ' + r.totals.review + ' 项待复核</p>' + button("view-report", "查看测试报告", false, testRunning() || hasPending(), ' data-id="' + r.id + '"') + '</div>').join("") +
-          issueHistory() + (!state.rounds.length && !state.revisions.length && !state.testReports.length && !openIssues().length ? '<div class="ab-empty">暂无迭代记录</div>' : "");
+          issueHistory() + (!state.rounds.length && !state.revisions.length && !state.testReports.length && !openIssues().length ? '<div class="ab-empty">暂无调试记录</div>' : "")+'</details>';
+        footer=(state.restorePoint?button("undo-restore","撤销恢复",false,!!restoreLockReason()):'')+button("close-dialog","关闭");
 
       }
       return '<div class="ab-overlay" data-ab="overlay"><section class="ab-dialog" data-dialog-kind="'+d.kind+'" role="dialog" aria-modal="true" aria-labelledby="ab-dialog-title"><header><h2 id="ab-dialog-title">' +
@@ -682,7 +741,10 @@
       if (c.knowledge) state.kbVersion++;
       if (c.proposal.knowledgeReview) state.knowledgeEntries=clone(c.proposal.knowledgeReview.entries);
       if (c.knowledge) {config.knowledge.pendingAttachments=[];config.knowledge.entries=clone(state.knowledgeEntries);}
-      state.revisions.push(Object.assign(clone(c), { round: state.round, version: state.version, kbVersion: state.kbVersion }));
+      state.contentModifiedAt=new Date().toISOString();state.restorePoint=null;
+      const changes=releases.summaries(c);
+      state.releaseChanges.push(...changes);state.editHistory.push(...changes.map(text=>({text,modifiedAt:state.contentModifiedAt})));
+      state.revisions.push(Object.assign(clone(c), { round: state.round, version: state.version, kbVersion: state.kbVersion, modifiedAt:state.contentModifiedAt }));
       state.issues.forEach(i => { if (c.issues.some(c => c.id === i.id)) i.status = "pending"; });
       state.pending = []; state.submitting = null; state.proposal=null; state.discussionError="";state.phase = "tune"; state.activeReportId = null; state.testJob = null;
       assistant("本轮方案已应用。可以继续在右侧试问，有不满意的地方再一起调整。");
@@ -758,8 +820,8 @@
       const t = event.target.closest("[data-ab]");
       if (!t || t.disabled) return;
       const action = t.dataset.ab;
-      if (testRunning() && !["cancel-test", "history", "close-dialog", "overlay", "artifact", "download", "file-preview", "copy-builder"].includes(action)) return;
-      if (state.scoring && !["history", "close-dialog", "overlay", "artifact", "download", "file-preview", "eval-filter", "eval-open", "eval-page", "eval-detail-page", "eval-reset"].includes(action)) return;
+      if (testRunning() && !["cancel-test", "history", "release-report", "close-dialog", "overlay", "artifact", "download", "file-preview", "copy-builder"].includes(action)) return;
+      if (state.scoring && !["history", "release-report", "close-dialog", "overlay", "artifact", "download", "file-preview", "eval-filter", "eval-open", "eval-page", "eval-detail-page", "eval-reset"].includes(action)) return;
       if (state.submitting && ["exit", "previous", "phase", "next", "send-builder", "submit-round", "attach", "attach-image", "remove-file", "fix-issue", "feedback-reply", "remove-feedback"].includes(action)) return;
       if (state.previewRequest && ["exit", "previous", "phase", "next", "start-test", "prepare-test", "view-report", "report-next", "publish"].includes(action)) return;
       if (previewLocked() && (["send-test", "suggest", "new-session", "retry-preview", "pass", "flag"].includes(action) || t.dataset.kind === "test")) return;
@@ -851,13 +913,21 @@
       if (action === "file-preview") { if (fileStore.has(t.dataset.file)) setDialog({ kind: "file", id: t.dataset.file }); return; }
       if (action === "artifact") { setDialog({ kind: "artifact", key: t.dataset.key }); return; }
       if (action === "history") { setDialog({ kind: "history" }); return; }
+      if (action === "release-report") { if(state.releases.some(r=>r.id===t.dataset.id && r.report))setDialog({kind:"release-report",id:t.dataset.id});return; }
+      if (action === "restore-release") { restoreRelease(t.dataset.id);return; }
+      if (action === "undo-restore") { undoRestore();return; }
       if (action === "download") { download(t.dataset.key); return; }
       if (action === "close-dialog") { closeDialog(); return; }
       if (action === "publish") {
         if (!canPublish() || isPublished()) return;
         const report = currentTestReport();
         if (state.phase === "test" && activeReport() && activeReport().id !== report.id) return;
-        state.published = { version: state.version, kbVersion: state.kbVersion, ratio: "100", reportId:report.id, publishedAt:new Date().toISOString() };
+        const frozenReport=clone(Object.assign({},report,{results:evaluatedRows(report)}));
+        const release={id:id(),number:state.releases.length+1,publishedAt:new Date().toISOString(),modifiedAt:state.contentModifiedAt,
+          version:state.version,kbVersion:state.kbVersion,changes:Array.from(new Set(state.releaseChanges)),content:contentSnapshot(),report:frozenReport,
+          score:clone(window.AgentBuddyEvaluation.summarize(frozenReport.results))};
+        state.releases.push(release);state.releaseChanges=[];state.restorePoint=null;
+        state.published = { releaseId:release.id,version: state.version, kbVersion: state.kbVersion, ratio: release.score.rate, reportId:report.id, publishedAt:release.publishedAt };
         notifyChange(true);
         state.activeReportId = report.id; state.phase = "test";
         state.dialog = null; state.notice = ""; render(); return;
@@ -1035,6 +1105,15 @@
     }
     function getSnapshot() {return clone({config,state,seq,receivedFiles:Array.from(receivedFiles.values()),summary:getSummary()});}
     function notifyChange(modified) {if(options.onChange)options.onChange({modified:!!modified,snapshot:getSnapshot()});}
+    if (state.published && !state.releases.length) {
+      const release=releases.legacy(state.published,state.testReports.find(r=>r.id===state.published.reportId));
+      state.releases.push(release);state.published.releaseId=release.id;
+    }
+    if (options.snapshot && !Object.hasOwn(options.snapshot.state,"editHistory")) {
+      state.editHistory=state.revisions.flatMap(r=>releases.summaries(r).map(text=>({text,modifiedAt:r.modifiedAt || null})));
+      state.releaseChanges=state.revisions.filter(r=>!state.published || r.version>state.published.version || r.kbVersion>state.published.kbVersion).flatMap(releases.summaries);
+      state.contentModifiedAt=state.revisions.slice().reverse().find(r=>r.modifiedAt)?.modifiedAt || null;
+    }
     if (!options.snapshot && (config.knowledge.pendingAttachments || []).length) {
       const initial={id:id(),role:"user",text:"整理创建时上传的知识资料。",files:clone(config.knowledge.pendingAttachments),feedback:[],attachmentOnly:true,stamp:stamp()};
       state.builder.push(initial);state.pending.push(initial);discussRound();

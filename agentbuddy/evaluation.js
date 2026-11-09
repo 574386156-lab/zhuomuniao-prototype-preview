@@ -119,5 +119,5 @@
         '预期：'+r.expect+'\n\n参考答案：'+(r.reference||'未提供')+'\n\n实际回答：'+(r.answer||'未生成')+'\n\n评分理由：'+r.finding+'\n\n执行状态：'+r.runStatus+'；评分状态：'+r.scoreStatus+'\n\n请求时间：'+r.requestedAt+'\n\n耗时：'+(r.durationSeconds==null?'未记录':r.durationSeconds+' 秒')+
         (r.runError?'\n\n执行错误：'+r.runError:'')+((r.files||[]).length?'\n\n附件：'+r.files.map(f=>f.name).join('、'):'' )).join('\n\n');
   }
-  window.AgentBuddyEvaluation = {newView,render,drawer,detailRows,pageRows,pageSize:PAGE_SIZE,filtered,summarize,groups,outcome,markdown};
+  window.AgentBuddyEvaluation = {newView,render,drawer,detailRows,pageRows,pageSize:PAGE_SIZE,filtered,summarize,groups,outcome,badge,markdown};
 })();
