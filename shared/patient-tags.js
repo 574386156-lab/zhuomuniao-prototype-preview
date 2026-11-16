@@ -85,13 +85,35 @@
       var node=editable(store,id);if(!node)return failure('只能调整个人标签顺序');if(direction!=='up'&&direction!=='down')return failure('请选择上移或下移');var siblings=ordered(store,'personal').filter(function(item){return item.parentId===node.parentId;}),index=siblings.findIndex(function(item){return item.id===id;}),target=index+(direction==='up'?-1:1);
       if(target<0||target>=siblings.length)return failure(direction==='up'?'已经是第一个':'已经是最后一个');var other=siblings[target];siblings[target]=node;siblings[index]=other;siblings.forEach(function(item,i){item.sort=(siblings.length-i)*10;});return {ok:true,node:decorate(store,node)};
     },'node_moved');}
+    function siblingOrderPlan(store,parentId,orderedIds,expectedOrder,requireExpected){
+      if(parentId!==null){var parent=typeof parentId==='string'?editable(store,parentId):null;if(!parent||parent.level>=3)return failure('只能调整个人分类下的同级顺序');}
+      var siblings=ordered(store,'personal').filter(function(item){return item.parentId===parentId;}),current=siblings.map(function(item){return item.id;});
+      if(requireExpected||expectedOrder!==undefined){if(!Array.isArray(expectedOrder)||expectedOrder.length!==current.length||expectedOrder.some(function(id,index){return id!==current[index];}))return failure('分类内容或顺序已更新，请重新排序');}
+      if(!Array.isArray(orderedIds)||orderedIds.length!==current.length||new Set(orderedIds).size!==orderedIds.length||orderedIds.some(function(id){return typeof id!=='string'||current.indexOf(id)<0;}))return failure('请选择完整且有效的同级排序');
+      return {ok:true,parentId:parentId,order:orderedIds.slice(),siblings:siblings};
+    }
+    function applySiblingOrder(plan){plan.order.forEach(function(id,index){var node=plan.siblings.find(function(item){return item.id===id;});node.sort=(plan.order.length-index)*10;});}
+    function reorderSiblings(parentId,orderedIds,settings){return commit(function(store){
+      var plan=siblingOrderPlan(store,parentId,orderedIds,settings?settings.expectedOrder:undefined,false);if(!plan.ok)return plan;applySiblingOrder(plan);
+      return {ok:true,parentId:parentId,order:plan.order};
+    },'nodes_reordered');}
+    function reorderGroups(groups){return commit(function(store){
+      if(!Array.isArray(groups)||!groups.length)return failure('请选择有效的排序分组');
+      var parents=new Set(),plans=[];
+      for(var i=0;i<groups.length;i++){
+        var group=groups[i];if(!group||typeof group!=='object'||Array.isArray(group))return failure('请选择有效的排序分组');
+        if(parents.has(group.parentId))return failure('同一个分类不能重复排序');parents.add(group.parentId);
+        var plan=siblingOrderPlan(store,group.parentId,group.order,group.expectedOrder,true);if(!plan.ok)return plan;plans.push(plan);
+      }
+      plans.forEach(applySiblingOrder);return {ok:true,groups:plans.map(function(plan){return {parentId:plan.parentId,order:plan.order};})};
+    },'nodes_reordered');}
     function setPatient(patientKey,ids){return commit(function(store){
       if(typeof patientKey!=='string'||!patientKey.trim())return failure('无法确定当前患者');if(!Array.isArray(ids)||ids.some(function(id){return typeof id!=='string';}))return failure('请选择有效标签');ids=Array.from(new Set(ids));if(ids.length>10)return failure('最多选择10个患者标签');if(ids.some(function(id){var node=raw(store,id);return !node||node.level!==3;}))return failure('包含无效或无权使用的标签');
       var patient=binding(store,patientKey);if(!patient){patient={tenantId:actor.tenantId,doctorId:actor.doctorId,patientKey:patientKey,ids:[]};store.patients.push(patient);}patient.ids=ids.slice();return {ok:true,tags:patientTags(store,patientKey)};
     },'patient_updated');}
     function onStorage(event){if(event.key!==KEY||!event.newValue||disposed)return;try{var next=JSON.parse(event.newValue);if(!valid(next))return;data=next;listeners.slice().forEach(function(fn){try{fn({type:'snapshot_updated'});}catch(error){}});}catch(error){}}
     if(root.addEventListener)root.addEventListener('storage',onStorage);
-    return {actor:function(){return copy(actor);},nodes:nodes,get:get,options:tagOptions,createNode:createNode,renameNode:renameNode,removeNode:removeNode,moveNode:moveNode,usage:function(id){var store=refresh(),node=raw(store,id);return node?affected(store,descendants(store,id)):0;},getPatient:function(patientKey){return patientTags(refresh(),patientKey);},setPatient:setPatient,subscribe:function(fn){listeners.push(fn);return function(){listeners=listeners.filter(function(item){return item!==fn;});};},dispose:function(){disposed=true;listeners=[];if(root.removeEventListener)root.removeEventListener('storage',onStorage);},storageKey:KEY};
+    return {actor:function(){return copy(actor);},nodes:nodes,get:get,options:tagOptions,createNode:createNode,renameNode:renameNode,removeNode:removeNode,moveNode:moveNode,reorderSiblings:reorderSiblings,reorderGroups:reorderGroups,usage:function(id){var store=refresh(),node=raw(store,id);return node?affected(store,descendants(store,id)):0;},getPatient:function(patientKey){return patientTags(refresh(),patientKey);},setPatient:setPatient,subscribe:function(fn){listeners.push(fn);return function(){listeners=listeners.filter(function(item){return item!==fn;});};},dispose:function(){disposed=true;listeners=[];if(root.removeEventListener)root.removeEventListener('storage',onStorage);},storageKey:KEY};
   }
   root.PatientTags=create();root.PatientTags.create=create;
 })(typeof window!=='undefined'?window:globalThis);
