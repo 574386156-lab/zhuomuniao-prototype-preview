@@ -90,7 +90,8 @@
     function testRunning() { return !!state.testJob && ["queued", "running", "reporting"].includes(state.testJob.status); }
     function previewLocked() { return !!state.submitting || testRunning() || !!state.previewRequest || !!state.scoring; }
     function formalTestLocked() { return hasPending() || previewLocked(); }
-    function builderLocked() { return !!state.submitting || testRunning() || !!state.scoring; }
+    function builderLocked() { return !!state.submitting || !!state.scoring; }
+    function applicationLocked() { return builderLocked() || testRunning() || !!state.previewRequest; }
     function activeReport() { return state.testReports.find(r => r.id === state.activeReportId) || null; }
     function reportState(report) { return state.reportViews[report.id] || (state.reportViews[report.id] = window.AgentBuddyEvaluation.newView()); }
     function evaluatedRows(report, includeReviews = true) {
@@ -163,7 +164,7 @@
         (Object.keys(e.conditions || {}).length ? '<div class="ab-knowledge-scope">适用条件：' + esc(Object.entries(e.conditions).map(([k,v])=>k+'：'+v).join('；')) + '</div>' : '') +
         '<small>来源：' + esc(Array.from(new Set((e.sourceRefs || [{source:e.source}]).map(s=>s.source || '对话补充'))).join('、')) + '</small></article>').join('') +
         (!entries.length ? '<p class="ab-knowledge-empty">' + (sources.length ? '这些资料尚未形成可用问答。' : '暂无知识资料，可在对话中上传附件或补充内容。') + '</p>' : '') + '</section>';
-      return '<div class="ab-knowledge-reader">' + materials + questions + incomplete + '</div>';
+      return '<div class="ab-knowledge-reader"><div class="ab-knowledge-toolbar">'+button('upload-code',icon('image')+'添加二维码 / 小程序码',false,builderLocked())+'</div>' + materials + window.AgentBuddyCodeAssets.summary(usable) + questions + incomplete + '</div>';
     }
     function openIssues() { return state.issues.filter(i => i.status !== "verified"); }
     function currentTestReport() {
@@ -265,7 +266,7 @@
           '<div class="ab-conflict-actions">' + [["keep","保留现有"],["replace","采用新资料"],["defer","暂不纳入"]].map(([decision,label])=>button("resolve-knowledge",label,false,builderLocked() || !!state.discussion,
             ' data-proposal-id="'+p.id+'" data-conflict-id="'+esc(c.id)+'" data-decision="'+decision+'"')).join('') + '</div></section>').join('') : '') +
         (current && !applied ? '<div class="ab-proposal-actions" role="group" aria-label="本轮方案操作">' +
-          button("submit-round", state.submitting ? "正在应用…" : p.testContext || p.testing ? "应用并重新测试" : "应用本轮方案", true, builderLocked() || !!state.previewRequest || !proposalReady(), ' data-proposal-id="' + p.id + '"') +
+          button("submit-round", state.submitting ? "正在应用…" : testRunning() ? "测试结束后可应用" : p.testContext ? "应用并重新测试" : "应用本轮方案", true, applicationLocked() || !proposalReady(), ' data-proposal-id="' + p.id + '"') +
           button("supplement-plan", "继续补充", false, builderLocked() || !!state.discussion, ' data-proposal-id="' + p.id + '"') + '</div>' : '');
     }
     function builderMessages() {
@@ -273,7 +274,7 @@
       return state.builder.map((m, index) => '<article class="ab-message ab-builder-message ' + (m.role === "user" ? "user" : "assistant" + (index === 0 ? " ab-welcome" : "")) + '" aria-label="' + (m.role === "user" ? "你的反馈" : "AgentBuddy 回复") + '">' +
         '<span class="ab-chat-avatar" aria-hidden="true">' + (m.role === "user" ? icon("patient") : "✦") + '</span><div class="ab-chat-message-body"><div class="ab-chat-bubble">' +
         '<p class="ab-prose">' + esc(m.role === "assistant" ? generatedText(m.text) : m.text) + "</p>" +
-        proposalContent(m) +
+        (m.proposal?window.AgentBuddyCodeAssets.summary(m.proposal.knowledgeFiles || [],!!state.proposal && state.proposal.id===m.proposal.id).replace('data-editable="','data-code-message-id="'+m.id+'" data-editable="'):'') + proposalContent(m) +
         feedbackReferences(m.feedback || [], false) +
         attachmentList(m.files || []) +
         (index === resourceIndex && m.role === "assistant" ? '<div class="ab-message-resources"><button type="button" data-ab="artifact" data-key="prompt">' + icon("file") + '查看提示词</button><button type="button" data-ab="artifact" data-key="knowledge">' + icon("book") + '查看知识库</button></div>' : '') + '</div>' +
@@ -287,13 +288,6 @@
       if (!refs.length) return "";
       return '<div class="ab-feedback-references">' + refs.map(ref => '<div class="ab-feedback-reference"><div><strong>' + (ref.kind === "test-case" ? "引用测试用例 · " + esc(ref.caseName || ref.category) : "引用试用回复") + '</strong><p>' + esc(ref.question) + '</p><small>' + esc(generatedText(ref.reply)) + '</small></div>' +
         (removable ? '<button type="button" class="ab-icon" data-ab="remove-feedback" data-id="' + ref.messageId + '" aria-label="取消引用这条回复"' + (builderLocked() ? ' disabled' : '') + '>' + icon("close") + '</button>' : '') + '</div>').join("") + '</div>';
-    }
-    function issueHistory() {
-      if (!openIssues().length) return "";
-      return '<details class="ab-history-feedback"><summary>未完成反馈 · ' + openIssues().length + '</summary>' + openIssues().map(i => '<article class="ab-issue"><header><strong>' + esc(i.type) + ' · 第 ' + i.round + ' 轮</strong><span class="ab-status ' + i.status + '">' +
-        ({ open: "待修改", pending: "待复测", verified: "已验证" }[i.status]) + '</span></header><p>问题：' + esc(i.question) + "</p><p>期望：" + esc(i.expect) + "</p>" +
-        (i.status === "pending" ? button("replay", "进入测试复测", false, formalTestLocked(), ' data-id="' + i.id + '"') : i.status === "open" ? button("fix-issue", "带入调试", false, previewLocked(), ' data-id="' + i.id + '"') : "") + "</article>"
-      ).join("") + '</details>';
     }
     function previewMessages() {
       const visible = state.tests.filter(m => m.session === state.testSession && m.source === "preview");
@@ -326,7 +320,7 @@
       const files = composerFiles(kind);
       return '<div class="ab-composer-wrap"><div class="ab-composer" data-ab-composer="' + kind + '">' + (builder ? feedbackReferences(state.feedbackRefs, true) : '') + attachmentList(files, kind) +
         '<textarea data-ab-draft="' + kind + '" aria-label="' + (builder ? "向 AgentBuddy 描述调整需求" : "输入测试问题") +
-        '" placeholder="' + (builder ? formal ? "反馈测试结果，或调整用例与通过标准…" : "粘贴截图，或告诉我哪里需要改…" : formal ? "补充正式测试场景…" : "输入患者的问题…") + '"' + (disabled ? ' disabled' : '') + '>' + esc(value) + '</textarea><div class="ab-compose-tools">' +
+        '" placeholder="' + (builder ? "粘贴截图，或告诉我哪里需要改…" : formal ? "补充正式测试场景…" : "输入患者的问题…") + '"' + (disabled ? ' disabled' : '') + '>' + esc(value) + '</textarea><div class="ab-compose-tools">' +
         '<button class="ab-icon" data-ab="attach" data-kind="' + kind + '" aria-label="' + (builder ? '添加反馈附件' : '添加测试附件') + '" title="上传附件"' + (disabled ? ' disabled' : '') + '>' + icon("clip") + '</button>' +
         '<button class="ab-icon" data-ab="attach-image" data-kind="' + kind + '" aria-label="' + (builder ? '上传反馈截图' : '添加测试图片') + '" title="上传图片，也可直接粘贴或拖入"' + (disabled ? ' disabled' : '') + '>' + icon("image") + '</button>' +
         '<button class="ab-send" data-ab="send-' + kind + '" aria-label="' + (builder ? "发送调整需求" : formal ? "加入测试计划" : "发送试用问题") + '"' +
@@ -373,19 +367,16 @@
         const job = state.testJob;
         const stageNames = [["queued", "准备测试用例"], ["running", "执行测试"], ["reporting", "生成测试报告"]];
         const stageIndex = stageNames.findIndex(([key]) => key === job.status);
-        return '<section class="ab-test-task running" aria-label="异步测试任务" aria-busy="true"><div class="ab-task-heading"><div><h2>' + ({ queued: "测试任务已提交", running: "正在执行测试", reporting: "正在生成测试报告" }[job.status]) + info("关于测试任务", "按提交时的配置与用例执行，完成后生成报告。运行期间暂停调试。") + '</h2><p>提示词 v' + job.version + ' · ' + knowledgeLabel(job.kbVersion, true) + '</p></div><span class="ab-task-badge">调试已暂停</span></div>' +
+        return '<section class="ab-test-task running" aria-label="异步测试任务" aria-busy="true"><div class="ab-task-heading"><div><h2>' + ({ queued: "测试任务已提交", running: "正在执行测试", reporting: "正在生成测试报告" }[job.status]) + info("关于测试任务", "按提交时的配置与用例执行。可以继续对话，测试结束后再应用修改。") + '</h2><p>提示词 v' + job.version + ' · ' + knowledgeLabel(job.kbVersion, true) + '</p></div></div>' +
           '<div class="ab-run-progress"><div class="ab-lock-icon processing">' + icon("reset") + '</div><strong>' + job.completed + ' / ' + job.cases.length + ' 项用例已完成</strong><progress value="' + job.progress + '" max="100" aria-label="测试任务进度"></progress><p role="status">' + esc(job.detail) + '</p></div>' +
           '<ol class="ab-run-steps">' + stageNames.map(([key, label], index) => '<li class="' + (index < stageIndex ? 'done' : index === stageIndex ? 'active' : '') + '"><span>' + (index < stageIndex ? '✓' : index + 1) + '</span>' + label + '</li>').join("") + '</ol>' +
           '<div class="ab-run-log"><h3>任务进度</h3>' + job.logs.slice(-6).map(l => '<p>' + esc(l) + '</p>').join("") + '</div><div class="ab-report-footer">' + button("cancel-test", "取消本次测试", false) + '</div></section>';
       }
       const report = activeReport();
       if (report) return reportView(report);
-      const plan = testPlan(), job = state.testJob;
-      return '<section class="ab-test-task" aria-label="测试准备"><div class="ab-task-heading"><div><h2>正式测试' + info("测试说明", "测试完成后查看报告，有问题可继续调试，全部通过后可直接发布。运行期间暂停调试。") + '</h2><p>提示词 v' + state.version + ' · ' + knowledgeLabel(state.kbVersion, true) + ' · ' + plan.length + ' 项用例</p></div>' + button("start-test", job && ["failed", "cancelled"].includes(job.status) ? "重新开始测试" : "开始正式测试", true) + '</div>' +
-        (job && ["failed", "cancelled"].includes(job.status) ? '<div class="ab-task-alert" role="status">' + (job.status === "failed" ? "测试未完成，本次没有生成报告。可重新开始测试。" : "本次测试已取消，没有生成报告。可以重新测试或返回调试。") + '</div>' : '') +
-        '<div class="ab-test-setup"><div><h3>测试范围</h3><div class="ab-plan-list">' + plan.map((c, i) => '<div><span class="ab-plan-number">' + (i + 1) + '</span><span><b>' + esc(c.category) + '</b><p>' + esc(c.question) + '</p></span>' +
-          (state.testCases.some(item => item.id === c.key) ? '<button class="ab-icon" data-ab="remove-test-case" data-id="' + c.key + '" aria-label="移除测试场景：' + esc(c.question) + '">' + icon("close") + '</button>' : '') + '</div>').join("") + '</div></div>' +
-        '<div class="ab-test-extra"><h3>补充测试场景' + info("补充场景说明", "可添加需要重点验证的问题、附件或图片。开始测试时，也会包含输入框中尚未加入计划的内容。") + '</h3>' + composer("test") + '</div></div></section>';
+      const job = state.testJob, failed=job && job.status === "failed", cancelled=job && job.status === "cancelled";
+      return '<section class="ab-test-task" aria-label="测试状态"><div class="ab-task-heading"><h2>'+(failed?'测试未完成':cancelled?'测试已取消':'测试尚未启动')+'</h2>'+button("start-test", "重新测试", true, formalTestLocked())+'</div>'+
+        '<div class="ab-task-alert" role="status">'+(failed?'测试未完成，本次没有生成报告。可重新测试。':cancelled?'本次测试已取消，没有生成报告。':'上次测试尚未启动，可以重新测试。')+'</div></section>';
     }
     function topActions() {
       const ready = canPublish(), published = isPublished();
@@ -401,7 +392,7 @@
         '</p></div><span class="ab-workspace-state' + (published ? ' published' : '') + '">' + (published ? '已发布' : '调整中') + '</span></div><div class="ab-top-actions">' +
         topActions() + '</div></header>' +
         (state.notice ? '<div class="ab-notice" role="status">' + esc(state.notice) + (state.restorePoint?button("undo-restore","撤销恢复",false,!!restoreLockReason()):'') + '</div>' : '') +
-        ('<div class="ab-columns'+(!tune?' ab-test-columns':'')+'"><section class="ab-pane builder-pane" aria-label="AgentBuddy 对话"><header class="ab-pane-head"><div class="ab-pane-title"><span class="ab-pane-symbol">' + icon("chat") + '</span><h2>'+(!tune?'讨论测试与反馈':'反馈给 AgentBuddy')+'</h2></div>' + info("反馈与附件", "支持粘贴、拖入或上传截图及文档；每条反馈最多 10 份附件，"+window.AgentBuddyAttachments.limitLabel+"。提示词与知识库由 AgentBuddy 根据反馈调整。", true) + '</header>' +
+        ('<div class="ab-columns'+(!tune?' ab-test-columns':'')+'"><section class="ab-pane builder-pane" aria-label="AgentBuddy 对话"><header class="ab-pane-head"><div class="ab-pane-title"><span class="ab-pane-symbol">' + icon("chat") + '</span><h2>反馈给 AgentBuddy</h2></div>' + info("反馈与附件", "支持粘贴、拖入或上传截图及文档；每条反馈最多 10 份附件，"+window.AgentBuddyAttachments.limitLabel+"。提示词与知识库由 AgentBuddy 根据反馈调整。", true) + '</header>' +
         '<div class="ab-scroll" data-ab-scroll="builder" id="ab-left-content" role="log" aria-label="与 AgentBuddy 的对话">' + builderMessages() +
         '</div>' + composer("builder") + '</section><section class="ab-pane '+(!tune?'ab-test-results':'preview-pane')+'" aria-label="'+(!tune?'测试结果':'患者端试用')+'" aria-busy="' + busy + '">' + (!tune?testStageView():previewView()) + '</section></div>') + '</div>' + dialogView();
     }
@@ -425,6 +416,12 @@
         body = local.image ? '<img class="ab-image-preview" src="' + esc(local.url) + '" alt="' + esc(local.file.name) + '">' :
           '<div class="ab-file-detail">' + icon("file") + '<strong>' + esc(local.file.name) + '</strong><p>' + formatSize(local.file.size) + '</p></div>';
         footer = '<a class="ab-button primary" href="' + esc(local.url) + '" download="' + esc(local.file.name) + '">' + icon("download") + '下载原文件</a>';
+      } else if(d.kind==='codes') {
+        title='二维码与小程序码';body=window.AgentBuddyCodeAssets.cards(d.files,d.editable);
+      } else if(d.kind==='edit-code') {
+        title='补充码信息';
+        body='<div class="ab-code-form"><p class="ab-code-origin">'+esc(d.sourceName)+' · '+esc(d.locator)+'</p><label for="ab-code-kind">类型</label><select id="ab-code-kind" data-ab-field="codeKind"><option value="qr"'+(d.codeKind==='qr'?' selected':'')+'>二维码</option><option value="mini"'+(d.codeKind==='mini'?' selected':'')+'>小程序码</option></select><label for="ab-code-question">关联问题</label><input id="ab-code-question" data-ab-field="codeQuestion" placeholder="例如：如何预约挂号？" value="'+esc(d.codeQuestion)+'"><label for="ab-code-target">跳转链接</label><input id="ab-code-target" data-ab-field="codeTarget" placeholder="粘贴该入口的链接" value="'+esc(d.codeTarget)+'">'+(state.error?'<p class="ab-error" role="alert">'+esc(state.error)+'</p>':'')+'</div>';
+        footer=button('close-dialog','取消')+button('save-code','保存到本轮方案',true);
       } else if (d.kind === "flag") {
         title = "标记这条回复的问题";
         body = "<blockquote>问题：" + esc(d.question) + "\n回复：" + esc(generatedText(d.reply)) + "</blockquote>" +
@@ -441,12 +438,7 @@
         footer=button("close-dialog","返回发布记录");
       } else if (d.kind === "history") {
         title = "发布记录";
-        body = releases.list(state.releases,{currentId:state.published && state.published.releaseId,published:isPublished(),sameContent:sameReleaseContent,lockReason:restoreLockReason()})+
-          '<details class="ab-debug-history"><summary>调试记录</summary>'+state.rounds.map(r => '<div class="ab-history-item"><b>第 ' + r.round + " 轮</b><span>" + r.tests + " 条回复 · " + r.passed + " 条确认符合预期</span></div>").join("") +
-          state.editHistory.map(r=>'<div class="ab-review-line"><small>'+esc(releases.date(r.modifiedAt))+'</small><p>'+esc(r.text)+'</p></div>').join('')+
-          (!state.editHistory.length?state.revisions.map(r => '<div class="ab-review-line"><b>第 ' + r.round + " 轮</b><p>" + esc(r.instruction) + "</p></div>").join(""):'') +
-          state.testReports.map(r => '<div class="ab-review-line"><b>第 ' + r.round + ' 轮测试报告 · v' + r.version + ' / ' + knowledgeLabel(r.kbVersion) + '</b><p>' + r.totals.total + ' 项用例 · ' + r.totals.failed + ' 项需改进 · ' + r.totals.review + ' 项待复核</p>' + button("view-report", "查看测试报告", false, testRunning() || hasPending(), ' data-id="' + r.id + '"') + '</div>').join("") +
-          issueHistory() + (!state.rounds.length && !state.revisions.length && !state.testReports.length && !openIssues().length ? '<div class="ab-empty">暂无调试记录</div>' : "")+'</details>';
+        body = releases.list(state.releases,{currentId:state.published && state.published.releaseId,published:isPublished(),sameContent:sameReleaseContent,lockReason:restoreLockReason()});
         footer=(state.restorePoint?button("undo-restore","撤销恢复",false,!!restoreLockReason()):'')+button("close-dialog","关闭");
 
       }
@@ -552,7 +544,7 @@
       state.discussion=task;state.proposal=null;state.discussionError="";
       render("builder", '[data-ab-draft="builder"]');
       let finished=false;
-      const stop=window.AgentBuddyParsing.run({files:window.AgentBuddyParsing.knowledgeFiles(task.snapshot.messages),known:task.snapshot.sources,
+      const stop=window.AgentBuddyParsing.run({files:window.AgentBuddyParsing.knowledgeFiles(task.snapshot.messages),known:task.snapshot.sources.concat(task.snapshot.receivedFiles),
         onProgress: progress=>{if(state.discussion!==task)return;task.files=progress.files;mergeParsedFiles(progress.files);refreshDiscussion();},
         onComplete: files=>{finished=true;if(state.discussion!==task)return;mergeParsedFiles(files);task.snapshot=buildSubmission();task.stage='planning';refreshDiscussion();planDiscussion(task);},
         onError: (error,files)=>{finished=true;if(state.discussion!==task)return;mergeParsedFiles(files);state.discussion=null;state.discussionError='附件解析失败：'+error.message;stopDiscussion=null;refreshDiscussion();}
@@ -566,7 +558,7 @@
       });
     }
     function parsingView(task) {
-      return '<section class="ab-parsing-task" role="status" aria-label="附件解析进度"><h3><span class="ab-parsing-spinner" aria-hidden="true"></span>正在解析附件</h3>'+task.files.map(f=>'<div class="ab-parsing-file '+f.parseStatus+'"><span>'+esc(f.name)+'</span><small>'+esc(f.parseStatus==='completed'?'已解析':f.parseStatus==='parsing'?f.pages?'第 '+(f.page || 0)+' / '+f.pages+' 页':'解析中':'排队中')+'</small></div>').join('')+button('cancel-parsing','取消解析',false)+'</section>';
+      return '<section class="ab-parsing-task" role="status" aria-label="附件解析进度"><h3><span class="ab-parsing-spinner" aria-hidden="true"></span>正在解析附件</h3>'+task.files.map(f=>'<div class="ab-parsing-file '+f.parseStatus+'"><span>'+esc(f.name)+'</span><small>'+esc(f.parseStatus==='completed'?'已解析':f.parseStatus==='parsing'?f.parseDetail || (f.pages?'第 '+(f.page || 0)+' / '+f.pages+' 页':'解析中'):'排队中')+'</small></div>').join('')+button('cancel-parsing','取消解析',false)+'</section>';
     }
     function planDiscussion(task) {
       stopDiscussion=window.AgentBuddyDiscussion.runLocal({snapshot:clone(task.snapshot),
@@ -583,8 +575,9 @@
       });
     }
     function submitRound(proposalId) {
-      if (builderLocked() || state.previewRequest || !proposalReady() || proposalId !== state.proposal.id || state.proposal.knowledgeFiles.some(f=>!window.AgentBuddyParsing.completed(f))) return;
+      if (applicationLocked() || !proposalReady() || proposalId !== state.proposal.id || state.proposal.knowledgeFiles.some(f=>!window.AgentBuddyParsing.completed(f)) || window.AgentBuddyCodeAssets.review(state.proposal.knowledgeFiles).unresolved) return;
       const p=state.proposal, proposal=clone(p);
+      if(p.testContext)state.retestFromReportId=(activeReport() || {}).id || state.retestFromReportId;
       delete proposal.snapshot;
       state.submitting=Object.assign(clone(p.snapshot),{instruction:p.instruction,prompt:p.prompt,knowledge:p.knowledge,proposal,knowledgeFiles:clone(p.knowledgeFiles || []),tasks:clone(p.tasks).map((t,i)=>Object.assign(t,{status:i ? "pending" : "running"})),
         conversation:clone(state.builder.slice(state.builder.findIndex(m=>m.id===p.messageIds[0])))});
@@ -614,6 +607,15 @@
       const message={id:id(),role:"user",kind:"knowledge-decision",conflictId:conflict.id,decision,
         text:"关于“"+conflict.candidate.question+"”，"+({keep:"保留现有答案",replace:"采用新资料中的答案",defer:"暂不纳入新答案"}[decision])+"。",files:[],feedback:[],stamp:stamp()};
       state.builder.push(message);state.pending.push(message);notifyChange(true);discussRound();
+    }
+    function updateCode(assetId,values) {
+      const proposal=state.proposal;
+      if(builderLocked() || state.discussion || !proposal)return;
+      const current=window.AgentBuddyCodeAssets.review(proposal.knowledgeFiles).assets.find(a=>a.id===assetId);
+      if(!current)return;
+      state.pending.concat(state.builder).forEach(m=>(m.files || []).forEach(f=>(f.codeAssets || []).forEach(a=>{if(a.id===assetId)Object.assign(a,clone(values));})));
+      for(const file of receivedFiles.values())(file.codeAssets || []).forEach(a=>{if(a.id===assetId)Object.assign(a,clone(values));});
+      state.dialog=null;state.error='';discussRound();
     }
     function demoAnswer(question, caseId, revisions) {
       revisions = revisions || state.revisions;
@@ -671,27 +673,24 @@
     }
     function sendTest(question, caseId) {
       if (previewLocked() || question == null && !filesReady("test")) return;
-      if (state.phase === "tune") { sendPreview(question, caseId); return; }
-      const text = (question == null ? state.testDraft : question).trim();
-      const files = question == null ? clone(state.testFiles) : [];
-      if (!text && !files.length) return;
-      state.testCases.push({ id: id(), text: text || "请核对所附资料或图片中的测试场景。", files });
-      state.testPlanVersion++;
-      if (question == null) { state.testDraft = ""; state.testFiles = []; state.attachmentErrors.test = ""; }
-      state.notice = "测试场景已加入计划，启动任务后统一执行。";
-      render(undefined, '[data-ab-draft="test"]');
+      if (state.phase === "tune") sendPreview(question, caseId);
     }
     function enterTest() {
       if (formalTestLocked()) return;
-      if ((canPublish() || isPublished()) && currentTestReport()) state.activeReportId = currentTestReport().id;
-      const report = activeReport();
-      if (report && (report.round !== state.round || report.version !== state.version || report.kbVersion !== state.kbVersion)) state.activeReportId = null;
-      state.phase = "test"; state.dialog = null; state.notice = ""; render();
-      if(!state.testIntroShown){state.testIntroShown=true;assistant('正式测试会在右侧显示进度和结果。你可以在这里调整测试问题、预期和评分标准。\n\n未通过项可以直接反馈给我；我会先核对口径，再规划用例或智能体的改动。应用方案后重新测试，每次报告都会保留。');render('builder');}
+      const report=currentTestReport(),viewing=report && (canPublish() || isPublished());
+      state.phase = "test"; state.dialog = null; state.notice = "";
+      if(viewing){state.activeReportId=report.id;render();return;}
+      state.retestFromReportId=(activeReport() || state.testReports.at(-1) || {}).id || null;
+      startTest();
+    }
+    function refreshTestStage() {
+      if(workspaceOwners.get(root)!==workspaceToken || state.phase!=="test" || state.dialog) {notifyChange(false);return;}
+      const panel=root.querySelector('.ab-test-results');
+      if(panel){panel.innerHTML=testStageView();panel.setAttribute('aria-busy',String(previewLocked()));}
+      syncWorkflow();
     }
     function startTest() {
       if (state.phase !== "test" || formalTestLocked()) return;
-      if (state.testDraft.trim() || state.testFiles.length) sendTest();
       const snapshot = clone({ config, prompt: promptText(), revisions: state.revisions, knowledgeEntries:state.knowledgeEntries, version: state.version, kbVersion: state.kbVersion, round: state.round,testPlanVersion:state.testPlanVersion,testOverrides:state.testOverrides });
       const baseline=state.testReports.find(r=>r.id===state.retestFromReportId);
       const job = { id: id(), status: "queued", round: state.round, version: state.version, kbVersion: state.kbVersion, snapshot,
@@ -699,13 +698,15 @@
         testPlanVersion:state.testPlanVersion,baselineReportId:state.retestFromReportId,
         cases: clone(testPlan()), progress: 0, completed: 0, detail: "已固定本轮版本，正在准备测试用例", logs: ["测试任务已提交，提示词与知识库版本已固定"] };
       state.testJob = job; state.activeReportId = null; state.notice = ""; state.dialog = null;
-      render();
+      state.testIntroShown=true;
+      assistant("已开始本轮正式测试。需要补充测试场景或调整标准，直接在这里告诉我；本轮结束后可应用方案并重新测试。");
+      render("builder");
       stopTest = window.AgentBuddyTesting.runLocal({
         snapshot, cases: job.cases,
         answer: (test, frozen) => (test.files || []).length ? "附件内容未能读取，请核对原文件后重新测试。" : knowledgeAnswer(test.question,test.issueId,frozen),
         onProgress: progress => {
           if (state.testJob !== job || !testRunning()) return;
-          Object.assign(job, progress, { status: progress.stage }); job.logs.push(progress.detail); render();
+          Object.assign(job, progress, { status: progress.stage }); job.logs.push(progress.detail); refreshTestStage();
         },
         onComplete: result => {
           if (state.testJob !== job || !testRunning()) return;
@@ -720,16 +721,18 @@
             if (r.outcome === "pass" && r.issueId) verifyResolvedIssues(reply);
           });
           state.testReports.push(report); state.activeReportId = report.id;
-          assistant("第 " + job.round + " 轮测试报告已生成，共 " + report.totals.total + " 项用例。");
-          render();
+          const totals=report.totals,errors=totals.executionErrors+totals.scoreErrors;
+          assistant("本轮测试已完成："+totals.passed+" 项通过"+(totals.failed?"，"+totals.failed+" 项未通过":"")+(totals.review?"，"+totals.review+" 项待复核":"")+"。"+
+            (errors?errors+" 项执行或评分异常，请在右侧查看并重试。":totals.failed?"点击右侧未通过项的「反馈」，我们继续讨论调整方案。":totals.review?"可以在右侧复核结果，也可以直接告诉我需要调整的地方。":hasPending()?"你补充的内容已保留，可以继续完善方案。":"全部通过，可以发布。"));
+          refreshTestStage();refreshDiscussion();
         },
-        onError: () => { if (state.testJob !== job || !testRunning()) return; job.status = "failed"; stopTest = null; render(); }
+        onError: () => { if (state.testJob !== job || !testRunning()) return; job.status = "failed"; stopTest = null; refreshTestStage();refreshDiscussion(); }
       });
     }
     function cancelTest() {
       if (!testRunning()) return;
       if (stopTest) stopTest();
-      stopTest = null; state.testJob.status = "cancelled"; state.notice = ""; render();
+      stopTest = null; state.testJob.status = "cancelled"; state.notice = ""; refreshTestStage();refreshDiscussion();
     }
     function reportNext(keys) {
       const report=activeReport();
@@ -795,7 +798,7 @@
       const retest=!!c.proposal.testContext;
       state.pending = []; state.submitting = null; state.proposal=null; state.discussionError="";state.phase = retest?"test":"tune"; state.activeReportId = retest?state.retestFromReportId:null; state.testJob = null;
       if(retest)state.round++;
-      assistant(retest?"本轮方案已应用，正在按新方案重新测试。上次报告已保留。":"本轮方案已应用。可以继续在右侧试问，有不满意的地方再一起调整。");
+      assistant(retest?"本轮方案已应用，正在按新方案重新测试。上次报告已保留。":c.proposal.testing && !c.prompt && !c.knowledge?"测试方案已更新。点击「正式测试」时会一并执行。":"本轮方案已应用。可以继续在右侧试问，有不满意的地方再一起调整。");
       state.notice = "";
       render("builder");
       if(retest)startTest();
@@ -849,14 +852,30 @@
       render(undefined, '[data-ab-draft="' + kind + '"]');
       if(kind==="builder" && files.length) notifyChange(true);
     }
-    function attach(kind, imagesOnly) {
+    function attach(kind, imagesOnly, replaceSourceId,knowledgeCode) {
       if (attachmentLocked(kind)) return;
       const input = document.createElement("input"); input.type = "file"; input.multiple = true;
       input.accept = imagesOnly ? "image/png,image/jpeg,image/gif,image/webp,image/bmp,image/avif" : ".pdf,.doc,.docx,.txt,.md,.json,.csv,.xls,.xlsx,.ppt,.pptx,.png,.jpg,.jpeg,.gif,.webp,.bmp,.avif";
       input.hidden = true;
       input.onchange = () => {
         const files = Array.from(input.files || []);
-        input.remove(); addFiles(kind, files);
+        input.remove();
+        const before=new Set(state.files.map(f=>f.id));
+        addFiles(kind, files);
+        const source=replaceSourceId && state.pending.flatMap(m=>m.files || []).find(f=>f.id===replaceSourceId);
+        if(source && !source.image && !/^image\//.test(source.type || '') && !/\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(source.name)) {
+          const partial=state.files.filter(f=>!before.has(f.id) && f.image);
+          partial.forEach(releaseFile);state.files=state.files.filter(f=>!partial.includes(f));
+          if(partial.length)state.attachmentErrors.builder='请重新上传包含该码的完整资料，或选择补充跳转信息。';
+          render(undefined,'[data-ab-draft="builder"]');
+        }
+        if(kind==='builder' && (replaceSourceId || knowledgeCode) && state.files.some(f=>!before.has(f.id))) {
+          state.files.filter(f=>!before.has(f.id)).forEach(f=>{f.knowledgeImage=true;f.codeKind='code';});
+          if(replaceSourceId)state.pending=state.pending.map(m=>Object.assign({},m,{files:(m.files || []).filter(f=>f.id!==replaceSourceId)}));
+          state.proposal=null;
+          if(!state.builderDraft.trim())state.builderDraft='请补充知识库中的'+(replaceSourceId?'新上传的':'')+'码图片。';
+          render(undefined,'[data-ab-draft="builder"]');
+        }
       };
       input.oncancel = () => input.remove();
       document.body.appendChild(input); input.click();
@@ -870,12 +889,35 @@
       const t = event.target.closest("[data-ab]");
       if (!t || t.disabled) return;
       const action = t.dataset.ab;
-      if (testRunning() && !["cancel-test", "history", "release-report", "close-dialog", "overlay", "artifact", "download", "file-preview", "copy-builder"].includes(action)) return;
+      if (testRunning() && !["cancel-test", "history", "release-report", "close-dialog", "overlay", "artifact", "download", "file-preview", "copy-builder", "send-builder", "supplement-plan", "retry-discussion", "cancel-parsing", "remove-failed-files", "resolve-knowledge", "reupload-source", "remove-feedback", "remove-file", "attach", "attach-image", "review-codes", "edit-code", "save-code", "exclude-code", "reupload-code", "upload-code"].includes(action)) return;
       if (state.scoring && !["history", "release-report", "close-dialog", "overlay", "artifact", "download", "file-preview", "eval-filter", "eval-open", "eval-page", "eval-detail-page", "eval-reset"].includes(action)) return;
       if (state.submitting && ["exit", "previous", "phase", "next", "send-builder", "submit-round", "attach", "attach-image", "remove-file", "fix-issue", "feedback-reply", "remove-feedback"].includes(action)) return;
       if (state.previewRequest && ["exit", "previous", "phase", "next", "start-test", "prepare-test", "view-report", "report-next", "publish"].includes(action)) return;
       if (previewLocked() && (["send-test", "suggest", "new-session", "retry-preview", "pass", "flag"].includes(action) || t.dataset.kind === "test")) return;
       if (action === "overlay") { if (event.target === t) closeDialog(); return; }
+      if(action==='upload-code'){if(builderLocked())return;state.dialog=null;render();attach('builder',true,null,true);return;}
+      if(action==='review-codes') {
+        const message=state.builder.find(m=>m.id===t.dataset.codeMessageId);
+        const files=message && message.proposal?message.proposal.knowledgeFiles:config.knowledge.attachments.concat(state.revisions.flatMap(r=>r.knowledgeFiles || []));
+        setDialog({kind:'codes',files:clone(files || []),editable:t.dataset.editable==='true' && !builderLocked() && !state.discussion,proposalId:state.proposal && state.proposal.id});return;
+      }
+      if(['edit-code','exclude-code','reupload-code'].includes(action)) {
+        const d=state.dialog,p=state.proposal;
+        if(builderLocked() || state.discussion || !d || d.kind!=='codes' || !d.editable || !p || p.id!==d.proposalId)return;
+        if(action==='reupload-code'){state.dialog=null;render();attach('builder',false,t.dataset.sourceId);return;}
+        const a=window.AgentBuddyCodeAssets.review(p.knowledgeFiles).assets.find(a=>a.id===t.dataset.id);if(!a)return;
+        if(action==='exclude-code'){updateCode(a.id,{decision:'exclude'});return;}
+        setDialog({kind:'edit-code',assetId:a.id,proposalId:p.id,sourceName:a.sourceName,locator:a.locator,codeQuestion:a.question || '',codeTarget:a.target || '',codeKind:a.kind==='mini'?'mini':'qr'});return;
+      }
+      if(action==='save-code') {
+        const d=state.dialog,p=state.proposal;
+        if(builderLocked() || !d || d.kind!=='edit-code' || !p || p.id!==d.proposalId)return;
+        const target=window.AgentBuddyCodeAssets.target(d.codeTarget),a=window.AgentBuddyCodeAssets.review(p.knowledgeFiles).assets.find(a=>a.id===d.assetId);
+        if(!a)return;
+        if(!d.codeQuestion.trim() || !target){state.error=!d.codeQuestion.trim()?'请填写该入口对应的问题。':'请填写有效的网页链接或微信小程序链接。';render();return;}
+        const decoded=a.method==='decoded' && a.target===target && a.kind===d.codeKind;
+        updateCode(a.id,{question:d.codeQuestion.trim(),target,kind:d.codeKind,decision:'include',status:decoded?'recognized':'provided',method:decoded?'decoded':'manual'});return;
+      }
       if (action === "exit") return;
       if (action === "previous") { if (state.phase === "tune") enterTest(); else { state.phase = "tune"; state.notice = ""; render(); } return; }
       if (action === "phase") { if (t.dataset.phase === "test") enterTest(); else { state.phase = "tune"; state.notice = ""; render(); } return; }
@@ -922,7 +964,7 @@
         if (action === "eval-regrade") {retryScores(t.dataset.key);return;}
         render(); return;
       }
-      if (action === "prepare-test") { if(formalTestLocked())return;state.activeReportId = null; state.testJob = null; state.dialog=null; state.notice = ""; render(); return; }
+      if (action === "prepare-test") { if(formalTestLocked())return;state.retestFromReportId=(activeReport() || {}).id || state.retestFromReportId;startTest();return; }
       if (action === "view-report") { if (hasPending() || !state.testReports.some(r => r.id === t.dataset.id)) return; state.activeReportId = t.dataset.id; state.phase = "test"; state.dialog = null; render(); return; }
       if (action === "remove-test-case") { if (previewLocked()) return; state.testCases = state.testCases.filter(c => c.id !== t.dataset.id);state.testPlanVersion++; render(); return; }
       if (action === "feedback-reply") {
@@ -1087,7 +1129,10 @@
       const actions = root.querySelector('.ab-top-actions');
       if (actions) actions.innerHTML = topActions();
       const submit = root.querySelector('[data-ab="submit-round"]');
-      if (submit) submit.disabled = builderLocked() || !!state.previewRequest || !proposalReady() || submit.dataset.proposalId !== state.proposal.id;
+      if (submit) {
+        submit.disabled = applicationLocked() || !proposalReady() || submit.dataset.proposalId !== state.proposal.id;
+        if(state.proposal)submit.textContent=state.submitting?"正在应用…":testRunning()?"测试结束后可应用":state.proposal.testContext?"应用并重新测试":"应用本轮方案";
+      }
       const status = root.querySelector('[data-ab-submit-status]');
       if (status) status.textContent = submissionStatus();
       for (const action of ["next", "exit", "previous"]) {

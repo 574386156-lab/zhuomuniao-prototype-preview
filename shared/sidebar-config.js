@@ -2,9 +2,9 @@
  'use strict';
  var KEY='zmn.prototype.sidebar-config.v1',ORDER_KEY='zmn.prototype.workbench-order.v1';
  var catalog={projects:[{id:'project-demo-1',name:'广德慢病项目'},{id:'project-demo-2',name:'中山肿瘤随访'}],doctors:[{id:'doctor-demo-1',name:'张医生',projectId:'project-demo-1'},{id:'doctor-demo-2',name:'李医生',projectId:'project-demo-1'},{id:'doctor-demo-3',name:'陈医生',projectId:'project-demo-2'}]};
- var definitions=[{id:'patient-profile',name:'患者档案',value:'患者档案',file:'patient-profile.html'},{id:'ai-summary',name:'AI小结',value:'AI小结',file:'ai-summary.html'},{id:'quick-replies',name:'快捷回复',value:'快捷回复',file:'quick-replies.html'},{id:'patient-followups',name:'患者跟进',value:'患者跟进',file:'patient-followups.html'},{id:'patient-handoffs',name:'患者交接',value:'患者交接',file:'卓睦鸟患管平台-交互原型.html?standalone=aggregate-chat&panel=handoff#aggregate-chat'}];
+ var definitions=[{id:'patient-profile',name:'患者档案',value:'患者档案',file:'patient-profile.html'},{id:'ai-summary',name:'AI小结',value:'AI小结',file:'ai-summary.html'},{id:'quick-replies',name:'快捷回复',value:'快捷回复',file:'quick-replies.html'},{id:'patient-followups',name:'患者跟进',value:'患者跟进',file:'patient-followups.html'},{id:'patient-handoffs',name:'患者交接',value:'患者交接',file:'卓睦鸟患管平台-交互原型.html?standalone=aggregate-chat&panel=handoff#aggregate-chat'},{id:'my-todos',name:'我的待办',value:'我的待办',file:'my-todos.html'}];
  function copy(v){return JSON.parse(JSON.stringify(v));}
- function defaults(){return {version:1,environments:[{id:'development',name:'开发环境'},{id:'test',name:'测试环境'},{id:'production',name:'生产环境'}],tabs:definitions.map(function(d,i){return {id:d.id,name:d.name,builtin:d.id,enabled:true,order:(i+1)*10,hosts:i===3?['web']:['web','wecom'],urls:{development:new URL(d.file,location.href).href,test:'',production:''},projectAllow:[],projectDeny:[],doctorAllow:[],doctorDeny:[]};})};}
+ function defaults(){return {version:1,environments:[{id:'development',name:'开发环境'},{id:'test',name:'测试环境'},{id:'production',name:'生产环境'}],tabs:definitions.map(function(d,i){return {id:d.id,name:d.name,builtin:d.id,enabled:true,order:(i+1)*10,hosts:d.id==='my-todos'||d.id==='patient-followups'?['web']:['web','wecom'],urls:{development:new URL(d.file,location.href).href,test:'',production:''},projectAllow:[],projectDeny:[],doctorAllow:[],doctorDeny:[]};})};}
  // Base files live at the preview root regardless of the page which reads the config.
  function safeURL(raw){try{if(typeof raw!=='string'||!raw.trim()||raw.length>2048)return null;var url=new URL(raw,location.href),sameLocalDirectory=location.protocol==='file:'&&url.protocol==='file:'&&url.pathname.slice(0,url.pathname.lastIndexOf('/')+1)===location.pathname.slice(0,location.pathname.lastIndexOf('/')+1);if(!/^https?:$/.test(url.protocol)&&!sameLocalDirectory||url.username||url.password)return null;var secret=false;url.searchParams.forEach(function(v,k){if(/^(token|secret|password|authorization|api[-_]?key|access_token)$/i.test(k))secret=true;});return secret?null:url;}catch(error){return null;}}
  function validate(data){
@@ -28,9 +28,9 @@
   var maxOrder=config.tabs.reduce(function(max,tab){return Math.max(max,Number(tab.order)||0);},0);
   definitions.forEach(function(definition){
    if(config.tabs.some(function(tab){return tab.id===definition.id;}))return;
-   var anchor=config.tabs.filter(function(tab){return tab.id==='patient-profile';})[0],order=anchor?anchor.order+5:maxOrder+10;
+   var anchor=config.tabs.filter(function(tab){return tab.id==='patient-profile';})[0],order=definition.id==='my-todos'?maxOrder+10:anchor?anchor.order+5:maxOrder+10;
    config.tabs.forEach(function(tab){if(tab.order>=order)tab.order+=10;});
-   config.tabs.push({id:definition.id,name:definition.name,builtin:definition.id,enabled:true,order:order,hosts:['web','wecom'],urls:{development:new URL(definition.file,location.href).href,test:'',production:''},projectAllow:[],projectDeny:[],doctorAllow:[],doctorDeny:[]});
+   config.tabs.push({id:definition.id,name:definition.name,builtin:definition.id,enabled:true,order:order,hosts:definition.id==='my-todos'?['web']:['web','wecom'],urls:{development:new URL(definition.file,location.href).href,test:'',production:''},projectAllow:[],projectDeny:[],doctorAllow:[],doctorDeny:[]});
    maxOrder=Math.max(maxOrder,order);
   });
   return config;
@@ -47,7 +47,7 @@
  function environment(){return new URLSearchParams(location.search).get('sidebarEnv')||'development';}
  function urlFor(tab,env,ctx){var url=safeURL(tab.urls[env]||'');if(!url)return null;
   // Known same-origin entry pages receive synthetic conversation context.
-  var path=url.pathname.split('/').pop();try{path=decodeURIComponent(path);}catch(error){}if(url.origin===location.origin&&(['quick-replies.html','patient-profile.html','ai-summary.html','patient-followups.html'].indexOf(path)>=0||(path==='卓睦鸟患管平台-交互原型.html'&&url.searchParams.get('standalone')==='aggregate-chat'&&url.searchParams.get('panel')==='handoff'))){if(ctx.patientName)url.searchParams.set('patient',ctx.patientName);if(ctx.doctorName)url.searchParams.set('doctor',ctx.doctorName);if(ctx.sceneName)url.searchParams.set('scene',ctx.sceneName);url.searchParams.set('embedded','1');url.searchParams.set('sidebarEnv',env);}
+  var path=url.pathname.split('/').pop();try{path=decodeURIComponent(path);}catch(error){}if(url.origin===location.origin&&path==='my-todos.html'){if(ctx&&ctx.patientId){url.searchParams.set('patientId',ctx.patientId);if(ctx.patientName)url.searchParams.set('patientName',ctx.patientName);else url.searchParams.delete('patientName');}else{url.searchParams.delete('patientId');url.searchParams.delete('patientName');}url.searchParams.set('embedded','1');url.searchParams.set('host','web');url.searchParams.set('sidebarEnv',env);return url;}if(url.origin===location.origin&&(['quick-replies.html','patient-profile.html','ai-summary.html','patient-followups.html'].indexOf(path)>=0||(path==='卓睦鸟患管平台-交互原型.html'&&url.searchParams.get('standalone')==='aggregate-chat'&&url.searchParams.get('panel')==='handoff'))){if(ctx.patientName)url.searchParams.set('patient',ctx.patientName);if(ctx.doctorName)url.searchParams.set('doctor',ctx.doctorName);if(ctx.sceneName)url.searchParams.set('scene',ctx.sceneName);url.searchParams.set('embedded','1');url.searchParams.set('sidebarEnv',env);}
   return url;
  }
  function inlineBuiltin(tab,env){var d=definitions.filter(function(d){return d.id===tab.builtin;})[0];if(!d)return '';var expected=new URL(d.file,location.href),actual=safeURL(tab.urls[env]||'');return actual&&actual.href===expected.href?d.value:'';}

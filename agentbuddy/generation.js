@@ -26,11 +26,12 @@
           if (!stopped) schedule();
           return;
         }
-        const candidates=snapshot.knowledge.attachments.flatMap((file,index)=>window.AgentBuddyKnowledge.parseText(file.text,file.id || "source-"+index,file.name));
+        const candidates=window.AgentBuddyCodeAssets.candidates(snapshot.knowledge.attachments.flatMap((file,index)=>window.AgentBuddyKnowledge.parseText(file.text,file.id || "source-"+index,file.name)),snapshot.knowledge.attachments);
         const review=window.AgentBuddyKnowledge.prepare(candidates,[],{});
-        snapshot.knowledge.entries=review.unresolved ? [] : review.entries;
+        const unresolved=review.unresolved || window.AgentBuddyCodeAssets.review(snapshot.knowledge.attachments).unresolved;
+        snapshot.knowledge.entries=unresolved ? [] : review.entries;
         snapshot.knowledge.importReview=review;
-        snapshot.knowledge.pendingAttachments=review.unresolved ? clone(snapshot.knowledge.attachments) : [];
+        snapshot.knowledge.pendingAttachments=unresolved ? clone(snapshot.knowledge.attachments) : [];
         options.onComplete({ mode: "local-demo", config: snapshot, version: 1, kbVersion: knowledgeSkipped ? 0 : 1 });
         stopped = true;
       } catch (error) {

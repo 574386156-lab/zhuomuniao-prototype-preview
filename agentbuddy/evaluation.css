@@ -36,7 +36,6 @@
 @media(max-width:1100px){.eval-heading{padding:18px 18px 14px}.eval-overview{margin:0 18px 16px;padding:15px;gap:16px}.eval-pass-rate{padding-left:16px;gap:8px;flex-direction:column;align-items:flex-start}.eval-pass-rate strong{font-size:24px}.eval-result-tabs{padding:0 18px;gap:20px}.eval-toolbar,.eval-pagination{padding:12px 18px}.eval-table-scroll{margin:0 18px}.eval-col-duration{width:0}.eval-duration{display:none}.eval-col-case{width:36%}.eval-col-status{width:80px}.eval-col-action{width:72px}.eval-table td,.eval-table th{padding-left:8px;padding-right:8px}.eval-heading .ab-report-actions{width:auto}}
 @media(max-width:760px){.ab-desk .ab-test-report.ab-evaluation{min-height:580px;overflow:visible}.eval-table-scroll{max-height:480px;flex:none}.eval-heading{align-items:flex-start;flex-wrap:wrap;gap:12px}.eval-heading h2{font-size:18px}.eval-overview{flex-wrap:wrap;gap:14px}.eval-verdict{flex-basis:65%}.eval-pass-rate{padding:0;border:0;margin-left:auto}.eval-next-action{width:100%}.eval-next-action .ab-button{width:100%}.eval-toolbar input{width:100%}.eval-toolbar select{flex:1}.eval-result-tabs{gap:18px}.eval-table{min-width:580px}.eval-pagination{flex-wrap:wrap}.eval-pages{margin-left:auto}.eval-comparison{grid-template-columns:1fr;gap:20px}.eval-comparison>section+section{padding:18px 0 0;border-left:0;border-top:1px solid #e7edf5}.eval-detail-content{padding:18px}.eval-drawer .eval-detail-actions{padding:14px 18px}.eval-drawer .eval-drawer-header{padding:14px 18px}.eval-drawer-header .ab-button{font-size:10px;padding:6px}}
 /* Discussion stays beside the test plan, running job and report. */
-.ab-desk .ab-test-columns{grid-template-columns:minmax(280px,.85fr) minmax(0,1.4fr)}
 .ab-desk .ab-test-results{background:#fff;min-width:0;min-height:0}
 .ab-desk .ab-test-results .ab-test-task,.ab-desk .ab-test-results .ab-test-report{width:100%;max-width:none;flex:1;min-height:0;margin:0;border:0;border-radius:0}
 .ab-desk .ab-test-results .ab-test-task{padding:20px;overflow:auto}
@@ -56,6 +55,4 @@
 .eval-report-comparison .ab-button{padding:4px 8px;font-size:11px;white-space:nowrap}
 .ab-test-changes{margin-top:12px;display:grid;gap:10px}.ab-test-changes article{padding:12px;border:1px solid #dce5f3;border-radius:8px;background:#fff}
 .ab-test-changes strong{color:#34547d;font-size:13px}.ab-test-changes p{font-size:12px;color:#526b8b;margin:8px 0 0;white-space:pre-wrap}.ab-test-changes p>span{display:block;font-size:11px;color:#8797ad;margin-bottom:3px}
-@media(max-width:760px){.ab-desk .ab-test-columns{grid-template-columns:1fr}.ab-desk .ab-test-results{height:720px}.ab-test-results .eval-pass-rate{border-left:0;padding-left:0}.ab-test-results .eval-overview{gap:10px}}
-.ab-desk .ab-columns.ab-test-columns{grid-template-columns:minmax(280px,.85fr) minmax(0,1.4fr)}
-@media(max-width:760px){.ab-desk .ab-columns.ab-test-columns{grid-template-columns:1fr}}
+@media(max-width:760px){.ab-desk .ab-test-results{height:720px}.ab-test-results .eval-pass-rate{border-left:0;padding-left:0}.ab-test-results .eval-overview{gap:10px}}

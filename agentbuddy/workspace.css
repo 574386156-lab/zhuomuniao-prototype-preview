@@ -119,8 +119,6 @@
 .ab-knowledge-answer p{white-space:pre-wrap;overflow-wrap:anywhere;margin:0 0 12px;line-height:1.8;font-size:13px}
 .ab-knowledge-answer small,.ab-knowledge-scope{display:block;font-size:12px;line-height:1.8;color:#75849a;overflow-wrap:anywhere}
 .ab-knowledge-empty{font-size:13px;line-height:1.8;color:#7b8a9d;margin:0;padding:16px;background:#f7f9fc;border-radius:8px}
-.ab-history-feedback{margin-top:20px;border-top:1px solid #e6ebf2;padding-top:16px}
-.ab-history-feedback>summary{font-size:13px;color:#536b8b;cursor:pointer}
 .builder-pane .ab-discussion-pending,.builder-pane .ab-discussion-error,.builder-pane .ab-running-tasks{margin-left:38px}
 @media(max-width:600px){.builder-pane .ab-message.ab-builder-message{margin-right:0}.builder-pane .ab-message.ab-builder-message.user{margin-left:12px}.ab-chat-bubble{padding:11px 12px}}
 .ab-preview-body{position:relative;display:flex;flex:1;min-height:0}
@@ -239,11 +237,6 @@
 .ab-dialog pre{font-size:12px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere;margin:0;background:#f6f8fb;padding:16px;border-radius:9px}
 .ab-dialog blockquote{margin:0 0 12px;padding:10px 13px;border-left:3px solid #c6d8f1;background:#f6f9fd;white-space:pre-wrap;overflow-wrap:anywhere;color:#74849b}
 .ab-dialog .ab-error{color:#b55049;font-size:12px;margin-top:9px}
-.ab-review-line{padding:12px 0;border-bottom:1px solid #edf0f5}
-.ab-review-line b{font-size:12px}
-.ab-review-line p{margin:5px 0;color:#7b8a9e;white-space:pre-wrap;overflow-wrap:anywhere}
-.ab-history-item{padding:12px 0;border-bottom:1px solid #edf0f5;font-size:12px;display:flex;justify-content:space-between;gap:20px}
-.ab-history-item small{color:#909eb2}
 .ab-test-task,.ab-test-report{border:1px solid #dfe6f0;border-radius:18px;background:#fff;padding:28px;max-width:1320px;margin:0 auto}
 .ab-task-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-bottom:22px;border-bottom:1px solid #ecf0f5}
 .ab-task-eyebrow{font-size:11px;letter-spacing:.5px;font-weight:650;color:#4374bb}

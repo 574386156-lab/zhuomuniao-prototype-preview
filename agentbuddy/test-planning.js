@@ -3,7 +3,7 @@
   const clone=value=>JSON.parse(JSON.stringify(value));
   const agentIntent=text=>/改(?:智能体|提示词|回答)|调整(?:智能体|提示词|回复)|修正(?:智能体|回答)|(?:更新|补充|替换)(?:知识库|知识资料)|新的知识资料/.test(String(text)
     .replace(/不(?:要|用)?(?:修改|调整|改|动)(?:智能体(?:回答)?|提示词|回复|回答|知识库)/g,'').replace(/(?:智能体|提示词|回复|回答|知识库)(?:保持不变|不改|不动)/g,''));
-  const testIntent=text=>/测试口径|评分(?:口径|标准|规则)|通过(?:标准|条件)|测试用例|测试问题|用例问题|新增用例|新增测试|预期(?:行为|回答|结果)?(?:改为|调整为|应为)/.test(String(text)
+  const testIntent=text=>/测试口径|评分(?:口径|标准|规则)|通过(?:标准|条件)|测试用例|测试问题|测试场景|用例问题|(?:新增|补充|增加)(?:一个|一条|一项)?用例|预期(?:行为|回答|结果)?(?:改为|改成|调整为|应为)/.test(String(text)
     .replace(/(?:测试口径|评分口径|评分标准|测试用例)(?:保持不变|不改|不动)/g,''));
   function field(text,label) {
     const labels='测试问题|测试场景|用例问题|新增用例|新增测试问题|新增测试场景|用例名称|预期行为|预期回答|预期结果|预期|评分口径|评分标准|评分规则|通过标准|通过条件|测试口径|参考答案';
@@ -18,8 +18,10 @@
     const latest=messages.at(-1)?.text || '';
     const keys=Array.from(new Set(refs.map(r=>r.caseKey)));
     const selected=(snapshot.testPlan || []).filter(c=>keys.includes(c.key) || !keys.length && [c.caseName,c.category].some(name=>name && latest.includes(name)));
-    const addition=field(text,'新增用例|新增测试问题|新增测试场景');
-    if(addition){selected.length=0;selected.push({key:'test-'+messages.at(-1).id,caseName:field(text,'用例名称') || '自定义场景',category:'自定义场景',question:addition,expect:'结合当前提示词与知识资料核对回答。',files:[],history:[],inputType:'text',rule:'review'});}
+    const additionLabel='(?:新增|补充|增加)(?:一个|一条|一项)?(?:测试用例|测试问题|测试场景|用例)';
+    const additionMessage=messages.slice().reverse().find(m=>field(m.text || '',additionLabel));
+    const addition=additionMessage && field(additionMessage.text,additionLabel);
+    if(addition){const files=clone(additionMessage.files || []);selected.length=0;selected.push({key:'test-'+additionMessage.id,caseName:field(text,'用例名称') || '自定义场景',category:'自定义场景',question:addition,expect:'结合当前提示词与知识资料核对回答。',files,history:[],inputType:files.some(f=>f.image)?'image':'text',rule:'review'});}
     const question=field(text,'测试问题|测试场景|用例问题'),expect=field(text,'预期行为|预期回答|预期结果|预期'),criteria=field(text,'评分口径|评分标准|评分规则|通过标准|通过条件|测试口径'),reference=field(text,'参考答案');
     const explicit=question || expect || criteria || reference;
     let clarification=selected.length?'':'请选择要调整的测试结果，或告诉我用例名称和调整方向。';

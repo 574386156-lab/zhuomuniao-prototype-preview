@@ -3,6 +3,7 @@
 `manifest.json` 固定官方 npm 包的版本、来源和 SHA-512 integrity；下载后校验压缩包，再提取运行资源，不运行包内安装脚本。
 
 - PDF.js / `pdfjs-dist`：浏览器 Worker 中逐页提取 PDF 文字，包含字体与 CMap 支持。原始许可证在 `pdfjs/LICENSE`。
+- jsQR 1.4.0：本机二维码解码，运行文件在 `jsqr/jsQR.js`，Apache-2.0 许可证在 `jsqr/LICENSE`。不提供微信专用小程序码解码或通用 OCR。
 - JSZip：读取 DOCX、XLSX、PPTX 的 Office XML 及 PDF.js 静态资源。许可证在 `jszip/LICENSE.markdown`；运行文件自带版权声明。
 - `pdfjs/resources.zip` 保留官方包中的 `cmaps/`、`standard_fonts/`、`wasm/` 资源及其中的第三方许可证。`parsing.js` 的 BinaryDataFactory 按原目录名称读取，避免发布大量独立小文件。
 

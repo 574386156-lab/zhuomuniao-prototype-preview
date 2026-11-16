@@ -228,7 +228,7 @@
         studio: { doctorTitle: v.doctorTitle, department: v.dept, departmentCode: dept ? dept.code : null, departmentReference: dept,
           diagnosis: v.diagnosis, diagnosisCode: diagnosis ? diagnosis.code : null, diagnosisReference: diagnosis,
           name: v.studio || "患者服务智能体", patientStages: list(v.stages) },
-        knowledge: { scopes: list(v.scopes), boundaries: list(v.boundaries), skipped: knowledgeSkipped && !files.length, attachments: files.filter((f,i)=>files.findIndex(other=>other.hash===f.hash)===i).map(f => ({id:"intake-"+f.id,name:f.name,size:f.size,type:f.type,hash:f.hash,hashStatus:f.hashStatus,text:f.text,extraction:f.extraction})) },
+        knowledge: { scopes: list(v.scopes), boundaries: list(v.boundaries), skipped: knowledgeSkipped && !files.length, attachments: files.filter((f,i)=>files.findIndex(other=>other.hash===f.hash)===i).map(f => ({id:"intake-"+f.id,name:f.name,size:f.size,type:f.type,hash:f.hash,hashStatus:f.hashStatus,text:f.text,extraction:f.extraction,codeKind:f.codeKind,knowledgeImage:!!f.codeKind})) },
         risk: { attachments: [], onlineHandoff: true, registrationLink: v.regLink === "暂不提供" ? "" : v.regLink, schedule: v.schedule === "暂不提供" ? "" : v.schedule,
           levels: [{name:"低风险", actions:list(v.lowRisk)}, {name:"中风险", actions:list(v.elevatedRisk)}, {name:"高风险", actions:list(v.elevatedRisk)}] },
         style: { replyLength:v.length, tone:v.tone, identityScript:v.identity }
@@ -242,7 +242,7 @@
     function knowledgeView() {
       return '<section class="brief-window brief-knowledge' + (files.length ? ' has-files' : '') + (knowledgeError || uploadError ? ' has-error' : '') + '" data-brief-knowledge aria-labelledby="brief-knowledge-title"><header class="brief-knowledge-heading"><div><h2 id="brief-knowledge-title" tabindex="-1">添加知识库</h2>' +
         window.AgentBuddyUI.info("知识库资料", "知识库是智能体回答问题时参考的资料，可上传已有的知识文档、患者问答、服务说明和风险识别资料。支持拖入文件或粘贴图片。暂时跳过后，可在调整对话中补充。", true) + '</div><span class="brief-knowledge-status" data-brief-knowledge-status role="status"' + (!files.length ? ' hidden' : '') + '>' + knowledgeStatus() + '</span></header>' +
-        '<div class="brief-upload-area"><span class="brief-upload-symbol">' + icon("upload") + '</span><p class="brief-upload-title">拖入知识文档或图片</p><div class="brief-knowledge-actions"><button type="button" class="brief-knowledge-upload" data-brief-action="upload">' + icon("clip") + '<span data-brief-upload-label>' + (files.length ? '继续添加' : '选择文件') + '</span></button><button type="button" class="brief-knowledge-image" data-brief-action="image">' + icon("image") + '上传图片</button></div><p class="brief-upload-formats">PDF、Word、Excel、PPT、文本、图片 · 最多 10 份 · '+window.AgentBuddyAttachments.limitLabel+'</p></div>' +
+        '<div class="brief-upload-area"><span class="brief-upload-symbol">' + icon("upload") + '</span><p class="brief-upload-title">拖入知识文档或图片</p><div class="brief-knowledge-actions"><button type="button" class="brief-knowledge-upload" data-brief-action="upload">' + icon("clip") + '<span data-brief-upload-label>' + (files.length ? '继续添加' : '选择文件') + '</span></button><button type="button" class="brief-knowledge-image" data-brief-action="image">' + icon("image") + '二维码 / 小程序码</button></div><p class="brief-upload-formats">PDF、Word、Excel、PPT、文本、图片 · 最多 10 份 · '+window.AgentBuddyAttachments.limitLabel+'</p></div>' +
         '<div class="brief-files" data-brief-files' + (!files.length ? ' hidden' : '') + '>' + attachments() + '</div><p class="brief-knowledge-feedback" data-brief-knowledge-feedback role="alert"' + (!knowledgeError && !uploadError ? ' hidden' : '') + '>' + esc([knowledgeError, uploadError].filter(Boolean).join(" ")) + '</p></section>';
     }
     function view() {
@@ -384,7 +384,7 @@
       undoSnapshot = null; editor().innerHTML = html; fullTools(); message = ""; showFeedback();
       root.querySelector('[data-brief-action="full"]').focus({preventScroll:true});
     }
-    function addFiles(incoming) {
+    function addFiles(incoming,knowledgeCode) {
       const errors = [];
       Array.from(incoming || []).forEach(file => {
         if (!file || !file.name) return;
@@ -393,7 +393,7 @@
         if (sizeError) { errors.push(file.name + "："+sizeError); return; }
         if (!/\.(pdf|docx?|xlsx?|pptx?|txt|md|csv|png|jpe?g|webp|gif)$/i.test(file.name)) { errors.push("不支持此文件格式：" + file.name); return; }
         if (files.some(f => f.file === file)) return;
-        const record={id:++nextFile,name:file.name,size:file.size,type:file.type || "",modified:file.lastModified,url:URL.createObjectURL(file),file,hashStatus:"checking"};
+        const record={id:++nextFile,name:file.name,size:file.size,type:file.type || "",modified:file.lastModified,url:URL.createObjectURL(file),file,hashStatus:"checking",codeKind:knowledgeCode?"code":undefined};
         files.push(record);
         window.AgentBuddyAttachments.inspect(file,result=>{
           if (!files.includes(record)) return;
@@ -446,7 +446,7 @@
       if (action === "upload" || action === "image") {
         const picker = document.createElement("input"); picker.type = "file"; picker.multiple = true;
         picker.accept = action === "image" ? "image/png,image/jpeg,image/webp,image/gif" : ".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.md,.csv,.png,.jpg,.jpeg,.webp,.gif";
-        picker.addEventListener("change", () => addFiles(picker.files), {once:true}); picker.click();
+        picker.addEventListener("change", () => addFiles(picker.files,action === "image"), {once:true}); picker.click();
       }
     }
     function input(e) {

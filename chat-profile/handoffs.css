@@ -1,35 +1,59 @@
-.ho-panel { min-width:0; padding:16px; color:#173c61; font:400 16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
+.ho-panel { min-width:0; padding:18px; background:#f7f9fc; color:#24415e; font:400 16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
 .ho-panel * { box-sizing:border-box; }
-.ho-heading h3 { margin:0; font-size:18px; }
-.ho-heading span,.ho-card small { color:#607b95; font-size:14px; }
-.ho-actions { display:flex; flex-wrap:wrap; gap:8px; margin:12px 0 16px; }
-#ops-shell .ho-actions button { min-height:44px; padding:8px 14px; border:1px solid #b9d5ef; border-radius:6px; background:#eef6ff; color:#0365bf; font-size:16px; }
-#ops-shell .ho-actions button:disabled { opacity:.45; cursor:default; }
-.ho-timeline { padding:0 0 0 14px; margin:0; list-style:none; border-left:2px solid #d8e8f5; }
-.ho-timeline > li { position:relative; margin-bottom:16px; }
-.ho-timeline > li::before { content:''; position:absolute; left:-20px; top:20px; width:10px; height:10px; border:2px solid #fff; border-radius:50%; background:#0365bf; }
-.ho-card { display:flex; flex-direction:column; padding:10px; border:1px solid #dce6f0; border-radius:8px; background:#fff; }
-.ho-card header { order:1; }
-.ho-card .ho-reason { order:2; }
-.ho-card > h4,.ho-card > .ho-summary,.ho-card > small { order:3; }
-.ho-card dl { order:4; }
-.ho-card footer { order:5; }
-.ho-card header { display:flex; flex-wrap:wrap; justify-content:space-between; gap:8px; }
-.ho-card header > div { display:grid; gap:2px; }
-.ho-event-label { color:#173f66; font-size:16px; }
-.ho-card time { font-size:14px; }
-.ho-status { padding:2px 6px; border-radius:4px; background:#fff5df; color:#906315; font-size:13px; }
-.ho-status.is-succeeded { background:#eaf7ef; color:#27704f; }
+.ho-context { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; min-width:0; margin:0 2px 12px; line-height:1.6; overflow-wrap:anywhere; }
+.ho-context strong { color:#2b4661; font-size:16px; font-weight:600; }
+.ho-context span { color:#65788d; font-size:14px; }
+.ho-toolbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:24px; padding:12px 14px; border:1px solid #e0e8f1; border-radius:10px; background:#fff; }
+.ho-owner { display:flex; align-items:center; gap:10px; min-width:0; }
+.ho-owner-avatar { display:grid; place-items:center; flex:none; width:36px; height:36px; border-radius:9px; background:#edf4ff; color:#387bc0; font-size:22px; }
+.ho-owner-avatar svg { width:20px; height:20px; }
+.ho-owner > div { display:grid; gap:1px; min-width:0; }
+.ho-owner-label { color:#7b8da0; font-size:12px; line-height:18px; }
+.ho-owner-name { color:#173b60; font-size:15px; line-height:22px; font-weight:600; overflow-wrap:anywhere; }
+.ho-actions { flex:none; }
+#ops-shell .ho-actions button { display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:34px; padding:4px 11px; border:1px solid #c8d9eb; border-radius:7px; background:#fff; color:#2869ad; font:500 13px/20px -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; cursor:pointer; }
+#ops-shell .ho-actions button:hover:not(:disabled) { border-color:#7aaddd; background:#f5f9ff; }
+#ops-shell .ho-actions button:disabled { border-color:#e1e7ef; background:#f8fafc; color:#9aa9b8; cursor:default; }
+.ho-day-group + .ho-day-group { margin-top:22px; }
+.ho-day-label { margin:0 0 12px; color:#7b8da0; font-size:12px; line-height:18px; font-weight:500; }
+.ho-timeline { padding:0 0 0 24px; margin:0; list-style:none; }
+.ho-timeline-item { position:relative; padding-bottom:14px; }
+.ho-timeline-item:last-child { padding-bottom:0; }
+.ho-timeline-item::before { content:''; position:absolute; z-index:1; left:-19px; top:23px; width:8px; height:8px; border-radius:50%; background:#b1c3d6; box-shadow:0 0 0 4px #f7f9fc; }
+.ho-timeline-item:not(:last-child)::after { content:''; position:absolute; left:-15px; top:24px; bottom:-24px; width:1px; background:#dce5ee; }
+.ho-timeline-item:first-child::before { background:#3a83c9; box-shadow:0 0 0 4px #e9f1fb; }
+.ho-timeline-item.is-pending_reply::before { background:#c48a2b; box-shadow:0 0 0 4px #fff3db; }
+.ho-card { padding:15px 16px 10px; border:1px solid #e0e8f1; border-radius:10px; background:#fff; }
+.ho-card.is-pending_reply { border-color:#e8d8b3; }
+.ho-card header { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+.ho-event-label { min-width:0; color:#173b60; font-size:16px; line-height:24px; font-weight:600; overflow-wrap:anywhere; }
+.ho-from { color:#526b83; font-weight:500; }
+.ho-direction { padding:0 5px; color:#9aadbf; font-weight:400; }
+.ho-recipient { color:#173b60; }
+.ho-status { display:inline-flex; align-items:center; gap:4px; flex:none; align-self:flex-start; padding:1px 6px; border-radius:4px; background:#fff5df; color:#906315; font-size:12px; line-height:20px; white-space:nowrap; }
+.ho-status.is-succeeded, .ho-status.is-transferred_ai { padding-right:0; background:transparent; color:#4b8c76; }
+.ho-status.is-succeeded::before, .ho-status.is-transferred_ai::before { content:'✓'; font-size:12px; }
 .ho-status.is-timed_out { background:#fff0ed; color:#ab5141; }
-.ho-card dl { display:grid; grid-template-columns:70px minmax(0,1fr); gap:4px 8px; margin:8px 0 0; padding-top:7px; border-top:1px solid #edf2f6; color:#7890a5; font-size:13px; }
-.ho-card dt { color:#607b95; }
-.ho-card dd { margin:0; overflow-wrap:anywhere; }
-.ho-card h4 { margin:12px 0 4px; font-size:16px; }
-.ho-reason { margin:8px 0; padding:8px 10px; border:1px solid #cfe2f2; border-radius:7px; background:#f5faff; }
-.ho-reason h4 { margin:0 0 4px; color:#315d83; font-size:14px; }
+.ho-status.is-return_pending { background:#fff5df; color:#906315; }
+.ho-status.is-return_failed { background:#fff0ed; color:#ab5141; }
+.ho-timeline-item.is-return_failed::before { background:#bd6558; box-shadow:0 0 0 4px #fff0ed; }
+.ho-card.is-return_failed { border-color:#edd4cd; }
+.ho-reason { margin-top:13px; color:#7b8da0; font-size:12px; }
+.ho-reason-heading { display:flex; align-items:baseline; flex-wrap:wrap; gap:4px 8px; }
+.ho-reason h4 { flex:none; margin:0; font:inherit; }
 .ho-reason p { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
-.ho-summary { margin:0 0 4px; padding:8px 10px; border:1px solid #d9e8f3; border-radius:7px; background:#f7fbfe; color:#244f72; white-space:pre-wrap; overflow-wrap:anywhere; }
-.ho-card footer { margin-top:8px; padding-top:7px; border-top:1px solid #e5edf4; color:#607b95; font-size:13px; }
+.ho-reason-value { padding:1px 7px; border-radius:4px; background:#f0f4f8; color:#4a637d; font-size:13px; line-height:20px; font-weight:500; }
+.ho-reason .ho-reason-detail { margin-top:9px; color:#294866; font-size:16px; line-height:1.65; }
+.ho-notice { margin:10px 0 0; font-size:12px; }
+.ho-notice.is-pending { color:#a07831; }
+.ho-notice.is-timeout { color:#ab5141; }
+.ho-card-footer { margin-top:10px; color:#8a9bac; font-size:12px; line-height:22px; }
+.ho-card-footer > time { display:block; }
+.ho-card.is-system { padding:4px 0; border:0; border-radius:0; background:transparent; }
+.ho-system-row { display:flex; align-items:center; gap:8px; min-height:36px; }
+.ho-system-row .ho-event-label { color:#71869b; font-size:13px; line-height:20px; font-weight:400; }
+.ho-system-row time { margin-left:auto; color:#8a9bac; font-size:12px; }
+.ho-timeline-item.is-system::before { top:20px; width:6px; height:6px; left:-18px; background:#c4d1de; }
 .ho-empty { padding:24px 4px; color:#607b95; text-align:center; }
 .ho-transfer-form { display:grid; gap:14px; min-width:0; }
 .ho-recipient-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:3px; border:1px solid #d8e7f2; border-radius:7px; background:#f5f9fc; }
@@ -47,5 +71,4 @@
 #ops-shell .ho-transfer-form .ui-select-trigger { min-height:44px; font-size:16px; }
 .ho-form-error { margin:0; color:#b3473f; font-size:14px; }
 .ho-form-error:empty { display:none; }
-.ops-workbench-tabs { overflow-x:auto; }
 @media(max-width:600px) { .ops-modal-backdrop:has(.ho-transfer-form) { padding:8px; } .ops-modal:has(.ho-transfer-form) { max-width:100%; max-height:calc(100dvh - 16px); } }

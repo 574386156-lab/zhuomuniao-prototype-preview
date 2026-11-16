@@ -1,5 +1,5 @@
 /* The patient trial is a phone-sized conversation; the feedback workspace stays on the left. */
-.ab-desk .ab-columns { grid-template-columns: minmax(0, 1fr) minmax(320px, .82fr); }
+.ab-desk .ab-columns { grid-template-columns: minmax(0, 1fr) minmax(320px, 1.1fr); }
 .ab-desk .ab-pane.preview-pane { background: transparent; border: 0; overflow: visible; }
 .ab-desk .preview-pane > .ab-pane-head { padding: 6px 9px 12px; background: transparent; border: 0; }
 .ab-preview-head-actions .ab-restart-conversation { padding: 6px 10px; font-size: 12px; white-space: nowrap; }
@@ -80,7 +80,7 @@
 .ab-phone button:focus-visible, .ab-phone textarea:focus-visible { outline: 2px solid #4a9a63; outline-offset: 2px; }
 @media (max-width: 1100px) {
   .ab-phone-stage { padding: 3px 6px 10px; }
-  .ab-desk .ab-columns { grid-template-columns: minmax(0, 1fr) minmax(310px, .85fr); }
+  .ab-desk .ab-columns { grid-template-columns: minmax(0, 1fr) minmax(310px, 1.1fr); }
 }
 @media (max-width: 760px) {
   .ab-desk .ab-columns { grid-template-columns: 1fr; }

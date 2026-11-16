@@ -9,7 +9,7 @@
   }
   function propose(snapshot) {
     const request=(snapshot.messages || []).map(m=>m.text || '').join('\n');
-    if(snapshot.testContext && window.AgentBuddyTestPlanning && !window.AgentBuddyTestPlanning.agentIntent(request))return window.AgentBuddyTestPlanning.propose(snapshot);
+    if(window.AgentBuddyTestPlanning && (snapshot.testContext || window.AgentBuddyTestPlanning.testIntent(request)) && !window.AgentBuddyTestPlanning.agentIntent(request) && !(/二维码|小程序码/.test(request) && !window.AgentBuddyTestPlanning.testIntent(request)))return window.AgentBuddyTestPlanning.propose(snapshot);
     const messages=snapshot.messages || [], issues=snapshot.issues || [], sources=snapshot.sources || [];
     const last=messages.filter(m=>m.kind!=="knowledge-decision").at(-1) || {text:""};
     const requests=messages.filter(m=>m.kind!=="knowledge-decision" && (!conversationOnly(compact(m.text)) || (m.files || []).length || (m.feedback || []).length));
@@ -17,8 +17,8 @@
     const text=requests.map(m=>intentText(m.text)).join("\n");
     const currentIds=new Set(files.map(f=>f.id));
     const identities=window.AgentBuddyAttachments.classify(files,(snapshot.receivedFiles || sources).filter(f=>!currentIds.has(f.id)));
-    const explicitImageKnowledge=/图片.{0,8}(知识|资料)|把.*(图片|截图).*(整理|加入|补充).*知识库|知识图片|这是知识资料/.test(text);
-    let knowledgeFiles=files.filter(f=>!f.image || explicitImageKnowledge);
+    const explicitImageKnowledge=/图片.{0,8}(知识|资料)|把.*(图片|截图).*(整理|加入|补充).*知识库|知识图片|这是知识资料|二维码|小程序码|^(?:请)?(?:补充|更新|新增|添加)(?:知识库|知识资料)/.test(text);
+    let knowledgeFiles=files.filter(f=>!f.image || f.knowledgeImage || explicitImageKnowledge);
     // A screenshot documenting a bad reply is evidence, not a medical knowledge source.
     const evidenceFiles=files.filter(f=>!knowledgeFiles.includes(f));
     const policyChange=/知识.{0,8}(使用|应用|优先|选择)|来源优先|按.*(阶段|条件).*回答|低风险|风险关键词|严肃诊疗/.test(text);
@@ -44,14 +44,16 @@
     const genericKnowledge=requests.length && requests.every(m=>/^(请)?(帮我)?(补充|更新|添加|完善)(一下)?(知识库|资料)[。！!]*$/.test(compact(m.text)));
     if (genericKnowledge) prompt=false;
     const existingHashes=new Set(sources.map(s=>s.hash).filter(Boolean)), pendingHashes=new Set();
-    const repeatedKnowledge=knowledgeFiles.filter(f=>f.hash && existingHashes.has(f.hash));
+    const repeatedKnowledge=knowledgeFiles.filter(f=>f.hash && existingHashes.has(f.hash) && !f.codeReconsidered);
     knowledgeFiles=knowledgeFiles.filter(f=>{
-      if (f.hash && (existingHashes.has(f.hash) || pendingHashes.has(f.hash))) return false;
+      if (f.hash && (existingHashes.has(f.hash) && !f.codeReconsidered || pendingHashes.has(f.hash))) return false;
       if (f.hash) pendingHashes.add(f.hash);return true;
     });
-    const candidates=requests.flatMap(m=>window.AgentBuddyKnowledge.parseText(m.text,m.id,"对话补充"));
+    let candidates=requests.flatMap(m=>window.AgentBuddyKnowledge.parseText(m.text,m.id,"对话补充"));
     if (candidates.length && !prompt) knowledge=true;
     if (knowledge) knowledgeFiles.forEach(f=>candidates.push(...window.AgentBuddyKnowledge.parseText(f.text,f.id,f.name)));
+    if(knowledge){window.AgentBuddyCodeAssets.fromMessages(messages,knowledgeFiles);candidates=window.AgentBuddyCodeAssets.candidates(candidates,knowledgeFiles);}
+    const codeReview=window.AgentBuddyCodeAssets.review(knowledge?knowledgeFiles:[]);
     const decisions=Object.fromEntries(messages.filter(m=>m.kind==="knowledge-decision").map(m=>[m.conflictId,m.decision]));
     const review=knowledge ? window.AgentBuddyKnowledge.prepare(candidates,snapshot.knowledgeEntries,decisions) : null;
     const duplicateOnly=!!repeatedKnowledge.length && !knowledgeFiles.length && !candidates.length && !prompt && (genericKnowledge || requests.every(m=>m.attachmentOnly));
@@ -63,7 +65,8 @@
     else if (!resolvedNoChange && !knowledge && !prompt) question="你想改善哪一处？可以描述希望达到的效果，我来判断需要调整回答规则还是知识内容。";
     if (!resolvedNoChange && files.some(f=>f.hashStatus==="checking" || f.hashStatus==="error")) question="附件内容尚未核对完成，请先处理附件。";
     if (review && review.unresolved) question="发现 " + review.unresolved + " 处相同条件下的答案分歧。先确定采用哪种说法，再应用本轮方案。";
-    if(knowledgeFiles.some(f=>typeof f.text!=='string' || !f.text.trim() || f.extraction==='not-parsed' || f.parseStatus==='failed'))question='附件解析未完成，请先完成解析再整理方案。';
+    if(knowledge && knowledgeFiles.some(f=>!window.AgentBuddyParsing.completed(f)))question='附件解析未完成，请先完成解析再整理方案。';
+    else if(codeReview.unresolved)question='有 '+codeReview.unresolved+' 个码需要补充用途或跳转信息，也可以选择暂不纳入。处理后再应用本轮方案。';
     const ready=!question && !resolvedNoChange;
     const actions=[], tasks=[];
     function task(id,skill,title,dependsOn) {tasks.push({id,skill,title,dependsOn:dependsOn || [],status:"planned"});}
@@ -106,8 +109,9 @@
     const result={mode:"local-demo",intent:resolvedNoChange ? "consultation" : knowledge && prompt ? "combined" : knowledge ? "knowledge" : prompt ? "prompt" : "clarify",
       response,actions,tasks,ready,question,prompt,knowledge,instruction,requestCount:requests.length,resolvedNoChange,
       attachments:identities,knowledgeFiles:knowledge ? knowledgeFiles : [],knowledgeReview:review};
+    result.codeReview=codeReview;
     const lastRequest=messages.at(-1)?.text || '';
-    if(snapshot.testContext && window.AgentBuddyTestPlanning && window.AgentBuddyTestPlanning.testIntent(lastRequest) && window.AgentBuddyTestPlanning.agentIntent(lastRequest)) {
+    if(window.AgentBuddyTestPlanning && window.AgentBuddyTestPlanning.testIntent(lastRequest) && window.AgentBuddyTestPlanning.agentIntent(lastRequest)) {
       const testing=window.AgentBuddyTestPlanning.propose(snapshot);
       Object.assign(result,{testing:true,testChanges:testing.testChanges,ready:result.ready && testing.ready,
         response:testing.question || result.response+'\n\n同时调整本轮测试用例与评分口径，应用后重新测试。',

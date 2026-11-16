@@ -24,8 +24,6 @@
 .ab-release-empty>span{font-size:28px;display:block;color:#9ab0ce}
 .ab-release-empty h3{font-size:15px;color:#47607d;margin:12px 0 4px}
 .ab-release-empty p{color:#8393a9;margin:0}
-.ab-debug-history{margin-top:20px;padding:16px 2px 0;border-top:1px solid #dfe6f0}
-.ab-debug-history>summary{cursor:pointer;color:#607693;font-weight:500}
 .ab-release-report-summary{display:flex;align-items:center;flex-wrap:wrap;gap:10px 20px;padding:0 0 22px;color:#6e819c}
 .ab-release-report-summary strong{font-size:26px;color:#258265}
 .ab-release-report-summary small{font-size:12px;font-weight:400;color:#6e819c}

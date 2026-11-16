@@ -3,11 +3,18 @@
   const clone=value=>JSON.parse(JSON.stringify(value));
   const base=new URL('./',document.currentScript?document.currentScript.src:new URL('agentbuddy/parsing.js',document.baseURI));
   const cache=new Map();let pdfLibrary,zipLibrary,resources;
-  function completed(file) {return !!file && typeof file.text==='string' && !!file.text.trim() && file.parseStatus!=='failed' && file.extraction!=='not-parsed';}
+  const parserVersion=2;
+  // Product preview adapter: represent the result of the future document/LLM
+  // service without implementing OCR or inferring clinical facts from a filename.
+  function previewDocumentResult(pages,codeAssets) {
+    return {text:'问：这份资料可以帮助我了解哪些内容？\n答：可以围绕资料中的服务说明、日常注意事项和后续安排进行咨询。\n\n问：资料中没有提到我的情况怎么办？\n答：请补充您的具体情况，我会为您转接人工进一步确认。\n\n问：涉及诊疗判断时如何处理？\n答：涉及个人诊断、用药调整或治疗决定时，请联系主诊医生，由人工为您进一步处理。',
+      extraction:'pdf-preview',parseMode:'preview',pages,codeAssets,parserVersion};
+  }
+  function completed(file) {return !!file && (typeof file.text==='string' && !!file.text.trim() || (file.codeAssets || []).some(a=>a.kind!=='other' && a.status!=='ignored') || file.extraction==='code-assets' && file.codeScanCompleted===true) && !['failed','queued','parsing'].includes(file.parseStatus) && file.extraction!=='not-parsed';}
   function knowledgeFiles(messages) {
     const text=messages.map(m=>m.text || '').join('\n');
-    const explicit=/图片.{0,8}(知识|资料)|把.*(图片|截图).*(整理|加入|补充).*知识库|知识图片|这是知识资料/.test(text);
-    return messages.flatMap(m=>m.files || []).filter(f=>!f.image || explicit);
+    const explicit=/图片.{0,8}(知识|资料)|把.*(图片|截图).*(整理|加入|补充).*知识库|知识图片|这是知识资料|二维码|小程序码|^(?:请)?(?:补充|更新|新增|添加)(?:知识库|知识资料)/.test(text);
+    return messages.flatMap(m=>(m.files || []).filter(f=>!f.image || f.knowledgeImage || explicit).map(f=>Object.assign({},f,{codeKind:/小程序码/.test(m.text || '')?'mini':/二维码/.test(m.text || '')?'qr':f.codeKind})));
   }
   function xmlText(xml,tag) {
     const doc=new DOMParser().parseFromString(xml,'application/xml');
@@ -20,7 +27,8 @@
     });
     return zipLibrary;
   }
-  async function office(data,name) {
+  async function office(data,file,control) {
+    const name=file.name;
     const Zip=await loadZip(),zip=await Zip.loadAsync(data);
     const pattern=/\.docx$/i.test(name)?/^word\/document\.xml$/:/\.pptx$/i.test(name)?/^ppt\/slides\/slide\d+\.xml$/:/^xl\/(sharedStrings|worksheets\/sheet\d+)\.xml$/;
     const files=Object.keys(zip.files).filter(path=>pattern.test(path)).sort((a,b)=>a.localeCompare(b,undefined,{numeric:true}));
@@ -37,14 +45,21 @@
         }).join(' ')).join('\n'));
       } else texts.push(xmlText(xml,'p'));
     }
-    return {text:texts.join('\n\n'),extraction:'office-text'};
+    const images=Object.keys(zip.files).filter(path=>/^(?:word|ppt|xl)\/media\/.*\.(?:png|jpe?g|gif|webp|bmp)$/i.test(path)),codeAssets=[];
+    if(images.reduce((n,path)=>n+((zip.files[path]._data || {}).uncompressedSize || 0),0)>100*1024*1024)throw new Error('文档图片过多，请拆分后上传');
+    for(const path of images){if(control.stopped())throw new Error('解析已取消');control.progress(null,null,'正在识别文档中的二维码');const bytes=await zip.files[path].async('uint8array');codeAssets.push(...await window.AgentBuddyCodeAssets.image(file,new Blob([bytes]),path,control));}
+    return {text:texts.join('\n\n'),extraction:'office-text',codeAssets};
   }
   async function parse(file,control) {
     const original=window.AgentBuddyAttachments.original(file);
     if(!original)throw new Error('原文件无法读取，请重新上传');
     const data=await window.AgentBuddyAttachments.bytes(original);
     if(/\.(txt|md|json|csv)$/i.test(file.name))return {text:new TextDecoder('utf-8',{fatal:true}).decode(data),extraction:'plain-text'};
-    if(/\.(docx|xlsx|pptx)$/i.test(file.name))return office(data,file.name);
+    if(/\.(docx|xlsx|pptx)$/i.test(file.name))return office(data,file,control);
+    if(file.image || /^image\//.test(file.type || '') || /\.(png|jpe?g|gif|webp|bmp|avif)$/i.test(file.name)) {
+      control.progress(null,null,'正在识别二维码与小程序码');
+      return {text:'',extraction:'code-assets',codeScanCompleted:true,codeAssets:await window.AgentBuddyCodeAssets.image(file,original,'原图',control)};
+    }
     if(!/\.pdf$/i.test(file.name))throw new Error(file.image?'图片文字尚未能识别，请上传含文字的 PDF 或文本':'无法读取此格式，请转换为 PDF、DOCX、XLSX、PPTX 或文本后上传');
     if(!pdfLibrary)pdfLibrary=import(new URL('vendor/pdfjs/build/pdf.mjs',base).href).catch(error=>{pdfLibrary=null;throw error;});
     const lib=await pdfLibrary;if(control.stopped())throw new Error('解析已取消');lib.GlobalWorkerOptions.workerSrc=new URL('vendor/pdfjs/build/pdf.worker.mjs',base).href;
@@ -62,14 +77,28 @@
     try {
       pdf=await loading.promise;
       if(pdf.numPages>window.AgentBuddyAttachments.limits.pdfPages)throw new Error('PDF 超过 '+window.AgentBuddyAttachments.limits.pdfPages+' 页，请拆分后上传');
-      const pages=[];
+      const pages=[],codeAssets=[];
       for(let n=1;n<=pdf.numPages;n++) {
         if(control.stopped())throw new Error('解析已取消');
         const page=await pdf.getPage(n),content=await page.getTextContent();
-        pages.push(content.items.map(item=>item.str+(item.hasEOL?'\n':' ')).join(''));page.cleanup();
+        const text=content.items.map(item=>item.str+(item.hasEOL?'\n':' ')).join('');pages.push(text);
+        const operators=await page.getOperatorList();
+        if(/二维码|小程序|扫码|QR|scan/i.test(text) || operators.fnArray.some(op=>[lib.OPS.paintImageXObject,lib.OPS.paintInlineImageXObject,lib.OPS.paintImageXObjectRepeat].includes(op))) {
+          const initial=page.getViewport({scale:1}),viewport=page.getViewport({scale:Math.min(2,1800/Math.max(initial.width,initial.height))}),canvas=document.createElement('canvas');canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
+          control.progress(n,pdf.numPages,'正在识别第 '+n+' 页中的二维码');
+          const render=page.render({canvasContext:canvas.getContext('2d'),viewport});control.cancel=()=>render.cancel();await render.promise;control.cancel=()=>loading.destroy();
+          try{codeAssets.push(...await window.AgentBuddyCodeAssets.canvas(file,canvas,'第 '+n+' 页',control));}finally{canvas.width=canvas.height=1;}
+        }
+        page.cleanup();
         control.progress(n,pdf.numPages);
       }
-      return {text:pages.join('\n\n'),extraction:'pdf-text',pages:pdf.numPages};
+      if(!pages.join('').trim() && !window.AgentBuddyCodeAssets.review([{id:file.id,name:file.name,codeAssets}]).total) {
+        control.progress(pdf.numPages,pdf.numPages,'正在整理识别内容与问答');
+        await new Promise(resolve=>window.setTimeout(resolve,900));
+        if(control.stopped())throw new Error('解析已取消');
+        return previewDocumentResult(pdf.numPages,codeAssets);
+      }
+      return {text:pages.join('\n\n'),extraction:'pdf-text',pages:pdf.numPages,codeAssets,parserVersion};
     } finally {await loading.destroy();control.cancel=null;}
   }
   function run(options) {
@@ -80,12 +109,17 @@
       if(stopped)return;
       if(index===files.length){options.onComplete(clone(files));return;}
       const file=files[index];
-      const reusable=completed(file)?file:[cache.get(file.hash),...known.filter(k=>file.hash && k.hash===file.hash)].find(completed);
-      if(reusable){Object.assign(file,{text:reusable.text,extraction:reusable.extraction,parseStatus:'completed',pages:reusable.pages,parseError:''});next(index+1);return;}
+      let reusable=completed(file)?file:[...known.filter(k=>file.hash && k.hash===file.hash),cache.get(file.hash)].find(completed);
+      if(reusable && /\.pdf$/i.test(file.name) && !String(reusable.text || '').trim() && reusable.parserVersion!==parserVersion)reusable=null;
+      if(reusable && reusable.extraction==='code-assets' && ['qr','mini','code'].includes(file.codeKind) && !(reusable.codeAssets || []).some(a=>a.kind!=='other' && a.status!=='ignored')){reusable=null;file.codeReconsidered=true;}
+      if(reusable){
+        Object.assign(file,{text:reusable.text,extraction:reusable.extraction,parseMode:reusable.parseMode,codeAssets:clone(reusable.codeAssets || []),codeScanCompleted:reusable.codeScanCompleted===true,parserVersion:reusable.parserVersion,parseStatus:'completed',pages:reusable.pages,parseError:''});
+        next(index+1);return;
+      }
       file.parseStatus='parsing';file.parseError='';notify();
-      Promise.resolve().then(()=>parse(file,{stopped:()=>stopped,set cancel(value){cancel=value;},progress:(page,pages)=>{file.page=page;file.pages=pages;notify();}})).then(result=>{
+      Promise.resolve().then(()=>parse(file,{stopped:()=>stopped,set cancel(value){cancel=value;},progress:(page,pages,detail)=>{file.page=page;file.pages=pages;file.parseDetail=detail || '';notify();}})).then(result=>{
         if(stopped)return;
-        if(!result.text.trim())throw new Error('没有提取到可读文字，请上传可复制文字的文档或补充文本');
+        if(!result.text.trim() && !(result.codeAssets || []).length && !result.codeScanCompleted)throw new Error('未能识别出可读文字，请上传更清晰的资料或补充文本');
         if(result.text.length>2000000)throw new Error('提取文字过多，请拆分后上传');
         Object.assign(file,result,{parseStatus:'completed',parseError:'',parsedAt:new Date().toISOString()});
         if(file.hash)cache.set(file.hash,clone(file));notify();next(index+1);

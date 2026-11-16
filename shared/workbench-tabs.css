@@ -1,0 +1,113 @@
+/* Aggregate-chat's outer navigation only; inner profile and reply tabs keep their own layout. */
+html #ops-shell [data-chat-workbench-tabs] {
+  display:flex;
+  flex:0 0 auto;
+  flex-wrap:wrap;
+  align-items:stretch;
+  align-content:flex-start;
+  justify-content:flex-start;
+  gap:0 4px;
+  box-sizing:border-box;
+  min-width:0;
+  min-height:44px;
+  max-inline-size:100%;
+  padding:0 8px;
+  overflow-x:hidden;
+  overflow-y:visible;
+  background:var(--surface,#fff);
+  border-bottom:1px solid var(--border,#e5e8ec);
+}
+html #ops-shell [data-chat-workbench-tabs] > [role="tab"],
+html #ops-shell [data-chat-workbench-tabs] > [data-workbench-tabs-toggle] {
+  position:relative;
+  box-sizing:border-box;
+  flex:0 0 auto;
+  width:auto;
+  min-width:0;
+  min-height:44px;
+  max-inline-size:100%;
+  margin:0;
+  padding:10px 12px;
+  border:0;
+  border-bottom:2px solid transparent;
+  border-radius:0;
+  background:transparent;
+  color:var(--text-secondary,#4f6e91);
+  font-family:inherit;
+  font-size:14px;
+  line-height:22px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+html #ops-shell [data-chat-workbench-tabs] > [role="tab"][aria-selected="true"],
+html #ops-shell [data-chat-workbench-tabs] > [role="tab"].is-active {
+  color:var(--primary,#0365bf);
+  border-bottom-color:var(--primary,#0365bf);
+}
+html #ops-shell [data-chat-workbench-tabs] > [data-workbench-tabs-toggle] {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  margin-inline-start:auto;
+  cursor:pointer;
+}
+html #ops-shell [data-chat-workbench-tabs] > [data-workbench-tabs-toggle]::after {
+  content:"";
+  flex:none;
+  width:5px;
+  height:5px;
+  margin-top:-3px;
+  border-right:1.5px solid currentColor;
+  border-bottom:1.5px solid currentColor;
+  transform:rotate(45deg);
+}
+html #ops-shell [data-chat-workbench-tabs] > [data-workbench-tabs-toggle][aria-expanded="true"]::after {
+  margin-top:3px;
+  transform:rotate(225deg);
+}
+html #ops-shell [data-chat-workbench-tabs] > [data-workbench-tabs-toggle].has-active-overflow {
+  color:var(--primary,#0365bf);
+  border-bottom-color:var(--primary,#0365bf);
+  font-weight:600;
+}
+html #ops-shell [data-chat-workbench-tabs] > [role="tab"]:focus-visible,
+html #ops-shell [data-chat-workbench-tabs] > [data-workbench-tabs-toggle]:focus-visible {
+  outline:2px solid var(--primary,#0365bf);
+  outline-offset:-3px;
+}
+html #ops-shell [data-chat-workbench-tabs] > .wbt-row-break {
+  flex:0 0 100%;
+  width:0;
+  height:0;
+  padding:0;
+  border:0;
+}
+html #ops-shell [data-chat-workbench-tabs] > [hidden] {
+  display:none!important;
+}
+html #ops-shell .ops-chat-layout > .ops-chat-workbench.is-followup-creating {
+  grid-template-rows:auto minmax(0,1fr);
+}
+html #ops-shell .ops-chat-layout > aside.ops-chat-column.ops-chat-workbench:has(> [data-chat-workbench-tabs]):not(:has(> .ops-quick-reply-page)) {
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  min-height:0;
+  overflow:hidden;
+}
+html #ops-shell .ops-chat-layout > aside.ops-chat-column.ops-chat-workbench:has(> [data-chat-workbench-tabs]) > .ho-panel,
+html #ops-shell .ops-chat-layout > aside.ops-chat-column.ops-chat-workbench:has(> [data-chat-workbench-tabs]) > .ops-followup-panel,
+html #ops-shell .ops-chat-layout > aside.ops-chat-column.ops-chat-workbench:has(> [data-chat-workbench-tabs]) > .sbc-external-tab,
+html #ops-shell .ops-chat-layout > aside.ops-chat-column.ops-chat-workbench:has(> [data-chat-workbench-tabs]) > .ops-workbench-empty {
+  min-width:0;
+  min-height:0;
+  overflow:auto;
+}
+html #ops-shell .ops-chat-layout > aside.ops-chat-column.ops-chat-workbench:has(> [data-chat-workbench-tabs]) > iframe.sbc-custom-frame {
+  display:block;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+}
