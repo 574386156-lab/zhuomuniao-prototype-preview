@@ -1,0 +1,734 @@
+{
+  "version": 1,
+  "method": "mechanical extraction; original script/style order, attributes and bodies retained",
+  "pages": [
+    {
+      "path": "卓睦鸟患管平台-交互原型.html",
+      "beforeBytes": 9017412,
+      "afterBytes": 6338,
+      "originalSha256": "ecf98b37c3ae30075b3c2de542e53bc82d7e5c61d343cbec7c1bc59044722c59",
+      "sha256": "111635d69af424e6f42738c244de1b3665c12c45bcb1e4f4ff5ef6102635f35c"
+    },
+    {
+      "path": "卓睦鸟患管助手-患者端-交互原型.html",
+      "beforeBytes": 13586035,
+      "afterBytes": 60193,
+      "originalSha256": "11399ecc5f4b6be8f368815549a53900a37ac7ca75925208e170a77850c97535",
+      "sha256": "02980816d603402498bfc5756bc7e4f93c9b4e75055189daeb3c6961a080c074"
+    },
+    {
+      "path": "patient-profile.html",
+      "beforeBytes": 13598949,
+      "afterBytes": 73077,
+      "originalSha256": "70360461496e897bcc7854173c97d0c25b0fb241bc3154e92b1a846b45ba5c60",
+      "sha256": "77ad2afe9af6989f3ffdf9c70586a90da78fb35732d8677751e2120ce522146b"
+    },
+    {
+      "path": "卓睦鸟患管后台-交互原型.html",
+      "beforeBytes": 537559,
+      "afterBytes": 7893,
+      "originalSha256": "37c4971c43288b11e38ba131141da043a436cdaabf71e783016fdc77f6dfa6e1",
+      "sha256": "9d00c69fd321e8d94d87df78a2ed54f5b0a76696264f361fda446b479f20bb1f"
+    }
+  ],
+  "assets": [
+    {
+      "path": "assets/iphone-bezel.png",
+      "mime": "image/png",
+      "sha256": "ee2514d74d2f75f3541405fa2f20811f159879a66586778cfd8c9c84c44959df",
+      "bytes": 353980,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/0ce9033c69dc714f5f45ef9bf17d55e4c46bcdfad6799a4e92b38e7781bf86bd.woff2",
+      "mime": "font/woff2",
+      "sha256": "0ce9033c69dc714f5f45ef9bf17d55e4c46bcdfad6799a4e92b38e7781bf86bd",
+      "bytes": 4796,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/30f6abf6baa425825828793d6dfad1fb63765d0e5abaa7af6feafb9bfcece5a0.ttf",
+      "mime": "font/ttf",
+      "sha256": "30f6abf6baa425825828793d6dfad1fb63765d0e5abaa7af6feafb9bfcece5a0",
+      "bytes": 10836,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/54cf6086f7bb21f9d072ad494a19b4681fa516dd0a14cee52da01d3651a913a3.ttf",
+      "mime": "font/ttf",
+      "sha256": "54cf6086f7bb21f9d072ad494a19b4681fa516dd0a14cee52da01d3651a913a3",
+      "bytes": 68064,
+      "occurrences": 3,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/5bcc3aa180e7f26f643cd5b2621cd7c2de193d0661d913a94afd3d4881a7a34b.woff2",
+      "mime": "font/woff2",
+      "sha256": "5bcc3aa180e7f26f643cd5b2621cd7c2de193d0661d913a94afd3d4881a7a34b",
+      "bytes": 22200,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/808443ae6c8204395add8543da8a90a60b9376fb0f87ed8e8ea37d109596d805.ttf",
+      "mime": "font/ttf",
+      "sha256": "808443ae6c8204395add8543da8a90a60b9376fb0f87ed8e8ea37d109596d805",
+      "bytes": 210792,
+      "occurrences": 3,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/b9c3346f0ae869eee449c94a182d90b100f253d916827785577887d03eff51db.woff",
+      "mime": "font/woff",
+      "sha256": "b9c3346f0ae869eee449c94a182d90b100f253d916827785577887d03eff51db",
+      "bytes": 21920,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/d2f0593540b0e33ba6de255a54f272d466e31144806956bea8cfdbf7edffc9bd.ttf",
+      "mime": "font/ttf",
+      "sha256": "d2f0593540b0e33ba6de255a54f272d466e31144806956bea8cfdbf7edffc9bd",
+      "bytes": 426112,
+      "occurrences": 3,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/d7236a19bf23cbb2027280e8f51dc99d6c45976a2ed60de73382b034b18a2b68.woff2",
+      "mime": "font/woff2",
+      "sha256": "d7236a19bf23cbb2027280e8f51dc99d6c45976a2ed60de73382b034b18a2b68",
+      "bytes": 118684,
+      "occurrences": 3,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/fonts/e3456d1283b9d75337a773dfd147bf908fd02c01b4bf48576d8603a69b13cbe5.woff2",
+      "mime": "font/woff2",
+      "sha256": "e3456d1283b9d75337a773dfd147bf908fd02c01b4bf48576d8603a69b13cbe5",
+      "bytes": 25472,
+      "occurrences": 3,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/077a782a3b6c2915fc518dfb4bba825c8c5861b2572f9522a7024902b9cb2850.svg",
+      "mime": "image/svg+xml",
+      "sha256": "077a782a3b6c2915fc518dfb4bba825c8c5861b2572f9522a7024902b9cb2850",
+      "bytes": 542,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/0a7ff9d969e882a6ef2cd5575b83e66879e4588701f52cb1ab22b197ff34124c.png",
+      "mime": "image/png",
+      "sha256": "0a7ff9d969e882a6ef2cd5575b83e66879e4588701f52cb1ab22b197ff34124c",
+      "bytes": 27530,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管后台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/0b3913ce91bb0fbb7177784b094e41f4e47fda6dba81076e57b0c4369d2a1cc5.png",
+      "mime": "image/png",
+      "sha256": "0b3913ce91bb0fbb7177784b094e41f4e47fda6dba81076e57b0c4369d2a1cc5",
+      "bytes": 2151727,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/0be31226bd9d48dc3e93eefa6dc6ac743ad10fe2e637d9a673054150ac4c004e.png",
+      "mime": "image/png",
+      "sha256": "0be31226bd9d48dc3e93eefa6dc6ac743ad10fe2e637d9a673054150ac4c004e",
+      "bytes": 1856,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/179cf5f46383dfa5f539e5bdbf4383026174f7e7bfb95d6bfd3af8f73040db0c.png",
+      "mime": "image/png",
+      "sha256": "179cf5f46383dfa5f539e5bdbf4383026174f7e7bfb95d6bfd3af8f73040db0c",
+      "bytes": 5079,
+      "occurrences": 4,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/1a8bd4207cf34532ae514bdcdca693acc9a2b8ebc9d3182dc163c3e9ddcc4823.svg",
+      "mime": "image/svg+xml",
+      "sha256": "1a8bd4207cf34532ae514bdcdca693acc9a2b8ebc9d3182dc163c3e9ddcc4823",
+      "bytes": 824,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/24d2d78933897c032d7dca4648519fb746df7209419e38da59d9c1c3198778ef.png",
+      "mime": "image/png",
+      "sha256": "24d2d78933897c032d7dca4648519fb746df7209419e38da59d9c1c3198778ef",
+      "bytes": 1260335,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/26209942af07844b620ad63c7a79d674a5b809895d2efbe2bc1e24c235883fd7.png",
+      "mime": "image/png",
+      "sha256": "26209942af07844b620ad63c7a79d674a5b809895d2efbe2bc1e24c235883fd7",
+      "bytes": 3078,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/292e2d83d69adaeb663d6a840ce8db8d0a5257710b472c20713e03f56b08ea88.png",
+      "mime": "image/png",
+      "sha256": "292e2d83d69adaeb663d6a840ce8db8d0a5257710b472c20713e03f56b08ea88",
+      "bytes": 53341,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/3dd1b6b3d907ec591ed1285cba86eb1b132e29e9ba16f482f4a7d7ef28f0156f.png",
+      "mime": "image/png",
+      "sha256": "3dd1b6b3d907ec591ed1285cba86eb1b132e29e9ba16f482f4a7d7ef28f0156f",
+      "bytes": 28303,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管后台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/40e218b274d0973d519b50f42884e6e05ef0f2b6a0e46e102fda54218784466d.svg",
+      "mime": "image/svg+xml",
+      "sha256": "40e218b274d0973d519b50f42884e6e05ef0f2b6a0e46e102fda54218784466d",
+      "bytes": 2765,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/5223b2a01a70435ed54e34c7b13b864be604c98f6ee10aba08bdda74c75e3dfe.png",
+      "mime": "image/png",
+      "sha256": "5223b2a01a70435ed54e34c7b13b864be604c98f6ee10aba08bdda74c75e3dfe",
+      "bytes": 1546526,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/563fec004ca69906f7ee7ed6a663d8a7f77cc797f3fbcc37855e06eb403af279.png",
+      "mime": "image/png",
+      "sha256": "563fec004ca69906f7ee7ed6a663d8a7f77cc797f3fbcc37855e06eb403af279",
+      "bytes": 2488,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/58198034b8a0715095f49be075923f6074c2672812c18dea12f3d47d1d316ab5.png",
+      "mime": "image/png",
+      "sha256": "58198034b8a0715095f49be075923f6074c2672812c18dea12f3d47d1d316ab5",
+      "bytes": 16548,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/6085e50be17ca2705b4351283187be2c5b01b58262c70b90d74b3376efb4adfe.png",
+      "mime": "image/png",
+      "sha256": "6085e50be17ca2705b4351283187be2c5b01b58262c70b90d74b3376efb4adfe",
+      "bytes": 42695,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/655cdaa81fb3e1fbe91a979f884eb863f007be5147c8c3d1ac982bf4c094e6f0.png",
+      "mime": "image/png",
+      "sha256": "655cdaa81fb3e1fbe91a979f884eb863f007be5147c8c3d1ac982bf4c094e6f0",
+      "bytes": 2196,
+      "occurrences": 4,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/6dc0dc7ef3c1919be18df87de6c4757a47d471a98f9d911e866d61190b728b69.png",
+      "mime": "image/png",
+      "sha256": "6dc0dc7ef3c1919be18df87de6c4757a47d471a98f9d911e866d61190b728b69",
+      "bytes": 1120583,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/737b4adf96150c9b46886769df600299947258e466afde5dd45efdc6623f14c5.png",
+      "mime": "image/png",
+      "sha256": "737b4adf96150c9b46886769df600299947258e466afde5dd45efdc6623f14c5",
+      "bytes": 945758,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/784cc092947db47fc9d72c99bb44449945a7dfbe2ce73ee46017f1e2f14c27a5.svg",
+      "mime": "image/svg+xml",
+      "sha256": "784cc092947db47fc9d72c99bb44449945a7dfbe2ce73ee46017f1e2f14c27a5",
+      "bytes": 505,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/79abd7cffde6b5dc1bab978c1d9308aa9a2fa5cc344c75224520b433b821b22a.png",
+      "mime": "image/png",
+      "sha256": "79abd7cffde6b5dc1bab978c1d9308aa9a2fa5cc344c75224520b433b821b22a",
+      "bytes": 13667,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/a0e316c85bf74fcff2145254da31a2c3cf433a3a995ffe8517b8d39b6a736be0.png",
+      "mime": "image/png",
+      "sha256": "a0e316c85bf74fcff2145254da31a2c3cf433a3a995ffe8517b8d39b6a736be0",
+      "bytes": 35093,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管后台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/a3aa155d640cc04dd0524d84894ac7626d8e176527b4e89c3184c68519925604.jpg",
+      "mime": "image/jpeg",
+      "sha256": "a3aa155d640cc04dd0524d84894ac7626d8e176527b4e89c3184c68519925604",
+      "bytes": 3006,
+      "occurrences": 6,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/a672d8612c7dbac7a01715e749bcf09736c66c56f2b7e8ee0a30c39b4bebbecc.png",
+      "mime": "image/png",
+      "sha256": "a672d8612c7dbac7a01715e749bcf09736c66c56f2b7e8ee0a30c39b4bebbecc",
+      "bytes": 1730,
+      "occurrences": 4,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html",
+        "卓睦鸟患管后台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/a87c1250ba20756f5d020b5351a7ae71d663dcfc64aca3a1cd56452e8a05233e.png",
+      "mime": "image/png",
+      "sha256": "a87c1250ba20756f5d020b5351a7ae71d663dcfc64aca3a1cd56452e8a05233e",
+      "bytes": 214337,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/c0ba40030f6529db80eccdbe105243f17775cf24f708c670c6a6205cc3ea1462.png",
+      "mime": "image/png",
+      "sha256": "c0ba40030f6529db80eccdbe105243f17775cf24f708c670c6a6205cc3ea1462",
+      "bytes": 1501757,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/c27349e8d565d57264cbe822a60f84c17cab4ddd07746fade8a82172d2bbf5ef.png",
+      "mime": "image/png",
+      "sha256": "c27349e8d565d57264cbe822a60f84c17cab4ddd07746fade8a82172d2bbf5ef",
+      "bytes": 1353,
+      "occurrences": 6,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/c2c10f625e45e8a918a6d74a063670394ad0a5078b6dd88d92f9a5ac7cb6d612.svg",
+      "mime": "image/svg+xml",
+      "sha256": "c2c10f625e45e8a918a6d74a063670394ad0a5078b6dd88d92f9a5ac7cb6d612",
+      "bytes": 484,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/c4ebfe320fae57f43219bd3c952c89d938714d558196dac7c968a70ae9c9e028.png",
+      "mime": "image/png",
+      "sha256": "c4ebfe320fae57f43219bd3c952c89d938714d558196dac7c968a70ae9c9e028",
+      "bytes": 13820,
+      "occurrences": 4,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/cf60fd626d53bffe624204e43f6ce9502ae8450bf516435287000c731be217c9.png",
+      "mime": "image/png",
+      "sha256": "cf60fd626d53bffe624204e43f6ce9502ae8450bf516435287000c731be217c9",
+      "bytes": 21584,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管后台-交互原型.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/de117f177b421e5cd5b75b9a96e39d201667af6eed3e2c0203b238cbd194fc7e.png",
+      "mime": "image/png",
+      "sha256": "de117f177b421e5cd5b75b9a96e39d201667af6eed3e2c0203b238cbd194fc7e",
+      "bytes": 5075,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/ee2800deb780dd83b3698365af7f4d131def01ae1d2ccc6a23b1139e876c5459.png",
+      "mime": "image/png",
+      "sha256": "ee2800deb780dd83b3698365af7f4d131def01ae1d2ccc6a23b1139e876c5459",
+      "bytes": 1574459,
+      "occurrences": 2,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/f0fce5779e8055c8e4bd1660c5733c4636ef4e36b777a5b9c9982b46f1dae857.png",
+      "mime": "image/png",
+      "sha256": "f0fce5779e8055c8e4bd1660c5733c4636ef4e36b777a5b9c9982b46f1dae857",
+      "bytes": 740809,
+      "occurrences": 4,
+      "pages": [
+        "卓睦鸟患管助手-患者端-交互原型.html",
+        "patient-profile.html"
+      ]
+    },
+    {
+      "path": "page-assets/images/f67e24a667daa6901cb8dd05cd82d96ed2add5d6253ff694ae77560048054530.png",
+      "mime": "image/png",
+      "sha256": "f67e24a667daa6901cb8dd05cd82d96ed2add5d6253ff694ae77560048054530",
+      "bytes": 11766,
+      "occurrences": 1,
+      "pages": [
+        "卓睦鸟患管后台-交互原型.html"
+      ]
+    },
+    {
+      "path": "shared/wecom-entry-icons.woff2",
+      "mime": "font/woff2",
+      "sha256": "aa75998623a391e61c6901794ace832e3ecdd288b56d608f21bea0411acc0b8e",
+      "bytes": 158220,
+      "occurrences": 3,
+      "pages": [
+        "卓睦鸟患管平台-交互原型.html"
+      ]
+    }
+  ],
+  "blocks": [
+    {
+      "page": "卓睦鸟患管平台-交互原型.html",
+      "index": 4,
+      "kind": "style",
+      "attributes": " id=\"ops-v3-styles\"",
+      "path": "page-assets/styles/ops-v3-styles.css",
+      "sha256": "d5c6e56e5471b3a407053d3646f442b951feb4c5e0249f3c9cf4e37539bf8ee2",
+      "bytes": 124773,
+      "originalSha256": "d5c6e56e5471b3a407053d3646f442b951feb4c5e0249f3c9cf4e37539bf8ee2"
+    },
+    {
+      "page": "卓睦鸟患管平台-交互原型.html",
+      "index": 5,
+      "kind": "script",
+      "attributes": " id=\"ops-v3-script\"",
+      "path": "page-assets/scripts/ops-v3-script.js",
+      "sha256": "b482edf897e4046552218b5d6dc3c2b52c198df0365bd12f840bac236d14064e",
+      "bytes": 396515,
+      "originalSha256": "2e43d008afebf6ccc79fd9ee0a6521452e8beaadb561368c560c9b1afbbf10fe"
+    },
+    {
+      "page": "卓睦鸟患管平台-交互原型.html",
+      "index": 6,
+      "kind": "style",
+      "attributes": " id=\"agentbuddy-styles\"",
+      "path": "page-assets/styles/agentbuddy-styles.css",
+      "sha256": "ff8ed6675518d65a708d4ef44ce7606d77e556522b072e788343a0df5e2dc207",
+      "bytes": 8693,
+      "originalSha256": "ff8ed6675518d65a708d4ef44ce7606d77e556522b072e788343a0df5e2dc207"
+    },
+    {
+      "page": "卓睦鸟患管平台-交互原型.html",
+      "index": 7,
+      "kind": "script",
+      "attributes": " type=\"module\"",
+      "path": "page-assets/scripts/platform-app-7.js",
+      "sha256": "2dd9579738f037297ef084e7d4d2f61d45c8292434cad90d8d70de088c4e98db",
+      "bytes": 301072,
+      "originalSha256": "a7e0e63dbc131131d6d18f0c2cc8c8457382342c3da0cb76bf386f141cf30119"
+    },
+    {
+      "page": "卓睦鸟患管平台-交互原型.html",
+      "index": 8,
+      "kind": "style",
+      "attributes": "",
+      "path": "page-assets/styles/platform-base-8.css",
+      "sha256": "7342d4bf050c9dfa07478eaa7e5c1b719080f997e2160c8e459e23fc83e8106b",
+      "bytes": 156292,
+      "originalSha256": "7d75923fa259105a296a6c9020d81d95249a83451f9cecddd833415cea2247c1"
+    },
+    {
+      "page": "卓睦鸟患管平台-交互原型.html",
+      "index": 24,
+      "kind": "script",
+      "attributes": "",
+      "path": "page-assets/scripts/platform-app-24.js",
+      "sha256": "b1db2e40f44d44f37c812a791ebf70b740712f5da42a62c57dfe80a7cbb8d9af",
+      "bytes": 245341,
+      "originalSha256": "b1db2e40f44d44f37c812a791ebf70b740712f5da42a62c57dfe80a7cbb8d9af"
+    },
+    {
+      "page": "卓睦鸟患管助手-患者端-交互原型.html",
+      "index": 0,
+      "kind": "script",
+      "attributes": " type=\"module\"",
+      "path": "page-assets/scripts/patient-app-0.js",
+      "sha256": "3947e62e2879f65d9cd1b96fe48f7478c917af0507b1720b988242f4331a1326",
+      "bytes": 457077,
+      "originalSha256": "66d5322e97267b40d50b447dda3717c2f0f10c6e5e7740a4cf8e41ac7195783c"
+    },
+    {
+      "page": "卓睦鸟患管助手-患者端-交互原型.html",
+      "index": 1,
+      "kind": "style",
+      "attributes": "",
+      "path": "page-assets/styles/patient-base-1.css",
+      "sha256": "6163a1f7c3a31ead7fcc9c8136356aca9bf08f9b354a542e5a64fcae024f8d4c",
+      "bytes": 34866,
+      "originalSha256": "0b0f85442396e79f2893dac55057a43c6cabfcb3d515a0923c46b072a719ac0a"
+    },
+    {
+      "page": "卓睦鸟患管助手-患者端-交互原型.html",
+      "index": 8,
+      "kind": "script",
+      "attributes": " id=\"patient-record-flow-script\"",
+      "path": "page-assets/scripts/patient-record-flow-script.js",
+      "sha256": "c30feb5152f3cd8e76dce7d5be0467f911d825d0fd213681c9b6e2153aa08641",
+      "bytes": 8597,
+      "originalSha256": "c30feb5152f3cd8e76dce7d5be0467f911d825d0fd213681c9b6e2153aa08641"
+    },
+    {
+      "page": "卓睦鸟患管助手-患者端-交互原型.html",
+      "index": 16,
+      "kind": "style",
+      "attributes": " id=\"ai-record-detail-styles\"",
+      "path": "page-assets/styles/ai-record-detail-styles.css",
+      "sha256": "e63593b6e572fc299fea7b0ab67c8fccd7dbd54fca221bc71a7d72077e68bd5c",
+      "bytes": 11747,
+      "originalSha256": "e63593b6e572fc299fea7b0ab67c8fccd7dbd54fca221bc71a7d72077e68bd5c"
+    },
+    {
+      "page": "卓睦鸟患管助手-患者端-交互原型.html",
+      "index": 18,
+      "kind": "script",
+      "attributes": " id=\"ai-profile-page-script\"",
+      "path": "page-assets/scripts/ai-profile-page-script.js",
+      "sha256": "db1525cc226c86795f74f088806fb4a2bbd738c76d059a32d15e796ae69d3a47",
+      "bytes": 124983,
+      "originalSha256": "8ffe1f46394758a81e21abe14991a2a96c5354fa5876933673c829aa1defd1ec"
+    },
+    {
+      "page": "卓睦鸟患管助手-患者端-交互原型.html",
+      "index": 21,
+      "kind": "style",
+      "attributes": " id=\"patient-upload-styles\"",
+      "path": "page-assets/styles/patient-upload-styles.css",
+      "sha256": "380e2c6fe6ad1063b317a9312a2e51d29ea46e0ba15d3ea7e20464ec0dada74d",
+      "bytes": 21298,
+      "originalSha256": "380e2c6fe6ad1063b317a9312a2e51d29ea46e0ba15d3ea7e20464ec0dada74d"
+    },
+    {
+      "page": "卓睦鸟患管助手-患者端-交互原型.html",
+      "index": 24,
+      "kind": "script",
+      "attributes": " id=\"patient-upload-script\"",
+      "path": "page-assets/scripts/patient-upload-script.js",
+      "sha256": "db29823126531d29d2b699c8e50db0494accc30290a8b8ab324dd7aaa73cf14d",
+      "bytes": 67184,
+      "originalSha256": "cadb6d0880dd4aa1aaf103ad05edd080b8d09a998495e35cce84766c390fd7d0"
+    },
+    {
+      "page": "patient-profile.html",
+      "index": 0,
+      "kind": "script",
+      "attributes": " type=\"module\"",
+      "path": "page-assets/scripts/patient-app-0.js",
+      "sha256": "3947e62e2879f65d9cd1b96fe48f7478c917af0507b1720b988242f4331a1326",
+      "bytes": 457077,
+      "originalSha256": "66d5322e97267b40d50b447dda3717c2f0f10c6e5e7740a4cf8e41ac7195783c"
+    },
+    {
+      "page": "patient-profile.html",
+      "index": 1,
+      "kind": "style",
+      "attributes": "",
+      "path": "page-assets/styles/patient-base-1.css",
+      "sha256": "6163a1f7c3a31ead7fcc9c8136356aca9bf08f9b354a542e5a64fcae024f8d4c",
+      "bytes": 34866,
+      "originalSha256": "0b0f85442396e79f2893dac55057a43c6cabfcb3d515a0923c46b072a719ac0a"
+    },
+    {
+      "page": "patient-profile.html",
+      "index": 8,
+      "kind": "script",
+      "attributes": " id=\"patient-record-flow-script\"",
+      "path": "page-assets/scripts/patient-record-flow-script.js",
+      "sha256": "c30feb5152f3cd8e76dce7d5be0467f911d825d0fd213681c9b6e2153aa08641",
+      "bytes": 8597,
+      "originalSha256": "c30feb5152f3cd8e76dce7d5be0467f911d825d0fd213681c9b6e2153aa08641"
+    },
+    {
+      "page": "patient-profile.html",
+      "index": 16,
+      "kind": "style",
+      "attributes": " id=\"ai-record-detail-styles\"",
+      "path": "page-assets/styles/ai-record-detail-styles.css",
+      "sha256": "e63593b6e572fc299fea7b0ab67c8fccd7dbd54fca221bc71a7d72077e68bd5c",
+      "bytes": 11747,
+      "originalSha256": "e63593b6e572fc299fea7b0ab67c8fccd7dbd54fca221bc71a7d72077e68bd5c"
+    },
+    {
+      "page": "patient-profile.html",
+      "index": 18,
+      "kind": "script",
+      "attributes": " id=\"ai-profile-page-script\"",
+      "path": "page-assets/scripts/ai-profile-page-script-cd8f94aaf93b.js",
+      "sha256": "cd8f94aaf93b42027e332537949a28bc47819295e904f6d4c54cb7e52cc07ee6",
+      "bytes": 125026,
+      "originalSha256": "c0f91fc5db505f1b5a15724c4b84cf98d3bcdf7d2a5285b184ffa107a3fee1c3"
+    },
+    {
+      "page": "patient-profile.html",
+      "index": 21,
+      "kind": "style",
+      "attributes": " id=\"patient-upload-styles\"",
+      "path": "page-assets/styles/patient-upload-styles.css",
+      "sha256": "380e2c6fe6ad1063b317a9312a2e51d29ea46e0ba15d3ea7e20464ec0dada74d",
+      "bytes": 21298,
+      "originalSha256": "380e2c6fe6ad1063b317a9312a2e51d29ea46e0ba15d3ea7e20464ec0dada74d"
+    },
+    {
+      "page": "patient-profile.html",
+      "index": 24,
+      "kind": "script",
+      "attributes": " id=\"patient-upload-script\"",
+      "path": "page-assets/scripts/patient-upload-script.js",
+      "sha256": "db29823126531d29d2b699c8e50db0494accc30290a8b8ab324dd7aaa73cf14d",
+      "bytes": 67184,
+      "originalSha256": "cadb6d0880dd4aa1aaf103ad05edd080b8d09a998495e35cce84766c390fd7d0"
+    },
+    {
+      "page": "卓睦鸟患管后台-交互原型.html",
+      "index": 0,
+      "kind": "style",
+      "attributes": "",
+      "path": "page-assets/styles/admin-base-0.css",
+      "sha256": "7c4fbe59077cd6bed0b95b55f12a94002ab58225ec1ee2f9f0d681e688b9ac11",
+      "bytes": 112144,
+      "originalSha256": "7c4fbe59077cd6bed0b95b55f12a94002ab58225ec1ee2f9f0d681e688b9ac11"
+    },
+    {
+      "page": "卓睦鸟患管后台-交互原型.html",
+      "index": 3,
+      "kind": "script",
+      "attributes": "",
+      "path": "page-assets/scripts/admin-app-3.js",
+      "sha256": "ba2e2f0f38329a782a63158215339e70908b4e969650cf823cadbf4e9d9a8da7",
+      "bytes": 250034,
+      "originalSha256": "d123a66b57b4fb02b4bf53ab3856110d6087bfbd20149d8c364fa2438ff7dcbe"
+    }
+  ],
+  "totals": {
+    "originalHtmlBytes": 36739955,
+    "htmlBytes": 147501,
+    "sharedAssetBytes": 12772695,
+    "externalCodeBytes": 2445642,
+    "totalBytes": 15365838,
+    "uniqueAssets": 44,
+    "assetOccurrences": 101
+  }
+}
