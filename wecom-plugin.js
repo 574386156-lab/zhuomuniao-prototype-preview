@@ -111,21 +111,21 @@
   function receptionStatus(item){if(item.result)return item.result;if(item.phase==='return_failed')return 'return_failed';if(item.phase==='returning_ai')return item.lastReturn&&item.lastReturn.mode==='timeout'?'timeout_returning':'transferring_ai';return 'waiting';}
   function receptionLabel(item){var key=receptionStatus(item),definition=receptionStatuses.pending.concat(receptionStatuses.history).find(function(status){return status[0]===key;});return definition?definition[1]+(key==='transferring_ai'?'…':''):'待接手';}
   function statusDefinitions(type){return todos.statusesFor?todos.statusesFor(type):type==='followup'?[{value:'pending',label:'待处理'},{value:'completed',label:'已完成'}]:todos.statuses;}
-  function todoDefinitions(type){return statusDefinitions(type||todoType).filter(function(status){return todoTab==='history'?status.value==='completed'||status.value==='expired':status.value==='pending'||status.value==='in_progress';});}
+  function todoDefinitions(type){if(todoTab!=='history')return [];return statusDefinitions(type||todoType).filter(function(status){return status.value==='completed'||status.value==='expired';});}
   function todoLabel(status,type){var definition=statusDefinitions(type||'conversation').find(function(item){return item.value===status;});return definition?definition.label:'';}
   function todoSearchMatches(item,query){return window.TodoSearch?window.TodoSearch.matches(item,query):!query||(item.patient+' '+item.title+' '+item.description+' '+item.resultLabel).toLowerCase().indexOf(query.toLowerCase())>=0;}
   function commitTodoSearch(input){var next=input.value,changed=next!==todoSearch;todoSearch=next;if(changed||todoSearchRenderPending)showTodos();}
-  function todoStatusMatches(item){var selected=todoStatus[todoTab];return selected==='all'||item.status===selected;}
+  function todoStatusMatches(item){var selected=todoStatus[todoTab];return todoTab!=='history'||selected==='all'||item.status===selected;}
   function todoSymbol(type){var paths={info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/>',conversation:'<path d="M4 7h15m-4-4 4 4-4 4M20 17H5m4-4-4 4 4 4"/>',followup:'<rect x="5" y="5" width="14" height="16" rx="2"/><path d="M9 3h6v4H9zM9 13l2 2 4-4M9 18h6"/>'};return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(paths[type]||'')+'</svg>';}
   function statusHelpButton(){return '<button type="button" class="wc-status-help-button" data-wc-status-help aria-label="待办状态说明" aria-haspopup="dialog" aria-expanded="'+todoHelpOpen+'">'+todoSymbol('info')+'</button>';}
   function statusDialog(){if(!todoHelpOpen)return '';return '<div class="wc-status-backdrop"><section class="wc-status-dialog" data-wc-status-dialog role="dialog" aria-modal="true" aria-labelledby="wc-status-title"><header><h2 id="wc-status-title">待办状态</h2></header><div class="wc-status-body"><dl>'+statusDefinitions('conversation').map(function(status){return '<div><dt><span class="wc-my-todo-status is-'+esc(status.value)+'">'+esc(status.label)+'</span></dt><dd>'+esc(status.description)+'</dd></div>';}).join('')+'</dl></div><footer><button type="button" data-wc-status-close>我知道了</button></footer></section></div>';}
   function openStatusHelp(){if(todoHelpOpen)return;todoHelpOpen=true;showTodos();}
   function closeStatusHelp(){if(!todoHelpOpen)return;todoHelpOpen=false;showTodos();var button=app.querySelector('[data-wc-status-help]');if(button)button.focus({preventScroll:true});}
-  function appliedTodoFilters(){return {type:todoType,status:todoStatus[todoTab],period:historyPeriod,from:historyFrom,to:historyTo};}
+  function appliedTodoFilters(){return {type:todoType,status:todoTab==='history'?todoStatus.history:'all',period:historyPeriod,from:historyFrom,to:historyTo};}
   function todoFilterChips(){
     var chips=[];
     if(todoType!=='all')chips.push(['type',todos.types.find(function(type){return type.value===todoType;}).label]);
-    if(todoStatus[todoTab]!=='all')chips.push(['status',todoLabel(todoStatus[todoTab],todoType)]);
+    if(todoTab==='history'&&todoStatus.history!=='all')chips.push(['status',todoLabel(todoStatus.history,todoType)]);
     if(todoTab==='history'&&historyPeriod!=='all')chips.push(['period',historyPeriod==='custom'?historyFrom+' 至 '+historyTo:({today:'今天',yesterday:'昨天',week:'近7天'})[historyPeriod]]);
     return chips;
   }
@@ -138,7 +138,7 @@
   function todoFilterResults(filters){
     var range=historyRange(filters),query=todoSearch.trim().toLowerCase();
     return todos.list({patientId:todoPatientId}).filter(function(item){
-      if(filters.type!=='all'&&item.type!==filters.type||filters.status!=='all'&&item.status!==filters.status)return false;
+      if(filters.type!=='all'&&item.type!==filters.type||todoTab==='history'&&filters.status!=='all'&&item.status!==filters.status)return false;
       if(!todoSearchMatches(item,query))return false;
       if(todoTab==='pending')return item.status==='pending'||item.status==='in_progress';
       if(range.error||item.status!=='completed'&&item.status!=='expired'||!Number.isFinite(item.finishedAt))return false;
@@ -148,11 +148,11 @@
   function todoFilterDialog(){
     if(!todoFilterDraft)return '';
     var draft=todoFilterDraft,range=historyRange(draft),error=todoTab==='history'&&range.error,dates=[['all','全部日期'],['today','今天'],['yesterday','昨天'],['week','近7天'],['custom','自定义']];
-    return '<div class="wc-filter-backdrop"'+(todoHelpOpen?' inert aria-hidden="true"':'')+'><section class="wc-filter-dialog" data-wc-filter-dialog role="dialog" aria-modal="true" aria-labelledby="wc-filter-title"><header><h2 id="wc-filter-title">筛选待办</h2><button type="button" data-wc-filter-close aria-label="关闭筛选">×</button></header><div class="wc-filter-body"><fieldset><legend>待办类型</legend>'+todoFilterChoices('type',[['all','全部类型']].concat(todos.types.map(function(type){return [type.value,type.label];})),draft.type)+'</fieldset><fieldset><legend>状态'+statusHelpButton()+'</legend>'+todoFilterChoices('status',[['all','全部状态']].concat(todoDefinitions(draft.type).map(function(status){return [status.value,status.label];})),draft.status)+'</fieldset>'+(todoTab==='history'?'<fieldset><legend>结束日期</legend>'+todoFilterChoices('period',dates,draft.period)+(draft.period==='custom'?'<div class="wc-filter-dates"><label>开始日期<input id="wc-history-from" type="date" aria-label="开始日期" max="'+historyDay(Date.now())+'" value="'+esc(draft.from)+'"></label><label>结束日期<input id="wc-history-to" type="date" aria-label="结束日期" max="'+historyDay(Date.now())+'" value="'+esc(draft.to)+'"></label></div>':'')+(error?'<p class="wc-history-error" role="alert">'+esc(error)+'</p>':'')+'</fieldset>':'')+'</div><footer><button type="button" data-wc-filter-reset>重置</button><button type="button" data-wc-filter-apply'+(error?' disabled':'')+'>查看结果'+(!error?'（'+todoFilterResults(draft)+'）':'')+'</button></footer></section></div>';
+    return '<div class="wc-filter-backdrop"'+(todoHelpOpen?' inert aria-hidden="true"':'')+'><section class="wc-filter-dialog" data-wc-filter-dialog role="dialog" aria-modal="true" aria-labelledby="wc-filter-title"><header><h2 id="wc-filter-title">筛选待办</h2><button type="button" data-wc-filter-close aria-label="关闭筛选">×</button></header><div class="wc-filter-body"><fieldset><legend>待办类型</legend>'+todoFilterChoices('type',[['all','全部类型']].concat(todos.types.map(function(type){return [type.value,type.label];})),draft.type)+'</fieldset>'+(todoTab==='history'?'<fieldset><legend>状态'+statusHelpButton()+'</legend>'+todoFilterChoices('status',[['all','全部状态']].concat(todoDefinitions(draft.type).map(function(status){return [status.value,status.label];})),draft.status)+'</fieldset>':'')+(todoTab==='history'?'<fieldset><legend>结束日期</legend>'+todoFilterChoices('period',dates,draft.period)+(draft.period==='custom'?'<div class="wc-filter-dates"><label>开始日期<input id="wc-history-from" type="date" aria-label="开始日期" max="'+historyDay(Date.now())+'" value="'+esc(draft.from)+'"></label><label>结束日期<input id="wc-history-to" type="date" aria-label="结束日期" max="'+historyDay(Date.now())+'" value="'+esc(draft.to)+'"></label></div>':'')+(error?'<p class="wc-history-error" role="alert">'+esc(error)+'</p>':'')+'</fieldset>':'')+'</div><footer><button type="button" data-wc-filter-reset>重置</button><button type="button" data-wc-filter-apply'+(error?' disabled':'')+'>查看结果'+(!error?'（'+todoFilterResults(draft)+'）':'')+'</button></footer></section></div>';
   }
   function openTodoFilters(){todoFilterDraft=appliedTodoFilters();showTodos();var close=app.querySelector('[data-wc-filter-close]');if(close)close.focus({preventScroll:true});}
   function closeTodoFilters(apply){
-    if(apply){if(todoTab==='history'&&historyRange(todoFilterDraft).error)return;todoType=todoFilterDraft.type;todoStatus[todoTab]=todoFilterDraft.status;historyPeriod=todoFilterDraft.period;historyFrom=todoFilterDraft.from;historyTo=todoFilterDraft.to;}
+    if(apply){if(todoTab==='history'&&historyRange(todoFilterDraft).error)return;todoType=todoFilterDraft.type;todoStatus[todoTab]=todoTab==='history'?todoFilterDraft.status:'all';if(todoTab==='history'){historyPeriod=todoFilterDraft.period;historyFrom=todoFilterDraft.from;historyTo=todoFilterDraft.to;}}
     todoFilterDraft=null;showTodos();var trigger=app.querySelector('[data-wc-filter-open]');if(trigger)trigger.focus({preventScroll:true});
   }
   function handleTodoFilterClick(event){
@@ -161,7 +161,7 @@
     if(event.target.closest('[data-wc-filter-open]')){openTodoFilters();return true;}
     if(event.target.closest('[data-wc-filter-close]')||event.target.classList.contains('wc-filter-backdrop')){closeTodoFilters(false);return true;}
     if(event.target.closest('[data-wc-filter-apply]')&&todoFilterDraft){closeTodoFilters(true);return true;}
-    if(event.target.closest('[data-wc-filter-reset]')&&todoFilterDraft){todoFilterDraft={type:'all',status:'all',period:'all',from:'',to:''};showTodos();app.querySelector('[data-wc-filter-reset]').focus({preventScroll:true});return true;}
+    if(event.target.closest('[data-wc-filter-reset]')&&todoFilterDraft){todoFilterDraft=Object.assign(appliedTodoFilters(),{type:'all',status:'all'},todoTab==='history'?{period:'all',from:'',to:''}:{});showTodos();app.querySelector('[data-wc-filter-reset]').focus({preventScroll:true});return true;}
     var clear=event.target.closest('[data-wc-filter-clear]');
     if(clear){var field=clear.getAttribute('data-wc-filter-clear');if(field==='type')todoType='all';else if(field==='status')todoStatus[todoTab]='all';else if(field==='period'){historyPeriod='all';historyFrom='';historyTo='';}showTodos();app.querySelector('[data-wc-filter-open]').focus({preventScroll:true});return true;}
     return false;

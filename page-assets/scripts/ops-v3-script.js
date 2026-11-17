@@ -25,7 +25,7 @@
           { label: "用户管理", icon: "fa-user", children: [{ label: "医助账号管理", route: "accounts" }, { label: "医生用户管理", route: "doctors" }] },
           { label: "注册管理", icon: "fa-user-plus", children: [{ label: "患者注册场景码配置", route: "patient-scenes" }] },
           { label: "患者管理", icon: "fa-hospital-user", children: [{ label: "患者档案", route: "patient-archives" }, { label: "标签管理", route: "tag-management" }] },
-          { label: "会话管理", icon: "fa-comment-dots", children: [{ label: "聚合聊天", route: "aggregate-chat", openInNewWindow: true }, { label: "我的待办", route: "my-todos" }, { label: "成员分配与接待管理", route: "member-assignment" }] },
+          { label: "会话管理", icon: "fa-comment-dots", children: [{ label: "聚合聊天", route: "aggregate-chat", openInNewWindow: true }, { label: "成员分配与接待管理", route: "member-assignment" }] },
           { label: "运营管理", icon: "fa-chart-column", children: [{ label: "素材管理", route: "materials" }, { label: "消息触达", route: "message-tasks" }, { label: "随访规则", route: "followup-rules" }, { label: "患者列表", route: "ops-patients" }] },
           { label: "Bot 管理", icon: "fa-robot", children: [{ label: "Bot 配置", route: "bot-config" }, { label: "智能体管理", route: "agent-admin", external: true }, { label: "智能体工作台（先不做）", route: "agent-management" }] }
         ];
@@ -4234,7 +4234,7 @@
           if (!sidebar) return;
           var definitions = {
             "患者管理": [{ label: "标签管理", route: "tag-management" }],
-            "会话管理": [{ label: "聚合聊天", route: "aggregate-chat", openInNewWindow: true }, { label: "我的待办", route: "my-todos" }, { label: "成员分配与接待管理", route: "member-assignment" }],
+            "会话管理": [{ label: "聚合聊天", route: "aggregate-chat", openInNewWindow: true }, { label: "成员分配与接待管理", route: "member-assignment" }],
             "运营管理": [{ label: "素材管理", route: "materials" }, { label: "消息触达", route: "message-tasks" }]
           };
           sidebar.querySelectorAll(".nav-group").forEach(function (group) {
