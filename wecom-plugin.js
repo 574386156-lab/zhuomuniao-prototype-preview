@@ -372,7 +372,7 @@
   function renderArchiveTagModal(){
     if(!archiveTagModal||!current)return;var state=archiveTagModal,oldBody=pageHost.querySelector('.wc-archive-tag-body'),scroll=oldBody?oldBody.scrollTop:0,focused=pageHost.querySelector('[data-wc-tag-search]:focus'),selection=focused?focused.selectionStart:null;
     pageHost.querySelectorAll('.wc-archive-tag-backdrop').forEach(function(node){node.remove();});
-    var scopeKeys={'个人标签':'personal','租户标签':'tenant','平台标签':'platform'},query=state.query.trim().toLowerCase(),options=window.PatientTags.options(scopeKeys[state.scope]).filter(function(tag){return !query||[tag.name,tag.level1,tag.level2].join(' ').toLowerCase().indexOf(query)>=0;}),selected=state.ids.map(function(id){return window.PatientTags.get(id);}).filter(Boolean),names=window.WecomPatientTags.labels(selected);
+    var existing=window.PatientTags.getPatient(current.id),scopeKeys={'个人标签':'personal','租户标签':'tenant','平台标签':'platform'},query=state.query.trim().toLowerCase(),options=window.PatientTags.options(scopeKeys[state.scope]).filter(function(tag){return !query||[tag.name,tag.level1,tag.level2].join(' ').toLowerCase().indexOf(query)>=0;}),selected=state.ids.map(function(id){return window.PatientTags.get(id)||existing.find(function(tag){return tag.id===id;});}).filter(Boolean),names=window.WecomPatientTags.labels(selected);
     var selectedHtml=selected.length?selected.map(function(tag,index){return '<span class="wc-archive-tag-chip"><span>'+esc(names[index])+'</span><button type="button" data-wc-tag-action="toggle" data-tag="'+esc(tag.id)+'" aria-label="移除标签'+esc(names[index])+'">×</button></span>';}).join(''):'<span class="wc-archive-tag-empty-selected">暂未添加标签</span>';
     var optionHtml=options.length?options.map(function(tag){var isSelected=state.ids.indexOf(tag.id)>=0;return '<button type="button" class="wc-archive-tag-option'+(isSelected?' is-selected':'')+'" data-wc-tag-action="toggle" data-tag="'+esc(tag.id)+'" aria-pressed="'+isSelected+'"><span class="wc-archive-tag-check" aria-hidden="true">'+(isSelected?'✓':'')+'</span><span class="wc-archive-tag-option-copy"><strong>'+esc(tag.name)+'</strong><span>'+esc(tag.level1)+' / '+esc(tag.level2)+'</span></span></button>';}).join(''):'<p class="wc-archive-tag-empty">暂无匹配标签</p>';
     var scopes=Object.keys(scopeKeys).map(function(scope){return '<button type="button" class="wc-archive-tag-scope-tab'+(scope===state.scope?' is-active':'')+'" data-wc-tag-action="scope" data-scope="'+scope+'" aria-pressed="'+(scope===state.scope)+'">'+scope+'</button>';}).join('');
@@ -414,6 +414,15 @@
     }
     var panel=window.ChatPatientArchive.render(ctx,archiveTab,0, true,archiveTabsExpanded,false,basic,archiveTimelineDetail,'wecom-archive',contentOverride);
     pageHost.innerHTML='<div class="wc-patient-archive" aria-label="患者档案">'+panel+'</div>';
+    window.ChatPatientArchive.mountTimelineUploads(pageHost,function(){
+      return current?window.ChatPatientArchive.context(archiveConversation(),current.doctor,current.scene):null;
+    },function(){
+      if(currentPage!=='patient-profile'||!pageHost.querySelector('.cp-panel'))return;
+      var form=pageHost.querySelector('[data-edit-form]'),draft=form?{date:form.querySelector('[name="visitDate"]').value,content:form.querySelector('[name="visitContent"]').value}:null;
+      renderPatientArchive();
+      var nextForm=draft&&pageHost.querySelector('[data-edit-form]');
+      if(nextForm){nextForm.querySelector('[name="visitDate"]').value=draft.date;nextForm.querySelector('[name="visitContent"]').value=draft.content;}
+    });
     syncFollowupOverlay();
     var container=pageHost.querySelector('.wc-patient-archive');
     if(window.ChatPatientArchive.mountScrollHints)window.ChatPatientArchive.mountScrollHints(container);

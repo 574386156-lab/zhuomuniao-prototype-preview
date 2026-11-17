@@ -350,26 +350,34 @@
           if (toastTimer) window.clearTimeout(toastTimer);
           toastTimer = window.setTimeout(function () {
             state.toast = "";
-            render();
+            // Expiring feedback must not rebuild an in-progress material editor
+            // or dismiss its variable picker and text selection.
+            if (shell && shell.querySelector('[data-bind="material.title"],.ops-modal.is-group-manager')) {
+              shell.querySelectorAll('.ops-toast').forEach(function (item) { item.remove(); });
+            } else render();
           }, 2500);
         }
         function navigate(route) {
           window.location.hash = route;
         }
         function openModal(modal, trigger) {
+          if (state.modal && state.modal.type === 'material-groups') clearMaterialGroupHighlight(state.modal);
+          closeMaterialHelpPopovers();
           state.modal = modal;
           returnFocus = trigger || document.activeElement;
           render(modal.type.indexOf("health-")===0 ? {preserveArchiveScroll:true} : undefined);
           window.requestAnimationFrame(function () {
             if (document.querySelector('.dt-dialog')) return;
-            var first = shell && (shell.querySelector(".ops-modal [data-initial-focus]") || shell.querySelector(".ops-modal input:not([disabled]):not([data-ui-date-source]), .ops-modal select:not([disabled]):not([data-ui-select-source]), .ops-modal button:not([disabled])"));
+            var first = shell && (modal.type === 'material-groups' ? shell.querySelector('.ops-modal [data-action="modal-close"]') : (shell.querySelector(".ops-modal [data-initial-focus]") || shell.querySelector(".ops-modal input:not([disabled]):not([data-ui-date-source]), .ops-modal select:not([disabled]):not([data-ui-select-source]), .ops-modal button:not([disabled])")));
             if (first) first.focus();
           });
         }
         function closeModal() {
+          if (state.modal && state.modal.type === 'material-groups') clearMaterialGroupHighlight(state.modal);
           var focusTarget = returnFocus;
           var healthModal=state.modal && state.modal.type.indexOf("health-")===0;
           var materialParent=state.modal&&state.modal.parent;
+          var materialFormReturn=state.modal&&state.modal.fromMaterialForm;
           state.modal = materialParent || null;
           render(healthModal ? {preserveArchiveScroll:true} : undefined);
           if(healthModal && focusTarget) {
@@ -377,7 +385,7 @@
             var replacement=Array.prototype.find.call(shell.querySelectorAll('button[data-action]'),function(button){return focusAttributes.every(function(attr){return button.getAttribute(attr)===focusTarget.getAttribute(attr);});});
             if(replacement)replacement.focus();
           }
-          if(materialParent){var materialGroupTrigger=shell&&shell.querySelector(materialParent.type==='chat-material-preview'?'[data-action="chat-material-edit"]':'[data-action="material-form-new-group"]');if(materialGroupTrigger)materialGroupTrigger.focus();}
+          if(materialParent||materialFormReturn){var materialGroupTrigger=shell&&shell.querySelector(materialParent&&materialParent.type==='chat-material-preview'?'[data-action="chat-material-edit"]':'[data-action="material-form-new-group"]');if(materialGroupTrigger)materialGroupTrigger.focus();}
           if (focusTarget && focusTarget.focus) window.requestAnimationFrame(function () {
             if (document.body.contains(focusTarget)) focusTarget.focus();
           });
@@ -529,7 +537,7 @@
           var items = MATERIAL_PARAMETERS.map(function (item) {
             return '<button type="button" class="ops-material-parameter" data-action="material-param-insert" data-value="' + item.token + '"><strong>' + item.label + '</strong><code>' + item.token + '</code></button>';
           }).join("");
-          return '<div class="ops-material-parameters" aria-label="插入动参"><button type="button" class="ops-material-parameter-trigger" data-action="material-param-toggle" aria-expanded="false" aria-controls="ops-material-parameter-menu">插入动参' + icon("fa-chevron-down") + '</button><small>共 ' + MATERIAL_PARAMETERS.length + ' 个动参可插入</small><div class="ops-material-parameter-menu" id="ops-material-parameter-menu" hidden>' + items + '</div></div>';
+          return '<div class="ops-material-parameters" aria-label="插入动参"><button type="button" class="ops-material-parameter-trigger" data-action="material-param-toggle" aria-expanded="false" aria-haspopup="dialog" aria-controls="ops-material-parameter-menu">插入动参' + icon("fa-chevron-down") + '</button><div class="ops-material-parameter-menu" id="ops-material-parameter-menu" role="dialog" aria-label="插入动参" hidden><div class="ops-material-parameter-heading"><strong>插入动参</strong><button type="button" data-action="material-param-close" aria-label="关闭动参">' + icon('fa-xmark') + '</button></div><div class="ops-material-parameter-options">' + items + '</div></div></div>';
         }
         function materialHelpIcon(markup, id, label) {
           return '<span class="ops-material-help"><button type="button" class="ops-material-help-trigger" data-action="material-help-toggle" aria-expanded="false" aria-describedby="' + id + '" aria-label="' + escapeHtml(label || "查看说明") + '">' + icon("fa-circle-question") + '</button><span class="ops-material-help-popover" id="' + id + '" role="tooltip" hidden>' + markup + '</span></span>';
@@ -543,11 +551,20 @@
         function positionMaterialFloating(trigger, panel, alignRight) {
           panel.hidden = false;
           var anchor = trigger.getBoundingClientRect();
-          var width = panel.offsetWidth || 200, height = panel.offsetHeight || 0;
+          var viewport = window.visualViewport;
+          var viewportTop = viewport ? viewport.offsetTop : 0;
+          var viewportLeft = viewport ? viewport.offsetLeft : 0;
+          var viewportWidth = viewport ? viewport.width : window.innerWidth;
+          var viewportHeight = viewport ? viewport.height : window.innerHeight;
+          var edge = 12, gap = 6;
+          var below = Math.max(0, viewportTop + viewportHeight - edge - anchor.bottom - gap);
+          var above = Math.max(0, anchor.top - viewportTop - edge - gap);
+          panel.style.maxHeight = Math.max(0, Math.max(below, above)) + 'px';
+          var width = panel.offsetWidth || 280, height = panel.offsetHeight || 0;
           var left = alignRight ? anchor.right - width : anchor.left;
-          left = Math.max(12, Math.min(left, window.innerWidth - width - 12));
-          var top = anchor.bottom + 6;
-          if (top + height > window.innerHeight - 12) top = Math.max(12, anchor.top - height - 6);
+          left = Math.max(viewportLeft + edge, Math.min(left, viewportLeft + viewportWidth - width - edge));
+          var top = below >= height || below >= above ? anchor.bottom + gap : anchor.top - height - gap;
+          top = Math.max(viewportTop + edge, Math.min(top, viewportTop + viewportHeight - height - edge));
           panel.style.left = Math.round(left) + "px";
           panel.style.top = Math.round(top) + "px";
         }
@@ -564,13 +581,32 @@
           popover.style.setProperty("--ops-help-arrow-x", Math.round(center - left) + "px");
         }
         var materialHelpDismissBound = false;
+        function updateMaterialFloating(event) {
+          // A picker can scroll independently without being dismissed.
+          if (event && event.target.closest && event.target.closest('.ops-material-parameter-menu')) return;
+          document.querySelectorAll('.ops-material-help-popover').forEach(function (item) { item.hidden = true; });
+          document.querySelectorAll('.ops-material-help-trigger').forEach(function (item) { item.setAttribute('aria-expanded', 'false'); });
+          var menu = shell && shell.querySelector('#ops-material-parameter-menu:not([hidden])');
+          var trigger = shell && shell.querySelector('[data-action="material-param-toggle"]');
+          if (!menu || !trigger) return;
+          var anchor = trigger.getBoundingClientRect();
+          var scroller = trigger.closest('.ops-modal-body,.ops-page-scroll');
+          var bounds = scroller ? scroller.getBoundingClientRect() : {top: 0, bottom: window.innerHeight};
+          if (anchor.bottom <= Math.max(0, bounds.top) || anchor.top >= Math.min(window.innerHeight, bounds.bottom)) {
+            closeMaterialHelpPopovers();
+          } else positionMaterialFloating(trigger, menu, false);
+        }
         function bindMaterialHelpDismiss() {
           if (materialHelpDismissBound) return;
           materialHelpDismissBound = true;
-          document.addEventListener("scroll", closeMaterialHelpPopovers, true);
-          window.addEventListener("resize", closeMaterialHelpPopovers);
+          document.addEventListener("scroll", updateMaterialFloating, true);
+          window.addEventListener("resize", updateMaterialFloating);
+          if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateMaterialFloating);
+            window.visualViewport.addEventListener('scroll', updateMaterialFloating);
+          }
           document.addEventListener("click", function (event) {
-            if (event.target.closest && (event.target.closest(".ops-material-help") || event.target.closest('[data-action="material-param-toggle"]'))) return;
+            if (event.target.closest && (event.target.closest(".ops-material-help") || event.target.closest('.ops-material-parameter-menu') || event.target.closest('[data-action="material-param-toggle"]'))) return;
             closeMaterialHelpPopovers();
           }, true);
         }
@@ -592,7 +628,7 @@
           return materialRichTextValue(wrapper);
         }
         function materialRichTextControl(value, limit) {
-          return '<div class="ops-material-rich-control"><div class="ops-material-rich-editor" contenteditable="true" role="textbox" aria-multiline="true" data-material-rich-text data-placeholder="请输入文本话术">' + materialRichTextMarkup(value) + '</div><textarea hidden data-bind="material.text" maxlength="' + limit + '">' + escapeHtml(value || "") + '</textarea><span class="ops-material-char-count" id="ops-material-count-text">' + String(value || "").length + '/' + limit + '</span></div>';
+          return '<div class="ops-material-rich-control"><div class="ops-material-rich-editor" contenteditable="true" role="textbox" aria-label="素材内容" aria-multiline="true" data-material-rich-text data-placeholder="请输入文本话术">' + materialRichTextMarkup(value) + '</div><textarea hidden data-bind="material.text" maxlength="' + limit + '">' + escapeHtml(value || "") + '</textarea><span class="ops-material-char-count" id="ops-material-count-text">' + String(value || "").length + '/' + limit + '</span></div>';
         }
         function materialUploadSpec(slot) {
           var image = {extensions:["jpg","jpeg","png"], accept:".jpg,.jpeg,.png", max:10, hint:"支持 JPG、PNG 格式，最大 10MB"};
@@ -622,7 +658,7 @@
         }
         function renderMaterialTypeContent() {
           var draft=state.materialDraft;
-          if (draft.type === "文本") { return '<label class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>素材内容</span>'+materialRichTextControl(draft.text,200)+materialParameterControl()+'</label>'; }
+          if (draft.type === "文本") { return '<div class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>素材内容</span>'+materialRichTextControl(draft.text,200)+materialParameterControl()+'</div>'; }
           function field(key,label,required,placeholder,help) {return '<label class="ops-field"><span class="ops-field-label">'+(required?'<span class="ops-required">*</span>':'')+label+(help?materialHelpIcon(help.markup,help.id||('ops-material-help-'+key),help.label):'')+'</span><input data-bind="material.'+key+'" value="'+escapeHtml(draft[key]||'')+'" placeholder="'+escapeHtml(placeholder||'请输入'+label)+'"></label>';}
           if (draft.type === "网页") return '<div class="ops-form-grid">'+field("webTitle","网页标题",true)+field("webUrl","网页链接",true,"请输入网页链接",materialLinkHelp("web"))+materialUploadField("webCover","封面图",false)+'<label class="ops-field ops-full-span"><span class="ops-field-label">网页描述</span>'+materialCountedControl("webDescription","请输入网页描述",200,true)+'</label></div>';
           if (draft.type === "小程序") return '<div class="ops-form-grid">'+field("miniTitle","小程序标题",true)+field("appId","AppID",true)+field("path","页面路径",true,"请输入页面路径",materialLinkHelp("mini"))+field("originalId","原始 ID",true,"请输入小程序原始 ID（gh_ 开头）")+'<label class="ops-field ops-full-span"><span class="ops-field-label"><span class="ops-required">*</span>描述</span>'+materialCountedControl("miniDescription","请输入小程序描述",200,true)+'</label>'+materialUploadField("miniIcon","Icon 图标",true)+materialUploadField("miniImage","上传图片",true)+'</div>';
@@ -686,7 +722,7 @@
             return '<option value="' + escapeHtml(group) + '"' + (draft.group === group ? " selected" : "") + '>' + escapeHtml(group) + "</option>";
           }).join("");
           var titleField = '<label class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>素材名称</span><input data-bind="material.title" data-initial-focus value="' + escapeHtml(draft.title) + '" placeholder="请输入素材名称"></label>';
-          var groupField = '<div class="ops-field"><label class="ops-field-label" for="ops-material-group">素材分组</label><div class="ops-material-group-choice"><select id="ops-material-group" data-bind="material.group">' + groupOptions + '</select>'+button("新增分组","","material-form-new-group")+'</div></div>';
+          var groupField = '<div class="ops-field"><label class="ops-field-label" for="ops-material-group">素材分组</label><div class="ops-material-group-choice"><select id="ops-material-group" data-bind="material.group">' + groupOptions + '</select>'+button("分组管理","","material-form-new-group")+'</div></div>';
           var scopeChoices = state.modal && state.modal.type === "chat-material-create" ? ["个人素材"] : state.materialMode === "edit" ? [draft.scope] : ["个人素材","租户素材"];
           var scopeField = '<div class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>素材范围</span><div class="ops-choice-row">'+scopeChoices.map(function(scope){return '<label><input type="radio" name="material-scope" data-material-scope="'+scope+'" '+(draft.scope===scope?'checked':'')+'>'+escapeHtml(scope==="租户素材"?"公共素材":scope)+'</label>';}).join('')+'</div></div>';
           var purposeField = '<div class="ops-field"><span class="ops-field-label"><span class="ops-required">*</span>用途标记</span><div class="ops-choice-row">' + purpose + "</div></div>";
@@ -1735,7 +1771,7 @@
           var conversationSearch = state.chatConversationSearchOpen ? '<label class="ops-search-shell ops-chat-conversation-search">' + icon("fa-magnifying-glass") + '<input id="ops-chat-conversation-search" data-bind="chat.conversationSearch" value="' + escapeHtml(state.chatConversationSearch) + '" placeholder="搜索名称或聊天内容" aria-label="搜索患者、群聊名称或聊天内容"></label>' : "";
           var conversationToolbar = '<div class="ops-conversation-toolbar"><strong>会话列表</strong><div class="ops-conversation-tools"><button class="ops-icon-button" type="button" data-action="chat-conversation-search" aria-label="' + (state.chatConversationSearchOpen ? "隐藏会话搜索框" : "显示会话搜索框") + '">' + icon("fa-magnifying-glass") + '</button><button class="ops-icon-button" type="button" data-action="chat-conversation-sort" aria-label="' + (state.chatConversationNewestFirst ? "切换为最早优先" : "切换为最新优先") + '">' + icon("fa-arrow-down-short-wide") + '</button><button class="ops-icon-button" type="button" data-action="chat-conversation-refresh" aria-label="刷新会话列表">' + icon("fa-rotate-right") + "</button></div></div>";
           var selectedConversation = conversations.filter(function (item) { return item.name === state.chatSelected; })[0] || conversations[0];
-          var workbenchPanelToggle = '<button class="ops-icon-button ops-workbench-panel-toggle ' + (state.chatWorkbenchCollapsed ? "is-collapsed" : "") + '" type="button" data-action="chat-workbench-panel-toggle" aria-label="' + (state.chatWorkbenchCollapsed ? "展开右侧工作台" : "收起右侧工作台") + '" title="' + (state.chatWorkbenchCollapsed ? (state.chatHistoryOpen ? "展开聊天记录" : "展开快捷回复和患者跟进") : (state.chatHistoryOpen ? "收起聊天记录" : "收起快捷回复和患者跟进")) + '">' + icon(state.chatWorkbenchCollapsed ? "fa-angles-left" : "fa-angles-right") + "</button>";
+          var workbenchPanelToggle = '<button class="ops-icon-button ops-workbench-panel-toggle ' + (state.chatWorkbenchCollapsed ? "is-collapsed" : "") + '" type="button" data-action="chat-workbench-panel-toggle" aria-label="' + (state.chatWorkbenchCollapsed ? "展开右侧工作台" : "收起右侧工作台") + '" title="' + (state.chatWorkbenchCollapsed ? (state.chatHistoryOpen ? "展开聊天记录" : "展开右侧工作台") : (state.chatHistoryOpen ? "收起聊天记录" : "收起右侧工作台")) + '">' + icon(state.chatWorkbenchCollapsed ? "fa-angles-left" : "fa-angles-right") + "</button>";
           var chatHeader = '<div class="ops-chat-heading ops-chat-heading-compact"><div class="ops-chat-person"><div class="ops-chat-identity"><h2>' + escapeHtml(selectedConversation.name) + '</h2><span class="ops-chat-demographics">· ' + escapeHtml(selectedConversation.type) + ' · 来源医生：' + escapeHtml(state.chatDoctorSelected) + '</span></div></div><div class="ops-inline-actions"><button class="ops-link" type="button" data-action="chat-unread">' + icon("fa-envelope") + '标记未读</button><button class="ops-link" type="button" data-action="chat-transfer">' + icon("fa-arrow-right-arrow-left") + '转接</button>' + workbenchPanelToggle + '</div></div>';
           var composer = '<div class="ops-composer"><div class="ops-composer-tools">' + icon("fa-face-smile", "表情") + icon("fa-image", "图片") + icon("fa-paperclip", "文件") + '<button class="ops-chat-history-toggle ' + (state.chatHistoryOpen ? "is-active" : "") + '" type="button" data-action="chat-history-toggle" aria-label="' + (state.chatHistoryOpen ? "隐藏聊天记录" : "查看聊天记录") + '" aria-pressed="' + (state.chatHistoryOpen ? "true" : "false") + '" title="聊天记录">' + icon("fa-clock-rotate-left") + '</button><button class="ops-chat-ai-summary-entry" type="button" data-action="chat-ai-summary-open" aria-label="打开AI小结" title="打开AI小结">AI小结</button></div><div class="ops-composer-row"><textarea id="ops-chat-input" data-bind="chat.draft" maxlength="500" placeholder="请输入消息，Enter 发送">' + escapeHtml(state.chatDraft) + '</textarea>' + button("发送", "primary", "chat-send") + "</div></div>";
           var sidebarContext=window.ChatPatientArchive.context(selectedConversation,state.chatDoctorSelected,state.chatArchiveScene),sidebarEnvironment=window.SidebarConfig.environment();
@@ -1884,15 +1920,16 @@
           if (modal.type === "chat-material-create") {
             return modalFrame(modal.editId?"编辑素材":"新增素材",'<div class="qr-material-editor ops-material-create-card"><div class="ops-form-card-body">'+renderMaterialEditorFields()+'</div></div>',cancel+button("保存","primary","material-save"),"xl");
           }
-          if (modal.type === "material-new-group") {
-            return modalFrame("新增素材分组",'<label class="ops-field"><span class="ops-field-label">分组名称</span><input data-initial-focus data-modal="newGroup" maxlength="20" value="'+escapeHtml(modal.newGroup||'')+'" placeholder="请输入分组名称" aria-label="新分组名称"></label>',cancel+button("确定","primary","material-form-save-group"),"sm");
-          }
           if (modal.type === "material-groups") {
             var managedGroupRows = modal.groups.length ? modal.groups.map(function (group, index) {
-              return '<div class="ops-group-manager-row"><input data-material-group-index="' + index + '" value="' + escapeHtml(group.name) + '" maxlength="20" aria-label="分组名称"><button class="ops-link ops-link-danger ops-group-manager-delete" type="button" data-action="material-group-delete" data-index="' + index + '">删除</button></div>';
+              return '<div class="ops-group-manager-row'+(modal.highlightedGroup===group?' is-new-group':'')+'" data-material-manager-index="'+index+'" role="group" tabindex="-1" aria-label="分组'+escapeHtml(group.name)+'"><div class="ops-group-manager-name"><button type="button" class="ops-group-manager-drag" draggable="true" data-material-manager-drag="'+index+'" aria-label="调整'+escapeHtml(group.name)+'顺序" aria-keyshortcuts="ArrowUp ArrowDown" title="拖动调整顺序">'+icon('fa-grip-lines')+'</button><div class="ops-group-manager-name-field"><input data-material-group-index="' + index + '" value="' + escapeHtml(group.name) + '" maxlength="20" aria-label="分组名称"><span class="ops-group-manager-edit-hint" aria-hidden="true">'+icon('fa-pen')+'</span></div></div><button class="ops-link ops-link-danger ops-group-manager-delete" type="button" data-action="material-group-delete" data-index="' + index + '" aria-label="删除'+escapeHtml(group.name)+'">'+icon('fa-trash-can')+'<span>删除</span></button></div>';
             }).join("") : '<div class="ops-group-manager-empty">暂无素材分组</div>';
-            var managedGroupBody = '<div class="ops-group-manager-create"><input data-initial-focus data-modal="newGroup" value="' + escapeHtml(modal.newGroup || "") + '" maxlength="20" placeholder="新分组名称" aria-label="新分组名称"><button class="ops-button ops-button-primary" type="button" data-action="material-group-create"><span>新建分组</span></button></div><div class="ops-group-manager-list"><div class="ops-group-manager-head"><span>分组名称</span><span>操作</span></div>' + managedGroupRows + '</div>';
-            return modalFrame("管理" + (modal.scope === "租户素材" ? "公共素材" : modal.scope) + "分组", managedGroupBody, button("完成", "primary", "material-group-finish"), "group-manager");
+            var managedGroupBody = '<div class="ops-group-manager-list">' + managedGroupRows + '</div>';
+            var mobileGroupEntry='<div class="ops-group-manager-mobile-create"><button type="button" data-action="material-group-new">'+icon('fa-plus')+'<span>新增分组</span></button></div>';
+            var managerTitle="管理" + (modal.scope === "租户素材" ? "公共素材" : modal.scope) + "分组";
+            var managerHeader='<header class="ops-modal-header"><button type="button" class="ops-group-manager-nav-cancel" data-action="modal-close">取消</button><h2 id="ops-modal-title">'+escapeHtml(managerTitle)+'</h2><button type="button" class="ops-group-manager-nav-done" data-action="material-group-finish">完成</button></header>';
+            var createDialog=modal.groupEditor?'<div class="ops-group-editor-backdrop" data-action="material-group-editor-backdrop"><section class="ops-group-editor-dialog" role="dialog" aria-modal="true" aria-labelledby="ops-group-editor-title"><header class="ops-group-editor-header"><h2 id="ops-group-editor-title">新增分组</h2><button type="button" data-action="material-group-editor-cancel" aria-label="关闭新增分组">'+icon('fa-xmark')+'</button></header><form data-material-group-create-form><div class="ops-group-editor-body"><label>分组名称<input data-modal="newGroupDialog" maxlength="20" aria-label="新分组名称" placeholder="请输入分组名称" value="'+escapeHtml(modal.newGroup||'')+'"></label><p class="ops-group-editor-error"'+(modal.groupEditor.error?' role="alert"':' hidden')+'>'+escapeHtml(modal.groupEditor.error||'')+'</p></div><div class="ops-group-editor-actions"><button type="button" data-action="material-group-editor-cancel">取消</button><button type="button" data-action="material-group-create"'+(String(modal.newGroup||'').trim()?'':' disabled')+'>新增</button></div></form></section></div>':'';
+            return '<div class="ops-modal-backdrop is-group-manager-backdrop" data-action="modal-backdrop"><section class="ops-modal is-group-manager" role="dialog" aria-modal="true" aria-labelledby="ops-modal-title"'+(modal.groupEditor?' inert aria-hidden="true"':'')+'>'+managerHeader+'<div class="ops-modal-body">'+managedGroupBody+'</div>'+mobileGroupEntry+'</section>'+createDialog+'</div>';
           }
           if (modal.type === "confirm") {
             return modalFrame(modal.title || "确认操作", '<div style="display:grid;grid-template-columns:46px minmax(0,1fr);gap:14px;align-items:start"><span class="ops-type-icon" style="background:var(--tag-warning-surface,#fff8eb);color:var(--warning,#f5a000)">' + icon("fa-triangle-exclamation") + '</span><div><strong>' + escapeHtml(modal.message || "确定执行该操作吗？") + '</strong><p class="ops-field-hint">操作完成后，列表数据会立即更新。</p></div></div>', cancel + button("确定", modal.danger ? "danger" : "primary", "modal-confirm"), "sm");
@@ -2079,6 +2116,17 @@
           if(window.WorkbenchTabs)window.WorkbenchTabs.mount(shell);
           updateArchiveLayout();
           window.ChatPatientArchive.mountScrollHints(shell);
+          window.ChatPatientArchive.mountTimelineUploads(shell,function(){
+            var conversation=getChatConversationData().filter(function(item){return item.name===state.chatSelected;})[0];
+            return window.ChatPatientArchive.context(conversation,state.chatDoctorSelected,state.chatArchiveScene);
+          },function(){
+            if(!shell||!shell.querySelector('.cp-panel'))return;
+            // Keep an open edit draft when an upload finishes in the background.
+            var form=shell.querySelector('[data-edit-form]'),draft=form?{date:form.querySelector('[name="visitDate"]').value,content:form.querySelector('[name="visitContent"]').value}:null;
+            render({preserveArchiveScroll:true});
+            var nextForm=draft&&shell.querySelector('[data-edit-form]');
+            if(nextForm){nextForm.querySelector('[name="visitDate"]').value=draft.date;nextForm.querySelector('[name="visitContent"]').value=draft.content;}
+          });
           window.PatientFollowups.mount(function(){render({preserveArchiveScroll:true});});
           if(window.ImagePreview)window.ImagePreview.mount(shell);
           if(window.PatientDiagnoses)window.PatientDiagnoses.mount(shell,function(key,summary){
@@ -2250,34 +2298,140 @@
           refreshPatientTagModal();
         }
 
+        function openMaterialGroupManager(scope, parent, fromForm, trigger) {
+          var sourceGroups=(state.materialGroupOrder[scope]||[]).slice();
+          openModal({type:"material-groups",scope:scope,originalGroups:sourceGroups.slice(),groups:sourceGroups.map(function(name){return {original:name,name:name};}),newGroup:"",parent:parent||null,fromMaterialForm:!!fromForm},trigger);
+        }
+
+        function clearMaterialGroupHighlight(modal) {
+          if (!modal) return;
+          if (modal.highlightTimer) window.clearTimeout(modal.highlightTimer);
+          delete modal.highlightTimer;delete modal.highlightedGroup;
+          if (state.modal === modal && shell) shell.querySelectorAll('.ops-group-manager-row.is-new-group').forEach(function(row){row.classList.remove('is-new-group');});
+        }
+        function revealMaterialGroup(modal, group) {
+          if (state.modal !== modal || modal.groupEditor || modal.highlightedGroup !== group || !shell) return;
+          var index=modal.groups.indexOf(group),row=shell.querySelector('[data-material-manager-index="'+index+'"]'),scroller=shell.querySelector('.ops-modal.is-group-manager .ops-modal-body');
+          if (!row || !scroller || !document.body.contains(row)) return;
+          // Focus the result, not an input: mobile users can see the newly added
+          // row without reopening the keyboard or jumping back to the create bar.
+          row.focus({preventScroll:true});
+          var bounds=scroller.getBoundingClientRect(),rowBounds=row.getBoundingClientRect(),top=bounds.top+12;
+          if(rowBounds.bottom>bounds.bottom-12)scroller.scrollTop+=rowBounds.bottom-bounds.bottom+12;
+          else if(rowBounds.top<top)scroller.scrollTop-=top-rowBounds.top;
+        }
+        function positionMaterialGroupEditor() {
+          var panel=shell&&shell.querySelector('.ops-group-editor-backdrop'),viewport=window.visualViewport;
+          if(panel&&viewport){panel.style.top=viewport.offsetTop+'px';panel.style.height=viewport.height+'px';panel.style.bottom='auto';}
+        }
+        function openMaterialGroupEditor() {
+          var modal=state.modal;if(!modal||modal.type!=='material-groups'||modal.groupEditor)return;
+          cancelMaterialManagerPointerDrag();
+          var scroller=shell&&shell.querySelector('.ops-modal.is-group-manager .ops-modal-body');
+          modal.groupEditor={scrollTop:scroller?scroller.scrollTop:0,error:''};modal.newGroup='';
+          render();scroller=shell&&shell.querySelector('.ops-modal.is-group-manager .ops-modal-body');if(scroller)scroller.scrollTop=modal.groupEditor.scrollTop;
+          window.requestAnimationFrame(function(){if(state.modal!==modal||!modal.groupEditor)return;positionMaterialGroupEditor();var input=shell&&shell.querySelector('[data-modal="newGroupDialog"]');if(input)input.focus({preventScroll:true});});
+        }
+        function cancelMaterialGroupEditor() {
+          var modal=state.modal;if(!modal||modal.type!=='material-groups'||!modal.groupEditor)return;
+          var scrollTop=modal.groupEditor.scrollTop;modal.groupEditor=null;modal.newGroup='';render();
+          var scroller=shell&&shell.querySelector('.ops-modal.is-group-manager .ops-modal-body');if(scroller)scroller.scrollTop=scrollTop;
+          var trigger=shell&&shell.querySelector('[data-action="material-group-new"]');if(trigger)trigger.focus({preventScroll:true});
+        }
+        function materialGroupCreateError(message) {
+          var modal=state.modal;
+          if(modal&&modal.groupEditor){modal.groupEditor.error=message;var feedback=shell&&shell.querySelector('.ops-group-editor-error');if(feedback){feedback.hidden=false;feedback.setAttribute('role','alert');feedback.textContent=message;}var field=shell&&shell.querySelector('[data-modal="newGroupDialog"]');if(field)field.focus({preventScroll:true});return;}
+        }
+
+        function moveMaterialManagerGroup(fromIndex,toIndex) {
+          var modal=state.modal;
+          if(!modal||modal.type!=="material-groups"||modal.groupEditor||fromIndex<0||toIndex<0||fromIndex>=modal.groups.length||toIndex>=modal.groups.length||fromIndex===toIndex)return;
+          var scroller=shell&&shell.querySelector('.ops-modal.is-group-manager .ops-modal-body');
+          var scrollTop=scroller?scroller.scrollTop:0;
+          var group=modal.groups.splice(fromIndex,1)[0];modal.groups.splice(toIndex,0,group);delete modal.dragIndex;
+          render();
+          scroller=shell&&shell.querySelector('.ops-modal.is-group-manager .ops-modal-body');if(scroller)scroller.scrollTop=scrollTop;
+          var handle=shell&&shell.querySelector('[data-material-manager-drag="'+toIndex+'"]');if(handle)handle.focus({preventScroll:true});
+        }
+
+        var materialManagerPointerDrag=null;
+        function markMaterialManagerDrop(drag) {
+          if(!shell)return;
+          var rows=Array.prototype.slice.call(shell.querySelectorAll('[data-material-manager-index]'));
+          var nearest=null,distance=Infinity;
+          rows.forEach(function(row){
+            row.classList.remove('is-drag-over');
+            var bounds=row.getBoundingClientRect(),gap=Math.abs(drag.y-(bounds.top+bounds.height/2));
+            if(gap<distance){nearest=row;distance=gap;}
+          });
+          if(nearest){drag.to=Number(nearest.getAttribute('data-material-manager-index'));if(drag.to!==drag.from)nearest.classList.add('is-drag-over');}
+        }
+        function scrollMaterialManagerDrag() {
+          var drag=materialManagerPointerDrag;
+          if(!drag||!drag.moved)return;
+          if(state.modal!==drag.modal||!document.body.contains(drag.handle)){cancelMaterialManagerPointerDrag();return;}
+          var bounds=drag.scroller.getBoundingClientRect();
+          var delta=drag.y<bounds.top+40?-8:drag.y>bounds.bottom-40?8:0;
+          if(delta){drag.scroller.scrollTop+=delta;markMaterialManagerDrop(drag);}
+          drag.frame=window.requestAnimationFrame(scrollMaterialManagerDrag);
+        }
+        function cancelMaterialManagerPointerDrag() {
+          var drag=materialManagerPointerDrag;
+          if(!drag)return;
+          materialManagerPointerDrag=null;
+          if(drag.frame)window.cancelAnimationFrame(drag.frame);
+          if(drag.handle.hasPointerCapture&&drag.handle.hasPointerCapture(drag.id))drag.handle.releasePointerCapture(drag.id);
+          if(shell)shell.querySelectorAll('.ops-group-manager-row.is-dragging,.ops-group-manager-row.is-drag-over').forEach(function(row){row.classList.remove('is-dragging','is-drag-over');});
+        }
+        function handleMaterialManagerPointerDown(event) {
+          if(event.pointerType!=='touch'&&event.pointerType!=='pen')return;
+          var handle=event.target.closest('[data-material-manager-drag]');
+          if(!handle||!state.modal||state.modal.type!=='material-groups'||state.modal.groupEditor)return;
+          var scroller=handle.closest('.ops-modal-body');if(!scroller)return;
+          event.preventDefault();cancelMaterialManagerPointerDrag();
+          materialManagerPointerDrag={id:event.pointerId,handle:handle,modal:state.modal,scroller:scroller,from:Number(handle.getAttribute('data-material-manager-drag')),to:Number(handle.getAttribute('data-material-manager-drag')),startY:event.clientY,y:event.clientY,moved:false};
+          if(handle.setPointerCapture)handle.setPointerCapture(event.pointerId);
+        }
+        function handleMaterialManagerPointerMove(event) {
+          var drag=materialManagerPointerDrag;
+          if(!drag||drag.id!==event.pointerId)return;
+          event.preventDefault();drag.y=event.clientY;
+          if(!drag.moved&&Math.abs(drag.y-drag.startY)<5)return;
+          if(!drag.moved){drag.moved=true;drag.handle.closest('.ops-group-manager-row').classList.add('is-dragging');drag.frame=window.requestAnimationFrame(scrollMaterialManagerDrag);}
+          markMaterialManagerDrop(drag);
+        }
+        function handleMaterialManagerPointerEnd(event) {
+          var drag=materialManagerPointerDrag;
+          if(!drag||drag.id!==event.pointerId)return;
+          var apply=event.type==='pointerup'&&drag.moved&&state.modal===drag.modal;
+          cancelMaterialManagerPointerDrag();
+          if(apply)moveMaterialManagerGroup(drag.from,drag.to);
+        }
+
         function createMaterialGroup() {
           var modal = state.modal;
-          if (!modal || modal.type !== "material-groups") return;
-          var name = readModalValue("newGroup");
+          if (!modal || modal.type !== "material-groups" || !modal.groupEditor) return;
+          var name = readModalValue("newGroupDialog");
           modal.newGroup = name;
           if (!name) {
-            toast("请输入新分组名称");
-            window.requestAnimationFrame(function () {
-              var input = shell && shell.querySelector('[data-modal="newGroup"]');
-              if (input) input.focus();
-            });
+            materialGroupCreateError("请输入新分组名称");
             return;
           }
           if (name.length>20 || name==="全部素材" || name==="未分组" || modal.groups.some(function (group) { return group.name.trim() === name; })) {
-            toast("分组名称已存在");
-            window.requestAnimationFrame(function () {
-              var input = shell && shell.querySelector('[data-modal="newGroup"]');
-              if (input) input.focus();
-            });
+            materialGroupCreateError("分组名称已存在");
             return;
           }
-          modal.groups.push({ original: "", name: name });
+          clearMaterialGroupHighlight(modal);
+          var addedGroup={ original: "", name: name };
+          modal.groups.push(addedGroup);
+          modal.highlightedGroup=addedGroup;
+          modal.groupEditor=null;
           modal.newGroup = "";
           render();
           window.requestAnimationFrame(function () {
-            var input = shell && shell.querySelector('[data-modal="newGroup"]');
-            if (input) input.focus();
+            revealMaterialGroup(modal,addedGroup);
           });
+          modal.highlightTimer=window.setTimeout(function(){if(modal.highlightedGroup===addedGroup)clearMaterialGroupHighlight(modal);},2000);
         }
 
         function deleteMaterialGroup(index) {
@@ -2310,6 +2464,7 @@
             toast("分组名称不能重复");
             return;
           }
+          clearMaterialGroupHighlight(modal);
           var scope = modal.scope;
           var renamed = {};
           modal.groups.forEach(function (group, index) {
@@ -2331,8 +2486,13 @@
             if (renamed[state.materialDraft.group]) state.materialDraft.group = renamed[state.materialDraft.group];
             else if (removedOriginals.indexOf(state.materialDraft.group) >= 0) state.materialDraft.group = fallbackGroup;
           }
-          state.modal = null;
+          if(modal.fromMaterialForm){
+            var createdGroups=modal.groups.filter(function(group){return !group.original;});
+            if(createdGroups.length)state.materialDraft.group=createdGroups[createdGroups.length-1].name.trim();
+          }
+          state.modal = modal.parent || null;
           toast("素材分组已更新");
+          if(modal.fromMaterialForm)window.requestAnimationFrame(function(){var trigger=shell&&shell.querySelector('[data-action="material-form-new-group"]');if(trigger)trigger.focus();});
         }
 
         function saveModal() {
@@ -2634,6 +2794,8 @@
           if (!actionTarget) return;
           var action = actionTarget.getAttribute("data-action") || actionTarget.getAttribute("data-entry-action");
           if (action === "modal-backdrop" && event.target !== actionTarget) return;
+          if (action === 'material-group-editor-backdrop' && event.target !== actionTarget) return;
+          if (state.modal && state.modal.type === 'material-groups' && state.modal.groupEditor && ['material-group-editor-cancel','material-group-editor-backdrop','material-group-create'].indexOf(action)<0) return;
           event.preventDefault();
 
           if (action === "quick-replies-page-close") {
@@ -2716,6 +2878,10 @@
                 parameterTrigger.classList.add("is-open");
               }
             }
+          } else if (action === "material-param-close") {
+            closeMaterialHelpPopovers();
+            var parameterReturn = shell && shell.querySelector('[data-action="material-param-toggle"]');
+            if (parameterReturn) parameterReturn.focus();
           } else if (action === "material-help-toggle") {
             var helpPopover = actionTarget.parentElement && actionTarget.parentElement.querySelector(".ops-material-help-popover");
             if (helpPopover) {
@@ -2762,15 +2928,7 @@
           } else if (action === "material-file-pick") {
             var picker=shell.querySelector('[data-material-file="'+actionTarget.getAttribute('data-slot')+'"]');if(picker)picker.click();
           } else if (action === "material-form-new-group") {
-            openModal({type:"material-new-group",parent:state.modal&&state.modal.type==="chat-material-create"?state.modal:null},actionTarget);
-          } else if (action === "material-form-save-group") {
-            var newName=readModalValue("newGroup"),groups=state.materialGroupOrder[state.materialDraft.scope]||[];
-            if(!newName||newName.length>20){toast("请输入 1–20 字分组名称");return;}
-            if(newName==='全部素材'||newName==='未分组'||groups.indexOf(newName)>=0){toast("分组名称已存在或为保留名称");return;}
-            groups.push(newName);state.materialGroupOrder[state.materialDraft.scope]=groups;state.materialDraft.group=newName;
-            state.modal = state.modal && state.modal.parent ? state.modal.parent : null;
-            render();
-            toast("分组已新增并已选中");
+            openMaterialGroupManager(state.materialDraft.scope,state.modal&&state.modal.type==="chat-material-create"?state.modal:null,true,actionTarget);
           } else if (action === "material-save") {
             saveMaterialDraft();
           } else if (action === "material-cancel") {
@@ -2816,18 +2974,11 @@
           } else if (action === "material-delete") {
             openModal({ type: "confirm", title: "删除素材", message: "确定删除该素材吗？", danger: true, confirmAction: "material-delete", id: actionTarget.getAttribute("data-id"), success: "素材已删除" }, actionTarget);
           } else if (action === "group-settings") {
-            var sourceGroups = (state.materialGroupOrder[state.materialTab] || []).slice();
-            openModal({
-              type: "material-groups",
-              scope: state.materialTab,
-              originalGroups: sourceGroups.slice(),
-              groups: sourceGroups.map(function (name) { return { original: name, name: name }; }),
-              newGroup: ""
-            }, actionTarget);
-            window.setTimeout(function () {
-              var newGroupInput = shell && shell.querySelector('[data-modal="newGroup"]');
-              if (newGroupInput) newGroupInput.focus();
-            }, 40);
+            openMaterialGroupManager(state.materialTab,null,false,actionTarget);
+          } else if (action === "material-group-new") {
+            openMaterialGroupEditor();
+          } else if (action === "material-group-editor-cancel" || action === "material-group-editor-backdrop") {
+            cancelMaterialGroupEditor();
           } else if (action === "material-group-create") {
             createMaterialGroup();
           } else if (action === "material-group-delete") {
@@ -3591,6 +3742,8 @@
         }
 
         function clearMaterialDragState() {
+          if(state.modal&&state.modal.type==="material-groups")delete state.modal.dragIndex;
+          if(shell)shell.querySelectorAll('.ops-group-manager-row.is-dragging, .ops-group-manager-row.is-drag-over').forEach(function(row){row.classList.remove('is-dragging','is-drag-over');});
           if (shell) {
             shell.querySelectorAll(".ops-group-row.is-dragging, .ops-group-row.is-drag-over").forEach(function (row) {
               row.classList.remove("is-dragging", "is-drag-over");
@@ -3600,6 +3753,12 @@
         }
 
         function handleMaterialDragStart(event) {
+          var managerHandle=event.target.closest('[data-material-manager-drag]');
+          if(managerHandle&&state.modal&&state.modal.type==="material-groups"&&!state.modal.groupEditor){
+            state.modal.dragIndex=Number(managerHandle.getAttribute('data-material-manager-drag'));
+            if(event.dataTransfer){event.dataTransfer.effectAllowed="move";event.dataTransfer.setData("text/plain","material-manager:"+state.modal.dragIndex);}
+            managerHandle.closest('.ops-group-manager-row').classList.add('is-dragging');return;
+          }
           var handle = event.target.closest("[data-material-group-drag]");
           if (!handle || currentRoute() !== "materials") return;
           var name = handle.getAttribute("data-material-group-drag") || "";
@@ -3614,6 +3773,11 @@
         }
 
         function handleMaterialDragOver(event) {
+          var managerRow=event.target.closest('[data-material-manager-index]');
+          if(managerRow&&state.modal&&state.modal.type==="material-groups"&&Number.isInteger(state.modal.dragIndex)){
+            event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect="move";
+            shell.querySelectorAll('.ops-group-manager-row.is-drag-over').forEach(function(row){row.classList.remove('is-drag-over');});managerRow.classList.add('is-drag-over');return;
+          }
           if(event.target.closest("[data-material-drop]")){event.preventDefault();if(event.dataTransfer)event.dataTransfer.dropEffect="copy";return;}
           var row = event.target.closest("[data-material-group-row]");
           var targetName = row && row.getAttribute("data-material-group-row");
@@ -3625,6 +3789,10 @@
         }
 
         function handleMaterialDrop(event) {
+          var managerRow=event.target.closest('[data-material-manager-index]');
+          if(managerRow&&state.modal&&state.modal.type==="material-groups"&&Number.isInteger(state.modal.dragIndex)){
+            event.preventDefault();var fromIndex=state.modal.dragIndex,toIndex=Number(managerRow.getAttribute('data-material-manager-index'));clearMaterialDragState();moveMaterialManagerGroup(fromIndex,toIndex);return;
+          }
           var upload=event.target.closest("[data-material-drop]");if(upload){event.preventDefault();acceptMaterialFile(upload.getAttribute("data-material-drop"),event.dataTransfer&&event.dataTransfer.files);return;}
           var row = event.target.closest("[data-material-group-row]");
           var targetName = row && row.getAttribute("data-material-group-row");
@@ -3674,8 +3842,11 @@
             return;
           }
           if (state.modal && state.modal.type === "health-add" && event.target.closest && event.target.closest('[data-health-entry]')) { syncHealthEntryModal(); updateHealthEntryModalProgress(); return; }
-          if (state.modal && (state.modal.type === "material-groups" || state.modal.type === "material-new-group" || state.modal.type === "chat-material-create")) {
-            if (event.target.matches('[data-modal="newGroup"]')) state.modal.newGroup = event.target.value;
+          if (state.modal && (state.modal.type === "material-groups" || state.modal.type === "chat-material-create")) {
+            if(state.modal.type==='material-groups'&&state.modal.groupEditor){
+              if(event.target.matches('[data-modal="newGroupDialog"]')){state.modal.newGroup=event.target.value;state.modal.groupEditor.error='';var groupError=shell.querySelector('.ops-group-editor-error');if(groupError){groupError.hidden=true;groupError.textContent='';groupError.removeAttribute('role');}var groupConfirm=shell.querySelector('.ops-group-editor-dialog [data-action="material-group-create"]');if(groupConfirm)groupConfirm.disabled=!event.target.value.trim();}
+              return;
+            }
             if (event.target.hasAttribute("data-material-group-index")) {
               var groupIndex = Number(event.target.getAttribute("data-material-group-index"));
               if (state.modal.groups[groupIndex]) state.modal.groups[groupIndex].name = event.target.value;
@@ -3977,6 +4148,13 @@
         }
 
         function handleKeydown(event) {
+          if (event.key === 'Escape' && shell && shell.querySelector('.ops-material-parameter-menu:not([hidden]),.ops-material-help-popover:not([hidden])')) {
+            event.preventDefault();
+            var floatingTrigger = shell.querySelector('[data-action="material-param-toggle"][aria-expanded="true"],.ops-material-help-trigger[aria-expanded="true"]');
+            closeMaterialHelpPopovers();
+            if (floatingTrigger) floatingTrigger.focus();
+            return;
+          }
           if (event.key === "Enter" && event.target.id === "ops-material-search") {
             event.preventDefault();
             state.materialApplied = state.materialSearch.trim();
@@ -4015,11 +4193,18 @@
             return;
           }
           if (!state.modal) return;
-          if(event.key==="Enter"&&(state.modal.type==="material-new-group"||(state.modal.type==="chat-material-create"&&state.modal.groupCreating))&&event.target.matches('[data-modal="newGroup"]')){event.preventDefault();shell.querySelector('[data-action="material-form-save-group"]').click();return;}
-          if (event.key === "Enter" && state.modal.type === "material-groups" && event.target.matches('[data-modal="newGroup"]')) {
-            event.preventDefault();
-            createMaterialGroup();
+          if(state.modal.type==='material-groups'&&state.modal.groupEditor){
+            if(event.isComposing||event.keyCode===229)return;
+            if(event.key==='Escape'){event.preventDefault();cancelMaterialGroupEditor();return;}
+            if(event.key==='Enter'&&event.target.matches('[data-modal="newGroupDialog"]')){event.preventDefault();createMaterialGroup();return;}
+            if(event.key==='Tab'){
+              var editor=shell&&shell.querySelector('.ops-group-editor-dialog'),controls=editor?Array.prototype.slice.call(editor.querySelectorAll('input,button:not([disabled])')):[],firstControl=controls[0],lastControl=controls[controls.length-1];
+              if(event.shiftKey&&document.activeElement===firstControl){event.preventDefault();lastControl.focus();}else if(!event.shiftKey&&document.activeElement===lastControl){event.preventDefault();firstControl.focus();}
+            }
             return;
+          }
+          if(state.modal.type==="material-groups"&&event.target.matches('[data-material-manager-drag]')&&(event.key==="ArrowUp"||event.key==="ArrowDown")){
+            event.preventDefault();var managerIndex=Number(event.target.getAttribute('data-material-manager-drag'));moveMaterialManagerGroup(managerIndex,managerIndex+(event.key==="ArrowUp"?-1:1));return;
           }
           if (event.key === "Enter" && (state.modal.type === "chat-patient-tags" || state.modal.type === "patient-archive-tags") && event.target.matches('[data-modal="patientTag"]')) {
             event.preventDefault();
@@ -4147,10 +4332,17 @@
           document.addEventListener("pointermove", handleChatMaterialTypePointerMove, true);
           document.addEventListener("pointerup", handleChatMaterialTypePointerEnd, true);
           document.addEventListener("pointercancel", handleChatMaterialTypePointerEnd, true);
+          document.addEventListener("pointerdown", handleMaterialManagerPointerDown, true);
+          document.addEventListener("pointermove", handleMaterialManagerPointerMove, true);
+          document.addEventListener("pointerup", handleMaterialManagerPointerEnd, true);
+          document.addEventListener("pointercancel", handleMaterialManagerPointerEnd, true);
           document.addEventListener("wheel", handleChatMaterialTypeWheel, {passive:false});
           document.addEventListener("scroll", handleChatMaterialTypeScroll, true);
           document.addEventListener("keydown", handleKeydown, true);
           document.addEventListener("submit",function(event){if(event.target.matches("[data-health-form]")){event.preventDefault();saveModal();}},true);
+          document.addEventListener('submit',function(event){if(event.target.matches('[data-material-group-create-form]')){event.preventDefault();createMaterialGroup();}},true);
+          window.addEventListener('resize',positionMaterialGroupEditor);
+          if(window.visualViewport){window.visualViewport.addEventListener('resize',positionMaterialGroupEditor);window.visualViewport.addEventListener('scroll',positionMaterialGroupEditor);}
           document.addEventListener("dragstart", handleChatWorkbenchDragStart, true);
           document.addEventListener("dragover", handleChatWorkbenchDragOver, true);
           document.addEventListener("drop", handleChatWorkbenchDrop, true);

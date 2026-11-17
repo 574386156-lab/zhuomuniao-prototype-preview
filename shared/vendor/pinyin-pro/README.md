@@ -7,4 +7,4 @@
 - The archive was verified against the npm registry's SHA-512 integrity before extracting the browser bundle.
 - `index.js` SHA-256: `a488173470768ace074c3c4fffbb880e83523b3aa9598a8147c930e7f2d5c7dc`
 
-The local browser bundle powers patient-name pinyin search. Runtime search performs no network requests and does not upload patient data.
+The local browser bundle powers patient-name and personal-tag pinyin search. Runtime search performs no network requests and does not upload patient data.

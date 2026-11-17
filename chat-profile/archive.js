@@ -72,6 +72,7 @@
         sceneRecord.label = ctx.sceneName + '专属档案';
         sceneRecord.updated = ctx.sceneName === '用药提醒' ? '2026-10-18 15:40' : '2026-10-17 11:20';
         sceneRecord.timeline = [{date:sceneRecord.updated.slice(0,10),type:ctx.sceneName,text:'当前场景下的专属档案记录；来源：场景建档。'}].concat(base.timeline || []);
+        records.push(sceneRecord);
         matches = [sceneRecord];
       }
     }
@@ -97,7 +98,7 @@
     var files=Array.isArray(event.files)&&event.files.length?'<section class="cp-timeline-detail-card ai-event-card"><div class="cp-event-section-heading"><h3>文件原件</h3></div><div class="cp-event-files ai-event-files">'+event.files.map(function(file,fileIndex){return '<button type="button" class="cp-event-file-row ai-event-file" '+eventAction(actionPrefix,'file-original',eventIndex,fileIndex)+'><span class="cp-file-icon" aria-hidden="true">▧</span><span><b>'+esc(file.name)+'</b><small>'+esc(file.type||'文件')+'</small></span><span class="cp-event-file-arrow" aria-hidden="true">›</span></button>';}).join('')+'</div></section>':'';
     var actions=event.statusTone==='failed'?'<button type="button" class="cp-timeline-detail-action ai-event-text-button" '+eventAction(actionPrefix,'resummarize',eventIndex)+'>重新总结</button>':event.readingStatus==='failed'?'<button type="button" class="cp-timeline-detail-action ai-event-text-button" '+eventAction(actionPrefix,'reread',eventIndex)+'>重新解读报告</button>':'';
     actions+='<button type="button" class="cp-timeline-detail-action ai-event-text-button" '+eventAction(actionPrefix,'edit',eventIndex)+'>编辑</button>';
-    var recordBody=event.statusTone==='failed'?'<p>'+esc(text)+'</p>':'<dl class="cp-event-detail-fields"><div><dt>病历时间</dt><dd>'+esc(event.date||'')+'</dd></div><div><dt>病历内容</dt><dd>'+esc(text)+'</dd></div></dl>';
+    var recordBody=event.statusTone==='failed'?'<p>'+esc(text)+'</p>':'<dl class="cp-event-detail-fields"><div><dt>病历时间</dt><dd>'+esc(event.date||'未填写')+'</dd></div><div><dt>病历内容</dt><dd>'+esc(text)+'</dd></div></dl>';
     var detailMeta=(event.date?'<time>'+esc(event.date)+'</time>':'')+'<span class="cp-event-type">'+esc(type)+'</span>';
     return '<section class="cp-timeline-detail ai-event-detail-layer" aria-label="病历详情"><header class="cp-timeline-detail-heading ai-record-detail-header"><button type="button" class="cp-timeline-back ai-profile-back" '+eventAction(actionPrefix,'timeline-back')+'><span aria-hidden="true">‹</span><span>返回</span></button><h2>病历详情</h2><span aria-hidden="true"></span></header><main class="cp-timeline-detail-main ai-event-detail-main"><div class="cp-timeline-detail-meta ai-event-timeline-status">'+detailMeta+status+readingStatus+'</div>'+timestamps+'<section class="cp-timeline-detail-card cp-timeline-record-card ai-event-card"><div class="cp-event-section-heading"><h3>病历记录</h3><div class="cp-timeline-detail-actions">'+actions+'</div></div>'+recordBody+'</section>'+report+files+'</main></section>';
   }
@@ -109,22 +110,122 @@
   function renderFileOriginal(event,file,eventIndex,fileIndex,actionPrefix){
     if(!event||!file)return empty('暂无文件原件');
     actionPrefix=actionPrefix||'chat-archive';
-    var preview=file.src?'<img class="cp-event-original-image" src="'+esc(file.src)+'" alt="'+esc(file.name)+'">':'<div class="cp-event-original-placeholder"><span class="cp-file-icon" aria-hidden="true">▧</span><strong>'+esc(file.name)+'</strong><small>原始文件预览</small></div>';
+    var documentFile=file.format==='pdf'||file.format==='word';
+    var preview=file.src?(documentFile?'<div class="cp-event-original-placeholder"><span class="cp-file-icon" aria-hidden="true">▧</span><strong>'+esc(file.name)+'</strong><a class="cp-event-original-download" href="'+esc(file.src)+'" download="'+esc(file.name)+'">下载原件</a></div>':'<img class="cp-event-original-image" src="'+esc(file.src)+'" alt="'+esc(file.name)+'">'):'<div class="cp-event-original-placeholder"><span class="cp-file-icon" aria-hidden="true">▧</span><strong>'+esc(file.name)+'</strong><small>原始文件预览</small></div>';
     return '<section class="cp-timeline-detail ai-event-detail-layer" aria-label="文件原件"><header class="cp-timeline-detail-heading ai-record-detail-header"><button type="button" class="cp-timeline-back ai-profile-back" '+eventAction(actionPrefix,'file-original-back',eventIndex,fileIndex)+'><span aria-hidden="true">‹</span><span>返回</span></button><h2>文件原件</h2><span aria-hidden="true"></span></header><main class="cp-timeline-detail-main ai-event-detail-main"><section class="cp-event-original cp-timeline-detail-card"><div class="cp-event-section-heading"><div><h3>'+esc(file.name)+'</h3><small>'+esc(file.type||'文件')+'</small></div></div>'+preview+'</section></main></section>';
   }
-  function renderTimeline(events,detailIndex,actionPrefix){
+  function renderTimeline(events,detailIndex,actionPrefix,ctx){
     events=Array.isArray(events)?events:[];
     if(detailIndex!==undefined&&detailIndex!==null&&String(detailIndex)!==''&&events[Number(detailIndex)])return renderTimelineDetail(events[Number(detailIndex)],actionPrefix,Number(detailIndex));
-    if(!events.length)return empty('暂无病历记录');
     actionPrefix=actionPrefix||'chat-archive';
-    return '<section class="cp-timeline-view" aria-label="病例时间轴"><header class="cp-timeline-heading"><strong>病例时间轴</strong><span>共 '+esc(events.length)+' 条</span></header><ol class="cp-timeline cp-timeline-cards">'+events.map(function(event,index){
+    var upload=ctx&&resolve(ctx).record?timelineUploadState(ctx):null;
+    var add=upload?'<button class="cp-timeline-add" type="button" data-archive-upload-add'+(upload.processing?' disabled aria-busy="true"':'')+'>'+(upload.processing?'<i class="cp-timeline-upload-spinner" aria-hidden="true"></i>处理中...':'<i class="cp-timeline-add-icon" aria-hidden="true">＋</i>新增')+'</button><input type="file" data-archive-upload-input aria-label="上传病历附件" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" multiple hidden>':'';
+    var feedback=upload&&upload.error?'<div class="cp-timeline-upload-feedback is-error" role="alert"><span>'+esc(upload.error)+'</span>'+(upload.files.length?'<button type="button" data-archive-upload-retry>重试</button>':'')+'</div>':upload&&upload.message?'<p class="cp-timeline-upload-feedback" role="status">'+esc(upload.message)+'</p>':'';
+    return '<section class="cp-timeline-view" aria-label="病例时间轴"><header class="cp-timeline-heading"><strong>病例时间轴</strong><span>共 '+esc(events.length)+' 条</span>'+add+'</header>'+feedback+(events.length?'<ol class="cp-timeline cp-timeline-cards">'+events.map(function(event,index){
       var type=event.type||event.kind||'记录',text=event.text||event.body||'',tone=event.statusTone==='failed'||/检验|检查|报告|文件|资料|病历|复查/.test(type)?'amber':/随访|会话/.test(type)?'green':'blue';
       var status=event.status?'<span class="cp-event-status" data-tone="'+esc(event.statusTone||'neutral')+'">'+esc(event.status)+'</span>':'';
       var originalCount=event.originalCount?'<span class="cp-event-meta">'+esc(event.originalCount)+' 份原始文件</span>':'';
       var dateMarkup=event.date?'<time>'+esc(event.date)+'</time>':'';
       var failure=event.statusTone==='failed'?'<span class="cp-event-type" data-tone="'+tone+'">'+esc(type)+'</span><div class="cp-event-failure"><p>'+esc(text||'报告原件已保存，您可以重新总结，或手动补充就诊信息。')+'</p></div>':'<span class="cp-event-type" data-tone="'+tone+'">'+esc(type)+'</span><p class="cp-event-body">'+esc(text)+'</p>';
       return '<li><span class="cp-event-marker" data-tone="'+tone+'" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h8l4 4v14H6zM14 3v5h4M9 14h6M12 11v6"/></svg></span><article class="cp-event-card"><header>'+dateMarkup+'<button type="button" class="cp-event-detail-link" data-action="'+actionPrefix+'-timeline-detail" data-event-index="'+index+'" aria-label="查看'+esc(event.date||'病历')+'的'+esc(type)+'详情">查看详情<span aria-hidden="true">›</span></button></header>'+failure+'<footer class="cp-event-footer">'+status+originalCount+(event.hasReport?'<span class="cp-event-meta cp-event-report-meta">含报告解读</span>':'')+'</footer></article></li>';
-    }).join('')+'</ol></section>';
+    }).join('')+'</ol>':empty('暂无病历记录'))+'</section>';
+  }
+  var timelineUploads=Object.create(null),uploadMounts=new WeakMap(),uploadSubscribers=new Set();
+  function timelineContextKey(ctx){
+    if(!ctx)return '';
+    return JSON.stringify([ctx.tenantId,ctx.projectId,ctx.doctorId,ctx.patientId,ctx.sceneName||'慢病随访']);
+  }
+  function timelineUploadState(ctx){
+    var key=timelineContextKey(ctx);
+    return timelineUploads[key]||(timelineUploads[key]={processing:false,files:[],error:'',message:''});
+  }
+  function notifyTimelineUpload(ctx,phase){
+    var change={key:timelineContextKey(ctx),phase:phase};
+    uploadSubscribers.forEach(function(mount){
+      if(!mount.container.isConnected){uploadSubscribers.delete(mount);return;}
+      if(timelineContextKey(mount.getContext())===change.key)mount.onChange(change);
+    });
+  }
+  function createTimelineEvent(ctx,event){
+    var found=resolve(ctx);
+    if(!found.record)return null;
+    if(!Array.isArray(found.record.timeline))found.record.timeline=[];
+    // Existing detail/edit actions address records by index, including async work.
+    // Append so an upload cannot redirect an in-flight action to another record.
+    found.record.timeline.push(event);
+    found.record.updated=event.updatedAt||found.record.updated;
+    return event;
+  }
+  function timelineFilesIssue(files){
+    if(files.length>10)return '每份病历最多上传 10 个文件，请重新选择';
+    for(var index=0;index<files.length;index++){
+      var file=files[index],extension=String(file.name||'').split('.').pop().toLowerCase();
+      if(['jpg','jpeg','png','pdf','doc','docx'].indexOf(extension)<0)return '仅支持 JPG、PNG、PDF、WORD 格式，请重新选择';
+      var image=['jpg','jpeg','png'].indexOf(extension)>=0;
+      if(Number(file.size)>(image?20:5)*1024*1024)return '单个'+(image?' JPG、PNG 文件不能超过 20MB':' PDF、WORD 文件不能超过 5MB')+'，请重新选择';
+    }
+    return '';
+  }
+  function readTimelineFile(file){
+    return new Promise(function(resolveFile,rejectFile){
+      var reader=new root.FileReader();
+      reader.onload=function(){
+        if(typeof reader.result!=='string'||!/^data:/.test(reader.result)){rejectFile(new Error('Unable to read attachment'));return;}
+        var extension=String(file.name).split('.').pop().toLowerCase(),image=['jpg','jpeg','png'].indexOf(extension)>=0;
+        resolveFile({name:file.name,type:image?'图片':extension==='pdf'?'PDF':'WORD',format:image?'image':extension==='pdf'?'pdf':'word',size:file.size,src:reader.result});
+      };
+      reader.onerror=reader.onabort=function(){rejectFile(new Error('Unable to read attachment'));};
+      reader.readAsDataURL(file);
+    });
+  }
+  function uploadTimelineFiles(ctx,selectedFiles){
+    var frozen=Object.assign({},ctx),found=resolve(frozen),state=timelineUploadState(frozen),files=Array.from(selectedFiles||[]);
+    if(!found.record||state.processing||!files.length)return Promise.resolve(null);
+    var issue=timelineFilesIssue(files);
+    if(issue){state.files=[];state.error=issue;state.message='';notifyTimelineUpload(frozen,'failed');return Promise.resolve(null);}
+    state.files=files;state.processing=true;state.error='';state.message='';
+    notifyTimelineUpload(frozen,'processing');
+    var delay=new Promise(function(done){root.setTimeout(done,650);});
+    var reading=Promise.all(files.map(readTimelineFile)).then(function(result){return {files:result};},function(error){return {error:error};});
+    return Promise.all([delay,reading]).then(function(results){
+      var result=results[1];
+      if(result.error)throw result.error;
+      var now=new Date(),at=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0')+' '+String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+':'+String(now.getSeconds()).padStart(2,'0');
+      var event=createTimelineEvent(frozen,{date:'',type:'病历材料',text:'已上传 '+result.files.length+' 份病历材料。',status:'已上传',statusTone:'success',createdAt:at,updatedAt:at,originalCount:result.files.length,files:result.files});
+      if(!event)throw new Error('Archive unavailable');
+      state.processing=false;state.files=[];state.message='已新增病历，包含 '+result.files.length+' 份文件。';
+      notifyTimelineUpload(frozen,'completed');
+      return event;
+    }).catch(function(){
+      state.processing=false;state.error='病历处理失败，文件已保留，请重试。';
+      notifyTimelineUpload(frozen,'failed');
+      return null;
+    });
+  }
+  function retryTimelineUpload(ctx){return uploadTimelineFiles(ctx,timelineUploadState(ctx).files);}
+  function mountTimelineUploads(container,getContext,onChange){
+    if(!container)return;
+    var mount=uploadMounts.get(container);
+    if(!mount){
+      mount={container:container,getContext:getContext,onChange:onChange};
+      uploadMounts.set(container,mount);
+      container.addEventListener('click',function(event){
+        var add=event.target.closest('[data-archive-upload-add]'),retry=event.target.closest('[data-archive-upload-retry]');
+        if(add){
+          var input=add.closest('.cp-timeline-view').querySelector('[data-archive-upload-input]'),ctx=mount.getContext();
+          if(add.disabled||!input||!resolve(ctx).record)return;
+          input.archiveUploadContext=Object.assign({},ctx);input.value='';input.click();
+        }else if(retry){retryTimelineUpload(mount.getContext());}
+      });
+      container.addEventListener('change',function(event){
+        var input=event.target;
+        if(!input.matches('[data-archive-upload-input]'))return;
+        var files=Array.from(input.files||[]),ctx=input.archiveUploadContext||Object.assign({},mount.getContext());
+        input.value='';
+        if(files.length)uploadTimelineFiles(ctx,files);
+      });
+    }
+    mount.getContext=getContext;mount.onChange=onChange;uploadSubscribers.add(mount);
   }
   function findTimelineEvent(ctx,index){
     var found=resolve(ctx),timeline=found.record&&Array.isArray(found.record.timeline)?found.record.timeline:[];
@@ -164,7 +265,7 @@
   }
   function content(record,tab,metric,patientName,ctx,timelineDetailIndex,actionPrefix) {
     if(tab==='专属档案') return renderExclusive(record);
-    if(tab==='病例时间轴') return renderTimeline(record.timeline,timelineDetailIndex,actionPrefix);
+    if(tab==='病例时间轴') return renderTimeline(record.timeline,timelineDetailIndex,actionPrefix,ctx);
     if(tab==='指标汇总') return root.PatientHealth.renderReports(record.id,record.metrics);
     if(tab==='基础健康指标') return root.PatientHealth.render(record.id,record.metrics);
     if(tab==='随访记录') return root.PatientFollowups.render(record.id,patientName,record.followups);
@@ -297,5 +398,5 @@
     }
   }
   if(root.document)root.document.addEventListener('scroll',function(e){if(e.target.classList&&e.target.classList.contains('cp-tabs'))updateScrollHints(e.target.parentElement.parentElement);},true);
-  root.ChatPatientArchive = {context:context,resolve:resolve,render:render,renderTimeline:renderTimeline,renderTimelineDetail:renderTimelineDetail,renderTimelineEdit:renderTimelineEdit,renderFileOriginal:renderFileOriginal,findTimelineEvent:findTimelineEvent,updateTimelineEvent:updateTimelineEvent,renderMedication:renderMedication,renderExclusive:renderExclusive,tabsFor:tabsFor,tabs:tabs,centerActiveTabs:centerActiveTabs,updateStickyOffsets:updateStickyOffsets,updateScrollHints:updateScrollHints,mountScrollHints:mountScrollHints};
+  root.ChatPatientArchive = {context:context,resolve:resolve,render:render,renderTimeline:renderTimeline,renderTimelineDetail:renderTimelineDetail,renderTimelineEdit:renderTimelineEdit,renderFileOriginal:renderFileOriginal,findTimelineEvent:findTimelineEvent,updateTimelineEvent:updateTimelineEvent,createTimelineEvent:createTimelineEvent,timelineUploadState:timelineUploadState,uploadTimelineFiles:uploadTimelineFiles,retryTimelineUpload:retryTimelineUpload,mountTimelineUploads:mountTimelineUploads,renderMedication:renderMedication,renderExclusive:renderExclusive,tabsFor:tabsFor,tabs:tabs,centerActiveTabs:centerActiveTabs,updateStickyOffsets:updateStickyOffsets,updateScrollHints:updateScrollHints,mountScrollHints:mountScrollHints};
 })(typeof window !== 'undefined' ? window : globalThis);

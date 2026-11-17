@@ -1173,7 +1173,32 @@
       .ops-modal.is-sm { width: min(100%, 520px); }
       .ops-modal.is-lg { width: min(100%, 800px); }
       .ops-modal.is-xl { width: min(100%, 920px); }
-      .ops-modal.is-group-manager { width: min(100%, 1120px); }
+      .ops-modal.is-group-manager { width: min(100%, 560px); height: min(720px, calc(100vh - 112px)); min-height: 0; grid-template-rows: 56px minmax(0, 1fr) auto; border-radius: 12px; }
+      .ops-modal.is-group-manager .ops-modal-header { display: grid; grid-template-columns: 44px minmax(0,1fr) 44px; gap: 8px; padding: 6px 16px; background: #fff; border-bottom: 1px solid #e9eef4; }
+      .ops-modal.is-group-manager .ops-modal-header h2 { min-width: 0; font-size: 17px; text-align: center; white-space: nowrap; }
+      .ops-modal.is-group-manager .ops-modal-body { padding: 16px; background: #f5f7fa; }
+      .ops-group-manager-nav-cancel,.ops-group-manager-nav-done { display: block; min-width: 44px; min-height: 44px; padding: 0; border: 0; background: transparent; color: #60758c; font-size: 15px; cursor: pointer; }
+      .ops-group-manager-nav-done { color: #176bd8; font-weight: 600; }
+      .ops-group-manager-mobile-create { display: flex; padding: 12px 16px max(12px, env(safe-area-inset-bottom)); border-top: 1px solid #e9eef4; background: #fff; }
+      .ops-group-manager-mobile-create button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; padding: 0 16px; border: 0; border-radius: 10px; background: #176bd8; color: #fff; font-size: 16px; font-weight: 600; cursor: pointer; }
+      .ops-group-editor-backdrop { position: fixed; inset: 0; z-index: 3; display: grid; place-items: center; padding: 24px; box-sizing: border-box; background: rgba(20,35,53,.42); }
+      .ops-group-editor-dialog { display: flex; flex-direction: column; width: min(100%,420px); max-height: 100%; overflow: hidden; border-radius: 18px; background: #fff; box-shadow: 0 14px 44px rgba(15,35,58,.2); }
+      .ops-group-editor-header { display: flex; flex: none; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px 8px 20px; }
+      .ops-group-editor-header h2 { margin: 0; color: #263d56; font-size: 18px; font-weight: 600; }
+      .ops-group-editor-header button { display: grid; place-items: center; flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: #f5f6f8; color: #93a1b2; font-size: 17px; cursor: pointer; }
+      .ops-group-editor-dialog form { display: flex; flex-direction: column; min-height: 0; }
+      .ops-group-editor-body { min-height: 0; overflow: auto; padding: 8px 20px 24px; }
+      .ops-group-editor-body label { display: grid; gap: 10px; color: #65758a; font-size: 14px; }
+      #ops-shell .ops-group-editor-body input { width: 100%; height: 50px; min-height: 50px; padding: 10px 12px; box-sizing: border-box; border: 1px solid #e0e5ed; border-radius: 8px; background: #fff; font-size: 16px; }
+      #ops-shell .ops-group-editor-body input:focus { border-color: #176bd8; outline: none; box-shadow: 0 0 0 2px #176bd814; }
+      .ops-group-editor-error { margin: 9px 0 0; color: #c44d45; font-size: 14px; line-height: 1.5; }
+      .ops-group-editor-error[hidden] { display: none; }
+      .ops-group-editor-actions { display: flex; flex: none; gap: 10px; padding: 14px 20px max(16px, env(safe-area-inset-bottom)); border-top: 1px solid #f0f3f7; }
+      .ops-group-editor-actions button { flex: 0 0 88px; min-height: 48px; padding: 11px 17px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; color: #7f8d9f; font-size: 15px; font-weight: 500; cursor: pointer; }
+      .ops-group-editor-actions button + button { flex: 1; border-color: #176bd8; background: #176bd8; color: #fff; }
+      .ops-group-editor-actions button:disabled { border-color: #c9daf3; background: #c9daf3; color: #fff; cursor: default; }
+      .ops-group-editor-actions button:not(:disabled):active { filter: brightness(.96); }
+      .ops-group-editor-actions button:focus-visible { outline: 2px solid #176bd8; outline-offset: -3px; }
       .ops-modal-header,
       .ops-modal-footer { display: flex; align-items: center; padding: 0 20px; }
       .ops-modal-header { justify-content: space-between; border-bottom: 1px solid var(--border, #e5e8ec); }
@@ -1189,38 +1214,39 @@
       .ops-modal-table .ops-table th,
       .ops-modal-table .ops-table td { height: 44px; }
       .ops-modal-table .ops-transfer-choice { width: 44px; min-width: 44px; padding-inline: 10px; text-align: center; }
-      .ops-group-manager-create {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 12px;
-        margin-bottom: 18px;
-      }
-      #ops-shell .ops-group-manager-create input { height: 44px; }
-      #ops-shell .ops-group-manager-create .ops-button { min-width: 116px; min-height: 44px; }
       .ops-group-manager-list {
         overflow: hidden;
-        border: 1px solid var(--border, #e5e8ec);
-        border-radius: var(--radius-md, 8px);
+        border: 1px solid #e3e9f0;
+        border-radius: 12px;
+        background: #fff;
       }
-      .ops-group-manager-head,
       .ops-group-manager-row {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 84px;
+        grid-template-columns: minmax(0, 1fr) 44px;
         align-items: center;
-        gap: 22px;
-        min-height: 58px;
-        padding: 10px 18px;
+        gap: 8px;
+        min-height: 60px;
+        padding: 4px 8px 4px 4px;
       }
-      .ops-group-manager-head {
-        min-height: 52px;
-        background: var(--surface-raised, #f4f6f8);
-        color: var(--text-selected, #204568);
-        font-weight: 600;
-      }
-      .ops-group-manager-head span:last-child { text-align: center; }
       .ops-group-manager-row + .ops-group-manager-row { border-top: 1px solid var(--border, #e5e8ec); }
-      #ops-shell .ops-group-manager-row input { height: 40px; }
-      .ops-group-manager-delete { justify-self: center; }
+      .ops-group-manager-name { display: flex; align-items: center; gap: 2px; min-width: 0; }
+      .ops-group-manager-name-field { position: relative; flex: 1; min-width: 0; }
+      .ops-group-manager-edit-hint { display: grid; place-items: center; position: absolute; inset: 0 2px 0 auto; width: 20px; pointer-events: none; color: #8193aa; font-size: 13px; }
+      .ops-group-manager-name-field:focus-within .ops-group-manager-edit-hint { display: none; }
+      #ops-shell .ops-group-manager-row input { min-width: 0; width: 100%; height: 44px; padding: 8px 24px 8px 6px; border-color: transparent; border-radius: 7px; background: transparent; color: #263f59; font-size: 16px; }
+      #ops-shell .ops-group-manager-row input:hover { background: #f7f9fc; }
+      #ops-shell .ops-group-manager-row input:focus { border-color: var(--primary, #0365bf); background: #fff; }
+      .ops-group-manager-drag { flex: none; display: grid; place-items: center; width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #8da0b5; cursor: grab; touch-action: none; user-select: none; }
+      .ops-group-manager-drag .ops-icon { font-size: 17px; }
+      .ops-group-manager-drag:focus-visible { outline: 2px solid var(--primary, #0365bf); outline-offset: 2px; }
+      .ops-group-manager-row.is-dragging { opacity: .45; }
+      .ops-group-manager-row.is-drag-over { box-shadow: inset 0 2px var(--primary, #0365bf); }
+      .ops-group-manager-row.is-new-group { background: #edf5ff; box-shadow: inset 3px 0 #176bd8; }
+      .ops-group-manager-row[tabindex="-1"]:focus { outline: none; }
+      #ops-shell .ops-group-manager-delete { display: grid; place-items: center; justify-self: center; width: 44px; min-height: 44px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: #8292a6; }
+      #ops-shell .ops-group-manager-delete:hover, #ops-shell .ops-group-manager-delete:focus-visible { background: #fff0ef; color: #cb5148; }
+      .ops-group-manager-delete .ops-icon { display: inline-block; font-size: 17px; }
+      .ops-group-manager-delete > span { display: none; }
       .ops-group-manager-empty { padding: 30px 18px; text-align: center; color: var(--text-secondary, #4f6e91); }
       .ops-transfer-radio { width: 14px !important; height: 14px !important; margin: 0; accent-color: var(--primary, #0365bf); }
       .ops-toast {
@@ -1644,8 +1670,11 @@
         .ops-ops-patient-filter-actions { grid-column: 1 / -1; }
       }
       @media (max-width: 760px) {
-        .ops-group-manager-create { grid-template-columns: 1fr; }
-        #ops-shell .ops-group-manager-create .ops-button { width: 100%; }
+        .ops-modal-backdrop.is-group-manager-backdrop { display: block; padding: 0; background: #f5f7fa; }
+        .ops-modal.is-group-manager { width: 100%; height: 100%; min-height: 0; max-height: 100%; grid-template-rows: 56px minmax(0, 1fr) auto; border: 0; border-radius: 0; box-shadow: none; }
+        .ops-modal.is-group-manager .ops-modal-header { padding-inline: 12px; }
+        .ops-group-editor-backdrop { place-items: end center; padding: 0; }
+        .ops-group-editor-dialog { width: 100%; max-height: calc(100% - 20px); border-radius: 18px 18px 0 0; }
         .ops-home-content { padding: 18px 14px 28px; }
         .ops-home-greeting { align-items: start; flex-direction: column; }
         .ops-home-metrics,

@@ -340,6 +340,20 @@
 .cp-timeline-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:0 0 12px; padding:0 4px; }
 .cp-timeline-heading strong { color:#173c61; font-size:18px; }
 .cp-timeline-heading span { color:#7890a5; font-size:13px; }
+.cp-timeline-heading > span { margin-left:auto; white-space:nowrap; }
+.cp-panel .cp-timeline-add { display:inline-flex; align-items:center; justify-content:center; gap:6px; flex:none; min-height:36px; padding:6px 12px; border:1px solid #0869c7; border-radius:6px; background:#0869c7; color:#fff; font-weight:500; white-space:nowrap; }
+.cp-panel .cp-timeline-add:hover:not(:disabled) { background:#005bb2; }
+.cp-panel .cp-timeline-add:disabled { cursor:wait; opacity:.75; }
+.cp-timeline-add-icon { font-size:18px; font-style:normal; line-height:1; }
+.cp-timeline-upload-spinner { width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:cp-timeline-upload-spin .8s linear infinite; }
+@keyframes cp-timeline-upload-spin { to { transform:rotate(360deg); } }
+.cp-timeline-upload-feedback { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:0 0 12px; padding:9px 12px; border-radius:6px; background:#eef7ff; color:#21629b; font-size:14px; }
+.cp-timeline-upload-feedback.is-error { color:#b63838; background:#fff1f0; }
+.cp-panel .cp-timeline-upload-feedback button { flex:none; min-height:32px; padding:4px 10px; border:1px solid currentColor; border-radius:5px; background:transparent; color:inherit; }
+.wc-patient-archive .cp-timeline-add,.wc-patient-archive .cp-timeline-upload-feedback button { min-height:44px; }
+@media(max-width:600px) { .cp-panel .cp-timeline-add,.cp-panel .cp-timeline-upload-feedback button { min-height:44px; } }
+.cp-event-original-download { color:#0869c7; }
+@media(prefers-reduced-motion:reduce) { .cp-timeline-upload-spinner { animation:none; } }
 .cp-timeline li { position:relative; padding:0 0 24px; }
 .cp-timeline li::before { content:''; position:absolute; width:8px; height:8px; border-radius:50%; background:#0365bf; border:2px solid white; box-shadow:0 0 0 1px #b6d9f7; left:-21px; top:6px; }
 .cp-timeline time { display:block; margin-bottom:6px; font-size:14px; color:#607b95; }
