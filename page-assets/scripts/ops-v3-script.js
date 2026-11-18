@@ -1965,8 +1965,7 @@
           if (modal.type === "transfer") {
             var context=modal.context||getHandoffContext();
             var handoffPending=window.PatientHandoffs.getRecords(context).some(function(item){return item.status==='pending_reply'||item.status==='return_pending';});
-            var handoffOwner=window.PatientHandoffs.getOwner(context);
-            return modalFrame(modal.mode==='ai'?'AI转医助':handoffOwner&&handoffOwner.kind==='ai'?'转医助':'转接',window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save',handoffPending?'disabled aria-describedby="handoff-pending-status"':''),'sm');
+            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save',handoffPending?'disabled aria-describedby="handoff-pending-status"':''),'sm');
           }
           if (modal.type === "member-view") {
             var row = memberRows.filter(function (item) { return item.id === modal.id; })[0] || memberRows[0];

@@ -58,6 +58,7 @@
 .ho-transfer-form { display:grid; gap:14px; min-width:0; }
 .ho-recipient-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding:3px; border:1px solid #d8e7f2; border-radius:7px; background:#f5f9fc; }
 .ho-recipient-tabs button { min-height:40px; border:0; border-radius:5px; background:transparent; color:#54728d; font:inherit; cursor:pointer; }
+#ops-shell .ho-recipient-tabs button:disabled { color:#8796a8; opacity:1; cursor:not-allowed; }
 .ho-recipient-tabs button.is-active { background:#fff; color:#0365bf; box-shadow:0 1px 4px rgba(31,78,122,.12); font-weight:600; }
 .ho-transfer-form [hidden] { display:none!important; }
 .ho-scene { margin:0; color:#607b95; font-size:14px; overflow-wrap:anywhere; }
