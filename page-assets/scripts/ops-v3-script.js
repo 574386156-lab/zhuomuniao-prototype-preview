@@ -1672,7 +1672,6 @@
         function openHandoff(mode,trigger) {
           var ctx=getHandoffContext();
           if(!ctx.patientId||!ctx.sceneCode){toast('请先选择明确的患者和场景码');return;}
-          if(window.PatientHandoffs.getRecords(ctx).some(function(item){return item.status==='pending_reply';})){toast('已有转接等待回复，请勿重复转接');return;}
           openModal({type:'transfer',mode:mode,context:ctx,requestId:'handoff-request-'+Date.now()+'-'+(++handoffRequestSequence),reason:'',reasonDetail:'',summary:handoffSummary(ctx),toId:'',recipientType:'assistant'},trigger);
         }
         function captureHandoffInput(target) {
@@ -1965,7 +1964,9 @@
           }
           if (modal.type === "transfer") {
             var context=modal.context||getHandoffContext();
-            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save'),'sm');
+            var handoffPending=window.PatientHandoffs.getRecords(context).some(function(item){return item.status==='pending_reply'||item.status==='return_pending';});
+            var handoffOwner=window.PatientHandoffs.getOwner(context);
+            return modalFrame(modal.mode==='ai'?'AI转医助':handoffOwner&&handoffOwner.kind==='ai'?'转医助':'转接',window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save',handoffPending?'disabled aria-describedby="handoff-pending-status"':''),'sm');
           }
           if (modal.type === "member-view") {
             var row = memberRows.filter(function (item) { return item.id === modal.id; })[0] || memberRows[0];
@@ -4298,7 +4299,7 @@
           // Archive ownership never determines the explicit synthetic recorder.
           window.PatientFollowups.setOperator({id:'operator-demo-admin',name:'管理员',role:'admin'});
           window.PatientHandoffs.mount(function(){render({preserveArchiveScroll:true});});
-          window.DoctorReception.subscribe(function(){if(shell&&shell.querySelector('.ho-panel'))render({preserveArchiveScroll:true});});
+          window.DoctorReception.subscribe(function(){if(shell&&(shell.querySelector('.ho-panel')||state.modal&&state.modal.type==='transfer'))render({preserveArchiveScroll:true});});
           window.PrototypeHandoffHost={context:getHandoffContext,receiveAssistantReply:function(ctx,receipt){
             var result=window.PatientHandoffs.receiveReply(ctx,receipt);
             if(result.ok&&!result.idempotent&&JSON.stringify(ctx)===JSON.stringify(getHandoffContext())){
