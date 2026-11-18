@@ -90,7 +90,7 @@ html #ops-shell [data-chat-workbench-tabs] > [hidden] {
 html #ops-shell .ops-chat-layout > .ops-chat-workbench.is-followup-creating {
   grid-template-rows:auto minmax(0,1fr);
 }
-html #ops-shell .ops-chat-layout > aside.ops-chat-column.ops-chat-workbench:has(> [data-chat-workbench-tabs]):not(:has(> .ops-quick-reply-page)) {
+html #ops-shell .ops-chat-layout:not(.is-workbench-collapsed) > aside.ops-chat-column.ops-chat-workbench:has(> [data-chat-workbench-tabs]):not(:has(> .ops-quick-reply-page)) {
   display:grid;
   grid-template-rows:auto minmax(0,1fr);
   min-height:0;

@@ -43,7 +43,7 @@
     ]
   };
   var historyDayFormat=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}),historyClockFormat=new Intl.DateTimeFormat('zh-CN',{timeZone:'Asia/Shanghai',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
-  var handoffReturn=null,handoffFeedbackTimer=null,routeVersion=0;
+  var handoffFeedbackTimer=null,routeVersion=0;
   var archiveTab='病例时间轴',archiveTabsExpanded=false,archiveTimelineDetail=null,archiveTimelineScroll=0,archiveFocusDetail=false,archiveResetScroll=false,archiveEditMode=null,archiveFileOriginal=null,healthModal=null,healthReturnFocus=null,healthChartModal=null,healthChartReturnFocus=null,archiveBasicDraft=null;
   function fitPhone(){
     if(!phoneScaleBox||!phoneDevice)return;
@@ -288,11 +288,10 @@
     var task=handoffTaskForCurrent();if(!task||task.doctorId!==reception.actor().doctorId||task.phase==='returning_ai'||task.result&&task.owner.kind==='ai')return;
     var job={person:current.id,taskId:task.id,name:current.name,hash:location.hash,routeVersion:routeVersion};
     reception.returnToAi(task.id,'manual').then(function(result){
-      if(!isHandoffView(job)){if(isTodoListRoute()&&result.ok)showHandoffFeedback(job.name+'已转交 AI');return;}
+      if(!isHandoffView(job)||routeVersion!==job.routeVersion)return;
       renderHandoffsPage();
       if(!result.ok){showHandoffFeedback(result.code==='superseded_by_reply'?'医生已接手，本次转交已取消':'AI 回接失败，请重试',true);return;}
-      if(routeVersion!==job.routeVersion){showHandoffFeedback('已转交 AI');return;}
-      handoffReturn={name:job.name};todoOrigin=current?'#chat/'+current.id:'#messages';navigate(patientTodoHash(current));
+      showHandoffFeedback(job.name+'已转交 AI');
     });
   }
   function takeOverConversation(){
@@ -301,8 +300,13 @@
     renderHandoffsPage();showHandoffFeedback('已由'+reception.actor().name+'接手，AI 自动回复已暂停');
   }
   function returnUnassignedConversation(){
-    var job={person:current.id,hash:location.hash,routeVersion:routeVersion};
-    window.PatientHandoffs.returnToAi(handoffContext()).then(function(result){if(!isHandoffView(job)||routeVersion!==job.routeVersion)return;renderHandoffsPage();if(!result.ok)showHandoffFeedback('转交失败，请重试',true);});
+    var job={person:current.id,name:current.name,hash:location.hash,routeVersion:routeVersion};
+    window.PatientHandoffs.returnToAi(handoffContext()).then(function(result){
+      if(!isHandoffView(job)||routeVersion!==job.routeVersion)return;
+      renderHandoffsPage();
+      if(!result.ok){showHandoffFeedback('转交失败，请重试',true);return;}
+      showHandoffFeedback(job.name+'已转交 AI');
+    });
   }
   function retryReception(id){reception.returnToAi(id,'timeout').then(function(result){if(isTodoListRoute())showHandoffFeedback(result.ok?'已转回 AI':'AI 回接失败，请重试',!result.ok);});}
   function openPage(key){
@@ -476,7 +480,7 @@
   function navigate(hash){if(location.hash===hash)route();else location.hash=hash;}
   function route(){
     if(window.WecomPatientTags)window.WecomPatientTags.destroy();
-    todoHelpOpen=false;todoFilterDraft=null;followupPhoneTask='';routeVersion++;var returned=handoffReturn;handoffReturn=null;clearHandoffFeedback();
+    todoHelpOpen=false;todoFilterDraft=null;followupPhoneTask='';routeVersion++;clearHandoffFeedback();
     if(phoneScreen)phoneScreen.classList.remove('wc-handoff-leaving');app.classList.remove('wc-handoff-arriving');
     var routeHash=location.hash.replace(/^#/,''),routeParams=new URLSearchParams(routeHash.split('?')[1]||''),parts=routeHash.split('?')[0].split('/'),person=people.filter(function(p){return p.id===parts[1];})[0];
     if(routeVersion===1&&(parts[0]==='todos'||!parts[0])){
@@ -494,7 +498,6 @@
     else if(parts[0]==='todos'){todoPatientId=String(routeParams.get('patientId')||'').trim();var patientRecord=todoPatientId&&todos.list({patientId:todoPatientId})[0],patient=people.find(function(row){return row.patientId===todoPatientId;});todoPatientName=patientRecord?patientRecord.patient:patient?patient.name:String(routeParams.get('patientName')||'');showTodos();}
     else if(parts[0]==='todo'){showFollowup(decodeURIComponent(parts.slice(1).join('/')));}
     else{showMessages();}
-    if(returned&&parts[0]==='todos'){app.classList.add('wc-handoff-arriving');showHandoffFeedback(returned.name+'已转交 AI');}
   }
   app.addEventListener('click',function(event){if(handleTodoFilterClick(event))return;if(event.target.closest('[data-wc-status-help]')){openStatusHelp();return;}if(event.target.closest('[data-wc-status-close]')||event.target.classList.contains('wc-status-backdrop')){closeStatusHelp();return;}if(todoHelpOpen||todoFilterDraft)return;if(event.target.closest('[data-wc-followup-phone-toggle]')){var phoneId=decodeURIComponent(location.hash.split('/').slice(1).join('/')),phoneTask=todos.get(phoneId);if(!phoneTask||!/^\d{11}$/.test(String(phoneTask.phone||'').trim()))return;var phoneKey=followupPhoneKey(phoneTask);followupPhoneTask=followupPhoneTask===phoneKey?'':phoneKey;showFollowup(phoneId);var phoneButton=app.querySelector('[data-wc-followup-phone-toggle]');if(phoneButton)phoneButton.focus({preventScroll:true});return;}if(event.target.closest('[data-wc-transfer-history]')){todoTab='history';historyPeriod='all';todoStatus.history='all';showTodos();return;}if(event.target.closest('[data-wc-clear-status]')){todoStatus[todoTab]='all';todoType='all';todoSearch='';historyPeriod='all';showTodos();return;}if(event.target.closest('[data-wc-notification]')){navigate('#notifications/my-todos');return;}if(event.target.closest('[data-wc-notification-todos]')){event.preventDefault();todoOrigin='#notifications/my-todos';todoTab='pending';todoType='all';todoSearch='';todoStatus.pending='all';navigate('#todos');return;}var followup=event.target.closest('[data-wc-followup-id]');if(followup){var followupId=followup.getAttribute('data-wc-followup-id'),followupTask=todos.get(followupId);followupError='';navigate('#todo/'+encodeURIComponent(followupId));return;}var retry=event.target.closest('[data-wc-retry-return]'),person=event.target.closest('[data-wc-person]'),todo=event.target.closest('[data-wc-todo-person]'),expand=event.target.closest('[data-wc-todo-expand]'),todoTabButton=event.target.closest('[data-wc-todo-tab]'),page=event.target.closest('[data-wc-page]'),action=event.target.closest('[data-wc-action]');if(retry){retryReception(retry.getAttribute('data-wc-retry-return'));}else if(person)navigate('#chat/'+person.getAttribute('data-wc-person'));else if(expand){var expandId=expand.getAttribute('data-wc-todo-expand');todoExpanded[expandId]=!todoExpanded[expandId];showTodos();}else if(todoTabButton){todoTab=todoTabButton.getAttribute('data-wc-todo-tab')||'pending';showTodos();}else if(todo){navigate('#chat/'+todo.getAttribute('data-wc-todo-person'));}else if(page&&current)navigate('#page/'+current.id+'/'+page.getAttribute('data-wc-page'));else if(action){var actionName=action.getAttribute('data-wc-action');if(actionName==='todos-back'){navigate(todoListHash());return;}if(actionName==='personal-tags'){navigate('#personal-tags');return;}if(actionName==='notifications'){navigate('#notifications/my-todos');return;}if(actionName==='todos'){todoOrigin=current?'#chat/'+current.id:'#messages';todoTab='pending';todoType='all';todoSearch='';todoStatus.pending='all';navigate(patientTodoHash(current));return;}navigate(actionName==='chat'&&current?'#chat/'+current.id:actionName==='todos'?'#todos':'#messages');}});
   pageHost.addEventListener('click',function(event){
