@@ -1657,6 +1657,57 @@
           return '<section class="ops-quick-reply-page ops-chat-workbench'+(embedded?' is-embedded':'')+'" aria-label="快捷回复">'+(!embedded?renderWorkbenchStandaloneTabs('quick-replies'):'')+'<div class="qr-scope-row">'+tabs+'</div><div class="qr-content">'+feedback+'<div class="qr-filter-area">'+tenantSelect+search+'<div class="qr-filter-row">'+groupSelect+typeSelect+'</div></div><div class="qr-folder-list">'+folders+'<div class="ops-workbench-empty" data-chat-material-empty hidden>暂无匹配的素材</div></div></div>'+footer+'</section>';
         }
         var handoffRequestSequence = 0;
+        // Sender-list projection only. The reception ledger, recipient queue and
+        // patient/archive source remain intact after a successful dispatch.
+        var chatOutboxKey = 'zmn.prototype.chat-outbox.v1';
+        var chatOutbox = readChatOutbox();
+        function readChatOutbox() {
+          try {
+            var value = JSON.parse(window.localStorage.getItem(chatOutboxKey) || 'null');
+            if (value && value.version === 1 && Array.isArray(value.items)) return value.items.filter(function (item) {
+              return item && typeof item.key === 'string' && typeof item.requestId === 'string' && Number.isFinite(item.dispatchedAt);
+            });
+          } catch (error) { /* Keep the current session usable when storage is unavailable. */ }
+          return [];
+        }
+        function chatOutboxScope(ctx) {
+          return ctx && ctx.patientId ? JSON.stringify(['operator-demo-admin',ctx.tenantId,ctx.projectId,ctx.doctorId,ctx.patientId]) : '';
+        }
+        function persistChatOutbox() {
+          try { window.localStorage.setItem(chatOutboxKey, JSON.stringify({version:1,items:chatOutbox})); } catch (error) { /* Dispatch already succeeded; never dispatch again to retry local persistence. */ }
+        }
+        function chatWasDispatched(ctx) {
+          var key=chatOutboxScope(ctx),entry=chatOutbox.find(function(item){return item.key===key;});
+          if(!entry)return false;
+          var queue=window.DoctorReception,task=queue&&queue.latestAssignment({patientId:ctx.patientId,sceneCode:ctx.sceneCode});
+          // Only a later incoming assignment to this view can bring it back.
+          // The original assignment, its first reply or its timeout cannot.
+          if(task&&task.tenantId===ctx.tenantId&&task.projectId===ctx.projectId&&task.doctorId===ctx.doctorId&&task.assignedAt>entry.dispatchedAt&&task.handoffRequestId!==entry.requestId&&(!task.result||task.result==='accepted')){
+            chatOutbox=chatOutbox.filter(function(item){return item.key!==key;});persistChatOutbox();return false;
+          }
+          return true;
+        }
+        function chatVisibleConversations() {
+          return getChatConversationData().filter(function(conversation){
+            var ctx=window.ChatPatientArchive.context(conversation,state.chatDoctorSelected,state.chatArchiveScene);
+            ctx.sceneCode=window.PatientHandoffs.sceneCode(ctx.projectId,ctx.sceneName);
+            return !chatWasDispatched(ctx);
+          });
+        }
+        function recordChatDispatch(ctx,requestId) {
+          var key=chatOutboxScope(ctx);if(!key)return;
+          if(!chatOutbox.some(function(item){return item.key===key&&item.requestId===requestId;})){
+            chatOutbox=chatOutbox.filter(function(item){return item.key!==key;});
+            chatOutbox.push({key:key,requestId:requestId,dispatchedAt:Date.now()});persistChatOutbox();
+          }
+          if(state.modal&&state.modal.type==='transfer'&&chatOutboxScope(state.modal.context)===key)state.modal=null;
+          if(ctx.patientName===state.chatSelected&&ctx.doctorId===getHandoffContext().doctorId){
+            var keyword=String(state.chatConversationSearch||'').trim().toLowerCase();
+            var visible=queryChatConversations(chatVisibleConversations(),state.chatQueryApplied).filter(function(item){return (state.chatConversationTab==='全部'||item.type===state.chatConversationTab)&&(!keyword||item.name.toLowerCase().indexOf(keyword)>=0||conversationContentMatches(item,keyword).length>0);});
+            if(!state.chatConversationNewestFirst)visible.reverse();
+            selectArchivePatient(visible.length?visible[0].name:'');state.chatDraft='';state.chatHistoryOpen=false;state.chatHistoryCalendarOpen=false;
+          }
+        }
         function getHandoffContext() {
           var conversation=getChatConversationData().filter(function(item){return item.name===state.chatSelected;})[0];
           var ctx=window.ChatPatientArchive.context(conversation,state.chatDoctorSelected,state.chatArchiveScene);
@@ -1671,6 +1722,7 @@
         }
         function openHandoff(mode,trigger) {
           var ctx=getHandoffContext();
+          if(chatWasDispatched(ctx)){state.modal=null;render();return;}
           if(!ctx.patientId||!ctx.sceneCode){toast('请先选择明确的患者和场景码');return;}
           openModal({type:'transfer',mode:mode,context:ctx,requestId:'handoff-request-'+Date.now()+'-'+(++handoffRequestSequence),reason:'',reasonDetail:'',summary:handoffSummary(ctx),toId:'',recipientType:'assistant'},trigger);
         }
@@ -1733,7 +1785,7 @@
               { name: "陈医生", status: "在线", count: 5 }
             ] }
           ];
-          var conversations = getChatConversationData();
+          var conversations = chatVisibleConversations();
           var queriedConversations = queryChatConversations(conversations, state.chatQueryApplied);
           var doctorIndex = 0;
           var doctorHtml = doctorGroups.map(function (group) {
@@ -1759,6 +1811,12 @@
           var tabConversations = queriedConversations.filter(function (item) { return state.chatConversationTab === "全部" || item.type === state.chatConversationTab; });
           var conversationOrder = state.chatConversationNewestFirst ? tabConversations : tabConversations.slice().reverse();
           var conversationKeyword = String(state.chatConversationSearch || "").trim().toLowerCase();
+          var selectedConversation=conversations.find(function(item){return item.name===state.chatSelected;});
+          if(!selectedConversation&&state.chatSelected){
+            selectedConversation=conversationOrder.find(function(item){return !conversationKeyword||item.name.toLowerCase().indexOf(conversationKeyword)>=0||conversationContentMatches(item,conversationKeyword).length>0;});
+            selectArchivePatient(selectedConversation?selectedConversation.name:'');state.chatDraft='';state.chatHistoryOpen=false;
+          }
+          if(state.modal&&state.modal.type==='transfer'&&chatWasDispatched(state.modal.context))state.modal=null;
           var showCountOnly = countMatchedConversations(conversationOrder, conversationKeyword) > 1;
           var conversationHtml = conversationOrder.map(function (item) {
             var contentMatches = conversationContentMatches(item, conversationKeyword);
@@ -1769,7 +1827,9 @@
           conversationHtml += '<div class="ops-chat-empty" data-chat-conversation-empty ' + (conversationOrder.length ? "hidden" : "") + '>暂无符合条件的会话</div>';
           var conversationSearch = state.chatConversationSearchOpen ? '<label class="ops-search-shell ops-chat-conversation-search">' + icon("fa-magnifying-glass") + '<input id="ops-chat-conversation-search" data-bind="chat.conversationSearch" value="' + escapeHtml(state.chatConversationSearch) + '" placeholder="搜索名称或聊天内容" aria-label="搜索患者、群聊名称或聊天内容"></label>' : "";
           var conversationToolbar = '<div class="ops-conversation-toolbar"><strong>会话列表</strong><div class="ops-conversation-tools"><button class="ops-icon-button" type="button" data-action="chat-conversation-search" aria-label="' + (state.chatConversationSearchOpen ? "隐藏会话搜索框" : "显示会话搜索框") + '">' + icon("fa-magnifying-glass") + '</button><button class="ops-icon-button" type="button" data-action="chat-conversation-sort" aria-label="' + (state.chatConversationNewestFirst ? "切换为最早优先" : "切换为最新优先") + '">' + icon("fa-arrow-down-short-wide") + '</button><button class="ops-icon-button" type="button" data-action="chat-conversation-refresh" aria-label="刷新会话列表">' + icon("fa-rotate-right") + "</button></div></div>";
-          var selectedConversation = conversations.filter(function (item) { return item.name === state.chatSelected; })[0] || conversations[0];
+          if(!selectedConversation){
+            return '<section class="ops-chat-page">'+toolbar(['首页','会话管理','聚合聊天'],renderIconActions('',''))+'<div class="ops-chat-layout '+(state.chatDoctorPanelCollapsed?'is-doctor-panel-collapsed':'')+'"><aside class="ops-chat-column"><div class="ops-chat-column-header"><span>项目/托管账号</span>'+doctorFilter+'</div>'+doctorSearch+doctorHtml+'</aside><aside class="ops-chat-column">'+conversationTabs+conversationToolbar+conversationSearch+conversationHtml+'</aside><main class="ops-chat-column ops-chat-main"><div class="ops-chat-empty">请选择会话</div></main><div class="ops-chat-resize-handle" aria-hidden="true"></div><aside class="ops-chat-column ops-chat-workbench"></aside></div></section>';
+          }
           var workbenchPanelToggle = '<button class="ops-icon-button ops-workbench-panel-toggle ' + (state.chatWorkbenchCollapsed ? "is-collapsed" : "") + '" type="button" data-action="chat-workbench-panel-toggle" aria-label="' + (state.chatWorkbenchCollapsed ? "展开右侧工作台" : "收起右侧工作台") + '" title="' + (state.chatWorkbenchCollapsed ? (state.chatHistoryOpen ? "展开聊天记录" : "展开右侧工作台") : (state.chatHistoryOpen ? "收起聊天记录" : "收起右侧工作台")) + '">' + icon(state.chatWorkbenchCollapsed ? "fa-angles-left" : "fa-angles-right") + "</button>";
           var chatHeader = '<div class="ops-chat-heading ops-chat-heading-compact"><div class="ops-chat-person"><div class="ops-chat-identity"><h2>' + escapeHtml(selectedConversation.name) + '</h2><span class="ops-chat-demographics">· ' + escapeHtml(selectedConversation.type) + ' · 来源医生：' + escapeHtml(state.chatDoctorSelected) + '</span></div></div><div class="ops-inline-actions"><button class="ops-link" type="button" data-action="chat-unread">' + icon("fa-envelope") + '标记未读</button><button class="ops-link" type="button" data-action="chat-transfer">' + icon("fa-arrow-right-arrow-left") + '转接</button>' + workbenchPanelToggle + '</div></div>';
           var composer = '<div class="ops-composer"><div class="ops-composer-tools">' + icon("fa-face-smile", "表情") + icon("fa-image", "图片") + icon("fa-paperclip", "文件") + '<button class="ops-chat-history-toggle ' + (state.chatHistoryOpen ? "is-active" : "") + '" type="button" data-action="chat-history-toggle" aria-label="' + (state.chatHistoryOpen ? "隐藏聊天记录" : "查看聊天记录") + '" aria-pressed="' + (state.chatHistoryOpen ? "true" : "false") + '" title="聊天记录">' + icon("fa-clock-rotate-left") + '</button><button class="ops-chat-ai-summary-entry" type="button" data-action="chat-ai-summary-open" aria-label="打开AI小结" title="打开AI小结">AI小结</button></div><div class="ops-composer-row"><textarea id="ops-chat-input" data-bind="chat.draft" maxlength="500" placeholder="请输入消息，Enter 发送">' + escapeHtml(state.chatDraft) + '</textarea>' + button("发送", "primary", "chat-send") + "</div></div>";
@@ -1964,8 +2024,7 @@
           }
           if (modal.type === "transfer") {
             var context=modal.context||getHandoffContext();
-            var handoffPending=window.PatientHandoffs.getRecords(context).some(function(item){return item.status==='pending_reply'||item.status==='return_pending';});
-            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save',handoffPending?'disabled aria-describedby="handoff-pending-status"':''),'sm');
+            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save'),'sm');
           }
           if (modal.type === "member-view") {
             var row = memberRows.filter(function (item) { return item.id === modal.id; })[0] || memberRows[0];
@@ -2565,12 +2624,13 @@
             return;
           }
           if (modal.type === "transfer") {
+            if(chatWasDispatched(modal.context)){state.modal=null;render();return;}
             var request={requestId:modal.requestId,reason:readModalValue('transferReason'),reasonDetail:readModalValue('transferReasonDetail'),summary:readModalValue('transferSummary')||modal.summary||'',toKind:modal.recipientType||'assistant'};
             var selected=shell.querySelector('[data-modal="transferTo"]:checked');
             var result=modal.mode==='ai'?window.PrototypeAiActions.transfer_to_assistant.invoke(request,modal.context):window.PatientHandoffs.transfer(modal.context,Object.assign({},request,{toId:selected?selected.value:''}),'manual');
             if(!result.ok){modal.error=result.message;var message=shell.querySelector('[data-handoff-error]');if(message)message.textContent=result.message;return;}
-            state.modal=null;state.chatWorkbenchTab='患者交接';state.chatWorkbenchCollapsed=false;
-            toast('已发起转接，等待转入方首次回复');return;
+            recordChatDispatch(modal.context,modal.requestId);
+            toast('已转接');return;
           }
           if (modal.type === "member-add") {
             var assistant = readModalValue("assistant");
@@ -3511,6 +3571,7 @@
             window.setTimeout(function () { toast("跟进记录已保存"); }, 10);
           } else if (action === "chat-select") {
             var selectedPatientName = actionTarget.getAttribute("data-name");
+            if(!chatVisibleConversations().some(function(item){return item.name===selectedPatientName;}))return;
             var patientChanged = state.chatSelected !== selectedPatientName;
             selectArchivePatient(selectedPatientName);
             if (patientChanged && window.ClinicAudio) window.ClinicAudio.playNewPatientEntry(selectedPatientName);
@@ -3635,7 +3696,8 @@
             if(takeoverResult.ok){render({preserveArchiveScroll:true});toast("人工已接手，AI 自动回复已暂停");}
             else toast(takeoverResult.message||"接手失败，请重试");
           } else if (action === "chat-transfer-ai") {
-            window.PatientHandoffs.returnToAi(getHandoffContext()).then(function(result){if(result.ok)render({preserveArchiveScroll:true});toast(result.ok?"已转交 AI":result.code==="superseded_by_reply"?"医生已接手，本次转交已取消":"AI 回接失败，请重试");});
+            var returningContext=getHandoffContext(),returningRequest='return-view-'+Date.now()+'-'+(++handoffRequestSequence);
+            window.PatientHandoffs.returnToAi(returningContext).then(function(result){if(result.ok){recordChatDispatch(returningContext,returningRequest);render({preserveArchiveScroll:true});}toast(result.ok?"已转交 AI":result.code==="superseded_by_reply"?"医生已接手，本次转交已取消":"AI 回接失败，请重试");});
           } else if (action === "chat-unread") {
             toast("已标记为未读");
           } else if (action === "member-add") {
@@ -4298,7 +4360,8 @@
           // Archive ownership never determines the explicit synthetic recorder.
           window.PatientFollowups.setOperator({id:'operator-demo-admin',name:'管理员',role:'admin'});
           window.PatientHandoffs.mount(function(){render({preserveArchiveScroll:true});});
-          window.DoctorReception.subscribe(function(){if(shell&&(shell.querySelector('.ho-panel')||state.modal&&state.modal.type==='transfer'))render({preserveArchiveScroll:true});});
+          window.DoctorReception.subscribe(function(){if(shell&&(shell.querySelector('.ops-chat-page')||shell.querySelector('.ho-panel')||state.modal&&state.modal.type==='transfer'))render({preserveArchiveScroll:true});});
+          window.addEventListener('storage',function(event){if(event.key===chatOutboxKey){chatOutbox=readChatOutbox();if(shell&&shell.querySelector('.ops-chat-page'))render();}});
           window.PrototypeHandoffHost={context:getHandoffContext,receiveAssistantReply:function(ctx,receipt){
             var result=window.PatientHandoffs.receiveReply(ctx,receipt);
             if(result.ok&&!result.idempotent&&JSON.stringify(ctx)===JSON.stringify(getHandoffContext())){
