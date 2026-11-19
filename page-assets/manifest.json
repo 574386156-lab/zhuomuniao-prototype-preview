@@ -5,9 +5,9 @@
     {
       "path": "卓睦鸟患管平台-交互原型.html",
       "beforeBytes": 9017412,
-      "afterBytes": 6608,
+      "afterBytes": 6609,
       "originalSha256": "ecf98b37c3ae30075b3c2de542e53bc82d7e5c61d343cbec7c1bc59044722c59",
-      "sha256": "cdf36e48b6fed3d41ce52cbee35bc3d2e7a309ba97892c1c346b21d7afe76cc4"
+      "sha256": "91133a5262f26c00fd90c8f475fb7524645c3db0bf690bcb9d0f27472d0ed17b"
     },
     {
       "path": "卓睦鸟患管助手-患者端-交互原型.html",
@@ -517,8 +517,8 @@
       "kind": "script",
       "attributes": " id=\"ops-v3-script\"",
       "path": "page-assets/scripts/ops-v3-script.js",
-      "sha256": "ad7c8323b04d8ce7c2b51e13554736d77c9728aa225239adb1f36d09cad58c73",
-      "bytes": 450265,
+      "sha256": "fb11bcbe0cc184fdba3f8b62bc7958ebab6125ee18a687de5c7b2cec0fe88e6e",
+      "bytes": 445554,
       "originalSha256": "2e43d008afebf6ccc79fd9ee0a6521452e8beaadb561368c560c9b1afbbf10fe"
     },
     {
@@ -724,10 +724,10 @@
   ],
   "totals": {
     "originalHtmlBytes": 36739955,
-    "htmlBytes": 147771,
+    "htmlBytes": 147772,
     "sharedAssetBytes": 12772695,
-    "externalCodeBytes": 2505002,
-    "totalBytes": 15425468,
+    "externalCodeBytes": 2500291,
+    "totalBytes": 15420758,
     "uniqueAssets": 44,
     "assetOccurrences": 101
   }

@@ -1392,19 +1392,6 @@
           return escapeHtml(v.lastMessage&&v.lastMessage.text||item.text||'');
         }
         function renderChatInboxTabs(){return '<div class="ops-inbox-queues" role="tablist" aria-label="接待队列">'+[['human','待人工'],['ai','AI接待'],['all','全部']].map(function(q){return '<button type="button" role="tab" data-action="inbox-queue" data-inbox-queue="'+q[0]+'" aria-selected="'+(state.chatWorkQueue===q[0])+'" class="'+(state.chatWorkQueue===q[0]?'is-active':'')+'">'+q[1]+' <span data-inbox-queue-count="'+q[0]+'">'+chatInboxFiltered(q[0],null,true).length+'</span></button>';}).join('')+'</div>';}
-        function renderChatInboxMatters(c){
-          if(!conversationInbox||!c)return '';
-          var current=chatInboxSubject(),subjects=conversationInbox.store.listSubjects({conversationKey:c.key}).filter(function(s){return s.status!=='done';});
-          if(!subjects.length)return '<div class="ops-inbox-view-state">'+(c.aiService&&c.aiService.receiving?'AI 接待':'只读会话')+'</div>';
-          return '<div class="ops-inbox-matters" aria-label="人工处理事项">'+subjects.map(function(s){
-            var own=conversationInbox.store.canOperate(s.id,{action:'complete'})&&!chatInboxIsHistory(),claim=conversationInbox.store.canOperate(s.id,{action:'claim'})&&!chatInboxIsHistory(),speaker=chatInboxSpeaker(c,s.speakerId);
-            var active=current&&current.id===s.id,actions='';
-            if(own)actions='<button type="button" class="ops-link" data-action="inbox-wait-patient" '+(s.status==='waiting_patient'?'disabled':'')+'>等待患者</button><button type="button" class="ops-link" data-action="inbox-complete">完成事项</button>';
-            else if(claim)actions='<button type="button" class="ops-link" data-action="inbox-claim">领取事项</button>';
-            return '<section class="ops-inbox-matter '+(active?'is-active':'')+'" data-inbox-matter-id="'+escapeHtml(s.id)+'" data-inbox-revision="'+s.revision+'" data-inbox-cutoff="'+s.lastPatientSeq+'"><div class="ops-inbox-matter-heading"><button type="button" class="ops-link" data-action="inbox-select-subject" aria-pressed="'+active+'">'+escapeHtml(speaker)+' · '+(s.status==='waiting_patient'?'等待患者':'待人工')+'</button><small>'+escapeHtml(s.assignee?s.assignee.name||'接待人员':'待领取')+'</small></div><p>'+escapeHtml(s.requestText)+'</p><div class="ops-inbox-matter-actions">'+(s.originMessageId?'<button type="button" class="ops-link" data-action="inbox-origin">定位原消息</button>':'<small>转出说明 · 原消息未留存</small>')+'<span></span>'+actions+'</div></section>';
-          }).join('')+'</div>';
-        }
-        function chatInboxCommand(target){var el=target.closest('[data-inbox-matter-id]');if(!el)return null;var subject=conversationInbox.store.getSubject(el.getAttribute('data-inbox-matter-id'));return subject?{subject:subject,command:{expectedRevision:Number(el.getAttribute('data-inbox-revision')),throughPatientSeq:Number(el.getAttribute('data-inbox-cutoff'))}}:null;}
         function chatInboxBeginTransfer(to,subject,request){
           if(!conversationInbox||!subject)return {ok:false,code:'subject_required'};
           return conversationInbox.store.beginOperation({id:'inbox-route-'+request+'-'+(++inboxOperationCounter),requestId:request,attemptId:'attempt-'+inboxOperationCounter,subjectId:subject.id,kind:'transfer',expectedRevision:subject.revision,throughPatientSeq:subject.lastPatientSeq,to:to});
@@ -1907,8 +1894,6 @@
           var composer = '<div class="ops-composer"><div class="ops-composer-tools">' + icon("fa-face-smile", "表情") + icon("fa-image", "图片") + icon("fa-paperclip", "文件") + '<button class="ops-chat-history-toggle ' + (state.chatHistoryOpen ? "is-active" : "") + '" type="button" data-action="chat-history-toggle" aria-label="' + (state.chatHistoryOpen ? "隐藏聊天记录" : "查看聊天记录") + '" aria-pressed="' + (state.chatHistoryOpen ? "true" : "false") + '" title="聊天记录">' + icon("fa-clock-rotate-left") + '</button><button class="ops-chat-ai-summary-entry" type="button" data-action="chat-ai-summary-open" aria-label="打开AI小结" title="打开AI小结">AI小结</button></div><div class="ops-composer-row"><textarea id="ops-chat-input" data-bind="chat.draft" maxlength="500" placeholder="请输入消息，Enter 发送">' + escapeHtml(state.chatDraft) + '</textarea>' + button("发送", "primary", "chat-send") + "</div></div>";
           if(inboxSending[state.chatDraftScope])composer=composer.replace('data-action="chat-send"','data-action="chat-send" disabled').replace('>发送</button>','>发送中…</button>');
           if(!canOperate)composer='';
-          else if(selectedInbox&&selectedInbox.kind==='group')composer=composer.replace('<div class="ops-composer">','<div class="ops-composer"><div class="ops-inbox-reply-scope">回复 '+escapeHtml(chatInboxSpeaker(selectedInbox,selectedSubject.speakerId))+' · 当前事项</div>');
-          chatHeader='<div class="ops-inbox-heading-stack">'+chatHeader+(selectedInbox?renderChatInboxMatters(selectedInbox):'')+'</div>'; 
           var sidebarContext=window.ChatPatientArchive.context(selectedConversation,state.chatDoctorSelected,state.chatArchiveScene),sidebarEnvironment=window.SidebarConfig.environment();
           sidebarContext.patientId=selectedConversation.patientId||'';
           var todoEntryURL=new URL('my-todos.html?embedded=1&host=web',location.href);if(sidebarContext.patientId){todoEntryURL.searchParams.set('patientId',sidebarContext.patientId);todoEntryURL.searchParams.set('patientName',sidebarContext.patientName||'');}
@@ -3686,21 +3671,6 @@
           } else if(action==='inbox-queue'){
             var queue=actionTarget.getAttribute('data-inbox-queue');if(['human','ai','all'].indexOf(queue)<0)return;
             state.chatWorkQueue=queue;state.chatReadOnlyContext=null;state.chatSubjectSelected=null;state.modal=null;render();
-          } else if(action==='inbox-select-subject'||action==='inbox-origin'||action==='inbox-complete'||action==='inbox-wait-patient'||action==='inbox-claim'){
-            var command=chatInboxCommand(actionTarget),current=chatInboxSelected();if(!command||!current||command.subject.conversationKey!==current.key)return;
-            if(action==='inbox-select-subject'){state.chatSubjectSelected=command.subject.id;render({preserveChatScroll:true});return;}
-            if(action==='inbox-origin'){
-              var origin=Array.from(shell.querySelectorAll('[data-chat-message-id]')).find(function(node){return node.getAttribute('data-chat-message-id')===command.subject.originMessageId;});
-              if(origin){origin.scrollIntoView({block:'center',behavior:'smooth'});origin.focus({preventScroll:true});origin.classList.add('is-inbox-origin');window.setTimeout(function(){origin.classList.remove('is-inbox-origin');},1800);}else toast('原消息未留存');return;
-            }
-            if(chatInboxIsHistory())return;
-            var result;
-            if(action==='inbox-claim'){
-              var request='claim-'+Date.now()+'-'+(++inboxOperationCounter);result=conversationInbox.store.claim(command.subject.id,Object.assign({},command.command,{id:request,requestId:request,attemptId:'attempt-1',name:conversationInbox.actor.name}));
-              if(result.ok)result=chatInboxSettle(result,{ok:true});
-            }else result=action==='inbox-complete'?conversationInbox.store.complete(command.subject.id,command.command):conversationInbox.store.waitForPatient(command.subject.id,command.command);
-            if(!result.ok)toast(result.code==='stale_subject'?'事项已有新消息，请重新查看后操作':'当前无法处理这件事项');
-            else{state.chatSubjectSelected=null;state.chatDraft='';render({preserveArchiveScroll:true});}
           } else if (action === "chat-select") {
             state.chatReadOnlyContext=null;
             var selectedPatientName=actionTarget.getAttribute("data-name"),selectedConversationKey=actionTarget.getAttribute("data-chat-conversation-key"),selectedRow=chatVisibleConversations().find(function(item){return selectedConversationKey?item.inboxKey===selectedConversationKey:item.name===selectedPatientName;});
