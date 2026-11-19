@@ -4,12 +4,17 @@
 .ops-inbox-queues button.is-active { color:var(--primary,#0365bf); background:var(--surface-selected,#e6f8ff); font-weight:600; }
 .ops-inbox-queues button:focus-visible { outline:2px solid var(--primary,#0365bf); outline-offset:1px; }
 .ops-inbox-queues [data-inbox-queue-count] { font-variant-numeric:tabular-nums; }
-.ops-conversation-row[data-chat-conversation-key] { grid-template-columns:36px minmax(0,1fr); align-items:start; min-height:94px; }
+.ops-conversation-row[data-chat-conversation-key] { grid-template-columns:36px minmax(0,1fr); align-items:start; min-height:86px; padding:13px 12px; }
+.ops-conversation-row[data-chat-conversation-key].is-active { box-shadow:inset 3px 0 var(--primary,#0365bf); }
 .ops-inbox-row-copy { min-width:0; }
-.ops-inbox-row-copy strong { display:flex; align-items:center; gap:7px; }
+.ops-inbox-row-copy > strong { display:flex; align-items:center; gap:7px; }
 .ops-inbox-unseen { flex:0 0 6px; width:6px; height:6px; border-radius:50%; background:var(--primary,#0365bf); }
 .ops-inbox-row-copy .ops-conversation-summary { margin-top:5px; }
-.ops-inbox-row-copy .ops-inbox-row-meta { display:flex; flex-wrap:wrap; gap:2px 7px; margin-top:5px; font-size:11px; white-space:normal; }
-.ops-inbox-row-meta [data-inbox-wait] { font-variant-numeric:tabular-nums; }
+.ops-inbox-row-copy .ops-inbox-row-meta { display:flex; align-items:center; flex-wrap:wrap; gap:5px 8px; margin-top:8px; overflow:visible; font-size:12px; white-space:normal; }
+.ops-inbox-time { display:inline-flex; align-items:center; gap:5px; min-width:0; min-height:26px; max-width:100%; padding:3px 7px; border:1px solid; border-radius:4px; font-size:13px; line-height:18px; white-space:nowrap; }
+.ops-inbox-time.is-countdown { background:#fff7e8; border-color:#f3deb1; color:#8a5908; }
+.ops-inbox-time.is-overdue { background:#fff0ec; border-color:#f6d0c8; color:#b53624; }
+.ops-inbox-time svg { flex:none; width:14px; height:14px; fill:none; stroke:currentColor; stroke-width:1.7; }
+.ops-inbox-row-copy .ops-inbox-time strong { display:inline; color:inherit; font-size:13px; line-height:18px; font-weight:650; letter-spacing:.2px; font-variant-numeric:tabular-nums; }
 .ops-inbox-transfer-scope { padding:8px 10px; background:var(--surface-info,#eef7ff); border-radius:5px; color:var(--text-selected,#204568); }
 .ops-unread[hidden] { display:none; }

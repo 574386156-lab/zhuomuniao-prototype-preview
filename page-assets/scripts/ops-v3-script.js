@@ -1350,7 +1350,7 @@
         }
 
 
-        var conversationInbox=null,inboxRenderQueued=false,inboxOperationCounter=0,inboxCompositionNode=null,inboxRenderDeferred=false,inboxDrafts={},inboxSending={};
+        var conversationInbox=null,inboxRenderQueued=false,inboxOperationCounter=0,inboxCompositionNode=null,inboxRenderDeferred=false,inboxDrafts={},inboxSending={},inboxTimeTimer=null;
         function getChatConversationData(){return conversationInbox?conversationInbox.rows(state.chatDoctorSelected):getChatSourceData();}
         function inboxBasicDefaults(row){var known=getChatSourceData().some(function(source){return source.patientId&&source.patientId===row.patientId;});return {name:row.name,gender:row.gender||'',phone:known?'138****5605':'',birthDate:known&&row.patientId==='patient-demo-1'?'1968-06-15':'',height:'',diagnosis:known?'2型糖尿病':''};}
         function bindInboxBasic(row){if(!row||!row.inboxKey||state.chatBasicScope===row.inboxKey)return;if(state.chatBasicScope)chatPatientBasics[state.chatBasicScope]=state.chatPatientBasic;state.chatPatientBasic=chatPatientBasics[row.inboxKey]||inboxBasicDefaults(row);state.chatBasicScope=row.inboxKey;}
@@ -1383,7 +1383,50 @@
           return true;
         }
         function chatInboxChange(){if(inboxRenderQueued)return;inboxRenderQueued=true;window.requestAnimationFrame(function(){inboxRenderQueued=false;if(shell&&currentRoute()==='aggregate-chat')render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});});}
-        function chatInboxWaitText(at){var seconds=Math.max(0,Math.floor((Date.now()-at)/1000));return seconds<60?'等待不足1分':seconds<3600?'等待'+Math.floor(seconds/60)+'分':'等待'+Math.floor(seconds/3600)+'时'+Math.floor(seconds%3600/60)+'分';}
+        function chatInboxTimeInfo(subjectId,at){
+          if(!conversationInbox||!conversationInbox.store.refresh().ok)return null;
+          var subject=conversationInbox.store.getSubject(subjectId),ref=subject&&subject.legacyRef;
+          if(!subject||subject.status!=='active'||!subject.assignee||subject.assignee.id!==conversationInbox.actor.id||!conversationInbox.store.canOperate(subject.id,{action:'complete'})||!ref||!ref.taskId)return null;
+          var c=conversationInbox.store.getConversation(subject.conversationKey),task=window.DoctorReception.assignment(ref.taskId);
+          if(!c||c.kind!=='private'||!task||task.tenantId!==c.tenantId||task.projectId!==c.projectId||task.patientId!==c.patientId||task.patientId!==subject.patientId||task.sceneCode!==ref.sceneCode||task.doctorId!==subject.assignee.id||task.assignedAt!==ref.assignedAt)return null;
+          var latest=window.DoctorReception.latestAssignment({patientId:task.patientId,sceneCode:task.sceneCode});
+          if(!latest||latest.id!==task.id||task.result!==null||task.phase!=='waiting'||task.firstReplyId||Number.isFinite(task.firstReplyAt)||!Number.isFinite(task.deadline))return null;
+          var overdue=at>=task.deadline,seconds=overdue?Math.floor((at-task.deadline)/1000):Math.ceil((task.deadline-at)/1000),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
+          var value=(hours?String(hours).padStart(2,'0')+':':'')+String(minutes).padStart(2,'0')+':'+String(rest).padStart(2,'0');
+          return {subjectId:subject.id,deadline:task.deadline,overdue:overdue,label:overdue?'首答超时':'首答剩余',value:value,title:'首次回复截止：'+new Date(task.deadline).toLocaleString('zh-CN',{hour12:false})};
+        }
+        function chatInboxTimeIcon(overdue){return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2"></circle><path d="'+(overdue?'M10 5.6v5.1M10 13v1':'M10 5.5V10l3 1.8')+'"></path></svg>';}
+        function renderChatInboxTime(view){
+          var at=Date.now(),info=view&&(view.subjects||[]).map(function(s){return chatInboxTimeInfo(s.id,at);}).filter(Boolean).sort(function(a,b){return a.deadline-b.deadline;})[0];if(!info)return '';
+          return '<span class="ops-inbox-time '+(info.overdue?'is-overdue':'is-countdown')+'" data-inbox-time data-inbox-time-subject="'+escapeHtml(info.subjectId)+'" title="'+escapeHtml(info.title)+'" aria-label="'+info.label+' '+info.value+'">'+chatInboxTimeIcon(info.overdue)+'<span data-inbox-time-label>'+info.label+'</span><strong data-inbox-time-value>'+info.value+'</strong></span>';
+        }
+        function stopChatInboxTimeClock(){if(inboxTimeTimer!==null){window.clearInterval(inboxTimeTimer);inboxTimeTimer=null;}}
+        function updateChatInboxTimes(){
+          if(!shell||currentRoute()!=='aggregate-chat'||document.hidden){stopChatInboxTimeClock();return;}
+          shell.querySelectorAll('[data-inbox-time]').forEach(function(node){
+            var info=chatInboxTimeInfo(node.getAttribute('data-inbox-time-subject'),Date.now());
+            if(!info){var meta=node.parentElement;node.remove();if(meta&&meta.classList.contains('ops-inbox-row-meta')&&!meta.childElementCount)meta.remove();return;}
+            var label=node.querySelector('[data-inbox-time-label]'),value=node.querySelector('[data-inbox-time-value]'),wasOverdue=node.classList.contains('is-overdue');
+            if(label.textContent!==info.label)label.textContent=info.label;
+            if(value.textContent!==info.value)value.textContent=info.value;
+            if(wasOverdue!==info.overdue){node.classList.toggle('is-overdue',info.overdue);node.classList.toggle('is-countdown',!info.overdue);var oldIcon=node.querySelector('svg');if(oldIcon)oldIcon.outerHTML=chatInboxTimeIcon(info.overdue);}
+            if(node.title!==info.title)node.title=info.title;
+            if(node.getAttribute('aria-label')!==info.label+' '+info.value)node.setAttribute('aria-label',info.label+' '+info.value);
+          });
+          if(!shell.querySelector('[data-inbox-time]'))stopChatInboxTimeClock();
+        }
+        function syncChatInboxTimeClock(){
+          if(!shell||currentRoute()!=='aggregate-chat'||document.hidden||!shell.querySelector('[data-inbox-time]')){stopChatInboxTimeClock();return;}
+          if(inboxTimeTimer===null)inboxTimeTimer=window.setInterval(updateChatInboxTimes,1000);
+        }
+        function renderChatInboxMeta(view){
+          if(!view)return '';
+          var parts=[];
+          if(state.chatWorkQueue==='all')parts.push('<span>'+escapeHtml(chatInboxState(view))+'</span>');
+          if(view.humanSubjectCount>1)parts.push('<span data-inbox-matter-count title="'+view.humanSubjectCount+'项待处理事项">'+view.humanSubjectCount+' 项</span>');
+          var time=renderChatInboxTime(view);if(time)parts.push(time);
+          return parts.length?'<small class="ops-inbox-row-meta">'+parts.join('')+'</small>':'';
+        }
         function chatInboxState(view){if(view.humanSubjectCount)return '待人工';if(view.waitingPatientCount)return '等待患者';if(view.queue==='ai')return 'AI 接待';var other=conversationInbox.store.listSubjects({conversationKey:view.key}).find(function(s){return s.status!=='done'&&s.assignee&&s.assignee.kind!=='ai';});return other?(other.assignee.name||'其他人员')+'接待':'无待人工事项';}
         function chatInboxSpeaker(c,id){var m=conversationInbox.store.listMessages(c.key).find(function(item){return item.speakerId===id;});return m&&(m.speakerName||m.displayName)||c.patientName||(c.kind==='group'?'群成员':c.title);}
         function chatInboxRowSummary(item){
@@ -1878,8 +1921,8 @@
           if(state.modal&&state.modal.type==='transfer'&&!state.modal.group&&window.PatientHandoffs.getOwner(state.modal.context)&&window.PatientHandoffs.getOwner(state.modal.context).kind==='ai'){state.modal.group=true;state.modal.scopeOnly=true;state.modal.currentAssigneeId=conversationInbox.actor.id;state.modal.context=Object.assign({},state.modal.context,{group:true});}
           var showCountOnly = countMatchedConversations(conversationOrder, conversationKeyword) > 1;
           var conversationHtml = conversationOrder.map(function(item){
-            var v=item.inboxView,s=v&&v.summary,unread=v&&v.unread;
-            return '<button class="ops-conversation-row '+((state.chatConversationSelectedKey?state.chatConversationSelectedKey===item.inboxKey:state.chatSelected===item.name)?'is-active':'')+'" type="button" data-action="chat-select" data-name="'+escapeHtml(item.name)+'" data-chat-conversation-name="'+escapeHtml(item.name)+'" data-chat-conversation-id="'+escapeHtml(item.conversationId||'')+'" data-chat-conversation-key="'+escapeHtml(item.inboxKey||'')+'" data-chat-conversation-type="'+item.type+'" data-chat-conversation-date="'+item.date+'"><span class="ops-avatar">'+escapeHtml(item.name.slice(0,1))+'</span><span class="ops-inbox-row-copy"><strong>'+escapeHtml(item.name)+(unread?'<i class="ops-inbox-unseen" aria-label="未查看"></i>':'')+'</strong><small class="ops-conversation-summary">'+chatInboxRowSummary(item)+'</small><small class="ops-inbox-row-meta"><span>'+escapeHtml(v?chatInboxState(v):'')+'</span>'+(v&&v.humanSubjectCount>1?'<span data-inbox-matter-count>'+v.humanSubjectCount+'项待人工</span>':'')+(s?'<span data-inbox-wait data-waiting-since="'+s.waitingSince+'">'+(s.overdue?'已超时 · ':'')+chatInboxWaitText(s.waitingSince)+'</span>':'')+'</small></span></button>';
+            var v=item.inboxView,unread=v&&v.unread;
+            return '<button class="ops-conversation-row '+((state.chatConversationSelectedKey?state.chatConversationSelectedKey===item.inboxKey:state.chatSelected===item.name)?'is-active':'')+'" type="button" data-action="chat-select" data-name="'+escapeHtml(item.name)+'" data-chat-conversation-name="'+escapeHtml(item.name)+'" data-chat-conversation-id="'+escapeHtml(item.conversationId||'')+'" data-chat-conversation-key="'+escapeHtml(item.inboxKey||'')+'" data-chat-conversation-type="'+item.type+'" data-chat-conversation-date="'+item.date+'"><span class="ops-avatar">'+escapeHtml(item.name.slice(0,1))+'</span><span class="ops-inbox-row-copy"><strong>'+escapeHtml(item.name)+(unread?'<i class="ops-inbox-unseen" aria-label="未查看"></i>':'')+'</strong><small class="ops-conversation-summary">'+chatInboxRowSummary(item)+'</small>'+renderChatInboxMeta(v)+'</span></button>';
           }).join('');
           conversationHtml += '<div class="ops-chat-empty" data-chat-conversation-empty ' + (conversationOrder.length ? "hidden" : "") + '>暂无符合条件的会话</div>';
           var conversationSearch = state.chatConversationSearchOpen ? '<label class="ops-search-shell ops-chat-conversation-search">' + icon("fa-magnifying-glass") + '<input id="ops-chat-conversation-search" data-bind="chat.conversationSearch" value="' + escapeHtml(state.chatConversationSearch) + '" placeholder="搜索名称或聊天内容" aria-label="搜索患者、群聊名称或聊天内容"></label>' : "";
@@ -2212,6 +2255,7 @@
           var route = currentRoute();
           var legacyPanels = document.querySelectorAll("#root .sidebar, #root .workspace");
           if (!isOpsRoute(route)) {
+            stopChatInboxTimeClock();
             if(window.WorkbenchTabs)window.WorkbenchTabs.mount(null);
             if (shell) shell.remove();
             shell = null;
@@ -2235,6 +2279,7 @@
             document.body.appendChild(shell);
           }
           shell.innerHTML = renderSidebar(route) + '<main class="ops-workspace">' + renderPageTabs(route) + renderRoute(route) + "</main>" + renderModal() + (state.toast ? '<div class="ops-toast" role="status">' + icon("fa-circle-check") + "<span>" + escapeHtml(state.toast) + "</span></div>" : "");
+          syncChatInboxTimeClock();
           if(chatFocus){var sameScope=chatFocus.field==='chat.draft'?chatFocus.draftScope===state.chatDraftScope:chatFocus.attribute==='data-modal'?chatFocus.conversationKey===state.chatConversationSelectedKey:true;var restored=Array.from(shell.querySelectorAll('input,textarea')).find(function(n){return n.getAttribute(chatFocus.attribute)===chatFocus.field;});if(sameScope&&restored){restored.value=chatFocus.value;restored.focus({preventScroll:true});if(typeof chatFocus.start==='number'&&restored.setSelectionRange)try{restored.setSelectionRange(chatFocus.start,chatFocus.end,chatFocus.direction);}catch(error){}}}
           if (window.PrototypeSelect) window.PrototypeSelect.enhance(shell);
           window.PrototypeDateTime.enhance(shell);
@@ -4540,6 +4585,9 @@
           document.addEventListener("drop", handleMaterialDrop, true);
           document.addEventListener("dragend", clearMaterialDragState, true);
           window.addEventListener("hashchange", render);
+          document.addEventListener('visibilitychange',function(){if(document.hidden)stopChatInboxTimeClock();else{updateChatInboxTimes();syncChatInboxTimeClock();}});
+          window.addEventListener('pagehide',stopChatInboxTimeClock);
+          window.addEventListener('pageshow',syncChatInboxTimeClock);
           window.addEventListener("sidebar-config-changed",function(){render({preserveArchiveScroll:true});});
           window.addEventListener("resize", updateArchiveLayout);
           var rootNode = document.getElementById("root");
