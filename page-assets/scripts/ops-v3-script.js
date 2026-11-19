@@ -1383,6 +1383,9 @@
           return true;
         }
         function chatInboxChange(){if(inboxRenderQueued)return;inboxRenderQueued=true;window.requestAnimationFrame(function(){inboxRenderQueued=false;if(shell&&currentRoute()==='aggregate-chat')render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});});}
+        // Presentation lead time only; the original reply deadline stays authoritative.
+        var chatReplyReminderLeadMs=60*1000;
+        function chatInboxTimeTone(deadline,at){return at>=deadline?'overdue':deadline-at<=chatReplyReminderLeadMs?'countdown':'waiting';}
         function chatInboxTimeInfo(subjectId,at){
           if(!conversationInbox||!conversationInbox.store.refresh().ok)return null;
           var subject=conversationInbox.store.getSubject(subjectId),ref=subject&&subject.legacyRef;
@@ -1402,18 +1405,18 @@
           if(conversationInbox.store.listMessages(c.key).some(function(message){return message.kind==='human'&&message.speakerId===task.doctorId&&Number.isFinite(message.sentAt)&&message.sentAt>=task.assignedAt;}))return null;
           var overdue=at>=task.deadline,seconds=overdue?Math.floor((at-task.deadline)/1000):Math.ceil((task.deadline-at)/1000),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
           var value=(hours?String(hours).padStart(2,'0')+':':'')+String(minutes).padStart(2,'0')+':'+String(rest).padStart(2,'0');
-          return {subjectId:subject.id,exactRef:ref.taskId===task.id,deadline:task.deadline,overdue:overdue,label:overdue?'超时':'剩余',value:value,title:'首次回复截止：'+new Date(task.deadline).toLocaleString('zh-CN',{hour12:false})};
+          return {subjectId:subject.id,exactRef:ref.taskId===task.id,deadline:task.deadline,overdue:overdue,tone:chatInboxTimeTone(task.deadline,at),label:overdue?'超时':'剩余',value:value,title:'首次回复截止：'+new Date(task.deadline).toLocaleString('zh-CN',{hour12:false})};
         }
         function chatInboxTimeIcon(overdue){return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2"></circle><path d="'+(overdue?'M10 5.6v5.1M10 13v1':'M10 5.5V10l3 1.8')+'"></path></svg>';}
         function chatGroupTimeInfo(key,at){
           var reply=conversationInbox&&conversationInbox.store.replyState(key);if(!reply)return null;
           var record=reply.records.slice().reverse()[0];if(!record||['pending_reply','timed_out'].indexOf(record.status)<0||!Number.isFinite(record.deadline))return null;
           var overdue=at>=record.deadline,seconds=overdue?Math.floor((at-record.deadline)/1000):Math.ceil((record.deadline-at)/1000),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
-          return {conversationKey:key,deadline:record.deadline,overdue:overdue,label:overdue?'超时':'剩余',value:(hours?String(hours).padStart(2,'0')+':':'')+String(minutes).padStart(2,'0')+':'+String(rest).padStart(2,'0'),title:'首次回复截止：'+new Date(record.deadline).toLocaleString('zh-CN',{hour12:false})};
+          return {conversationKey:key,deadline:record.deadline,overdue:overdue,tone:chatInboxTimeTone(record.deadline,at),label:overdue?'超时':'剩余',value:(hours?String(hours).padStart(2,'0')+':':'')+String(minutes).padStart(2,'0')+':'+String(rest).padStart(2,'0'),title:'首次回复截止：'+new Date(record.deadline).toLocaleString('zh-CN',{hour12:false})};
         }
         function renderChatInboxTime(view){
           var at=Date.now(),info=view&&(view.conversation.kind==='group'?chatGroupTimeInfo(view.key,at):(view.subjects||[]).map(function(s){return chatInboxTimeInfo(s.id,at);}).filter(Boolean).sort(function(a,b){return a.deadline-b.deadline||Number(b.exactRef)-Number(a.exactRef);})[0]);if(!info)return '';
-          return '<span class="ops-inbox-time '+(info.overdue?'is-overdue':'is-countdown')+'" data-inbox-time '+(info.conversationKey?'data-inbox-time-conversation="'+escapeHtml(info.conversationKey)+'"':'data-inbox-time-subject="'+escapeHtml(info.subjectId)+'"')+' title="'+escapeHtml(info.title)+'" aria-label="'+info.label+' '+info.value+'">'+chatInboxTimeIcon(info.overdue)+'<span data-inbox-time-label>'+info.label+'</span><strong data-inbox-time-value>'+info.value+'</strong></span>';
+          return '<span class="ops-inbox-time is-'+info.tone+'" data-inbox-time '+(info.conversationKey?'data-inbox-time-conversation="'+escapeHtml(info.conversationKey)+'"':'data-inbox-time-subject="'+escapeHtml(info.subjectId)+'"')+' title="'+escapeHtml(info.title)+'" aria-label="'+info.label+' '+info.value+'">'+chatInboxTimeIcon(info.overdue)+'<span data-inbox-time-label>'+info.label+'</span><strong data-inbox-time-value>'+info.value+'</strong></span>';
         }
         function stopChatInboxTimeClock(){if(inboxTimeTimer!==null){window.clearInterval(inboxTimeTimer);inboxTimeTimer=null;}}
         function updateChatInboxTimes(){
@@ -1424,7 +1427,8 @@
             var label=node.querySelector('[data-inbox-time-label]'),value=node.querySelector('[data-inbox-time-value]'),wasOverdue=node.classList.contains('is-overdue');
             if(label.textContent!==info.label)label.textContent=info.label;
             if(value.textContent!==info.value)value.textContent=info.value;
-            if(wasOverdue!==info.overdue){node.classList.toggle('is-overdue',info.overdue);node.classList.toggle('is-countdown',!info.overdue);var oldIcon=node.querySelector('svg');if(oldIcon)oldIcon.outerHTML=chatInboxTimeIcon(info.overdue);}
+            ['waiting','countdown','overdue'].forEach(function(tone){node.classList.toggle('is-'+tone,info.tone===tone);});
+            if(wasOverdue!==info.overdue){var oldIcon=node.querySelector('svg');if(oldIcon)oldIcon.outerHTML=chatInboxTimeIcon(info.overdue);}
             if(node.title!==info.title)node.title=info.title;
             if(node.getAttribute('aria-label')!==info.label+' '+info.value)node.setAttribute('aria-label',info.label+' '+info.value);
           });
