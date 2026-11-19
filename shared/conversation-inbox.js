@@ -21,8 +21,8 @@
   }
   function keyOf(meta) {
     if (!meta || !id(meta.tenantId) || !id(meta.projectId) || !id(meta.id) || ['private', 'group'].indexOf(meta.kind) < 0 || !id(meta.accountId)) return null;
-    // One real group remains one conversation even when reached by two accounts.
-    return JSON.stringify([meta.tenantId, meta.projectId, meta.kind, meta.kind === 'group' ? '' : meta.accountId, meta.id]);
+    // Reply authority belongs to this hosted account in this conversation.
+    return JSON.stringify([meta.tenantId, meta.projectId, meta.kind, meta.accountId, meta.id]);
   }
   function assignee(value) {
     if (value === null) return null;
@@ -31,6 +31,11 @@
   }
   function aiEvidence(value) {
     return value && id(value.evidenceId) && typeof value.enabled === 'boolean' && typeof value.available === 'boolean' && typeof value.receiving === 'boolean';
+  }
+  function aiOwner() { return { id: 'ai-demo', kind: 'ai', name: 'AI' }; }
+  function replyControl(owner) { return { owner: clone(owner || aiOwner()), revision: 1, records: [], operations: [] }; }
+  function validReplyControl(value) {
+    return value && assignee(value.owner) && Number.isSafeInteger(value.revision) && value.revision > 0 && Array.isArray(value.records) && Array.isArray(value.operations);
   }
 
   /**
@@ -75,6 +80,43 @@
     var storage = options.storage || null, storageKey = options.storageKey || KEY;
     var clock = typeof options.now === 'function' ? options.now : Date.now;
     var data = empty(), loadError = null, listeners = [];
+    function migrateGroups(state) {
+      var changed = false, additions = [], messages = [];
+      state.conversations.forEach(function (c) {
+        if (c.kind !== 'group') return;
+        var expected = keyOf(c), accounts = Array.from(new Set([c.accountId].concat(c.accountIds || []).filter(id)));
+        if (!expected) throw new Error('invalid_group_scope');
+        if (c.replyControl && !validReplyControl(c.replyControl)) throw new Error('invalid_reply_control');
+        if (c.key !== expected || accounts.length > 1) {
+          var oldKey = c.key, original = clone(c), oldMessages = state.messages.filter(function (m) { return m.conversationKey === oldKey; });
+          state.groupMigrationBackups = state.groupMigrationBackups || [];
+          state.groupMigrationBackups.push({ conversation: original, messages: clone(oldMessages),
+            subjects: clone(state.subjects.filter(function (s) { return s.conversationKey === oldKey; })),
+            operations: clone(state.operations.filter(function (op) { return op.conversationKey === oldKey; })),
+            reads: clone(state.reads.filter(function (r) { return r.conversationKey === oldKey; })) });
+          accounts.filter(function (account) { return account !== c.accountId; }).forEach(function (account) {
+            var other = Object.assign({}, clone(original), { accountId: account, accountIds: [account], patientId: null, patientName: '' });
+            other.key = keyOf(other); other.replyControl = replyControl();
+            other.aiService = Object.assign({}, other.aiService || {}, { receiving: true });
+            if (!state.conversations.concat(additions).some(function (row) { return row.key === other.key; })) {
+              additions.push(other); oldMessages.forEach(function (m) { messages.push(Object.assign({}, clone(m), { conversationKey: other.key, relatedSubjectIds: [] })); });
+            }
+          });
+          c.key = expected; c.accountIds = [c.accountId]; c.patientId = null; c.patientName = '';
+          [state.subjects, state.messages, state.operations, state.reads].forEach(function (rows) { rows.forEach(function (row) { if (row.conversationKey === oldKey) row.conversationKey = expected; }); });
+          if (c.replyControl) [c.replyControl.records, c.replyControl.operations].forEach(function (rows) { rows.forEach(function (row) { if (row.conversationKey === oldKey) row.conversationKey = expected; }); });
+          changed = true;
+        }
+        if (!c.replyControl) {
+          var routed = state.operations.filter(function (op) { return op.conversationKey === c.key && op.kind !== 'ai_send' && op.phase === 'succeeded' && assignee(op.to); }).sort(function (a, b) { return (b.finishedAt || b.startedAt || 0) - (a.finishedAt || a.startedAt || 0); })[0];
+          var assigned = state.subjects.filter(function (s) { return s.conversationKey === c.key && s.status !== 'done' && s.assignee && s.assignee.kind !== 'ai'; }).sort(function (a, b) { return a.createdAt - b.createdAt; })[0];
+          c.replyControl = replyControl(routed ? assignee(routed.to) : assigned ? assigned.assignee : aiOwner()); changed = true;
+        }
+      });
+      if (additions.length) state.conversations = state.conversations.concat(additions);
+      if (messages.length) state.messages = state.messages.concat(messages);
+      return changed;
+    }
     function refresh() {
       if (!storage) return;
       try {
@@ -82,10 +124,12 @@
         if (!raw) { data = empty(); loadError = null; return; }
         var parsed = JSON.parse(raw);
         if (!validStore(parsed)) { loadError = 'invalid_storage'; return; }
+        var migrated = migrateGroups(parsed);
+        if (migrated) storage.setItem(storageKey, JSON.stringify(parsed));
         data = parsed; loadError = null;
       } catch (error) { loadError = 'storage_unavailable'; }
     }
-    function accountIds(c) { return c.accountIds || [c.accountId]; }
+    function accountIds(c) { return c.kind === 'group' ? [c.accountId] : c.accountIds || [c.accountId]; }
     function matching(c) {
       return grants.filter(function (g) {
         return g.tenantId === c.tenantId && g.projectId === c.projectId && accountIds(c).indexOf(g.accountId) >= 0 &&
@@ -108,6 +152,7 @@
     function canViewSubject(c, s) { return permitted(c, 'view') && (permitted(c, 'viewAll') || owns(c, s) || canClaim(c, s) || s.assignee && s.assignee.kind === 'ai' && permitted(c, 'viewAI')); }
     function canAct(c, s, action) {
       if (!c || !s || s.status === 'done') return false;
+      if (c.kind === 'group' && ['claim', 'takeover', 'transfer'].indexOf(action) >= 0) return false;
       if (action === 'claim') return canClaim(c, s);
       if (action === 'takeover') return canClaim(c, s) || owns(c, s) || !!s.assignee && s.assignee.kind === 'ai' && permitted(c, 'view') && matching(c).some(function (g) { return g.work === true && g.takeoverAI === true; });
       return owns(c, s);
@@ -130,12 +175,125 @@
     function versionMatches(s, command) {
       return command && command.expectedRevision === s.revision && command.throughPatientSeq === s.lastPatientSeq;
     }
+    function pendingReply(c) {
+      return c.replyControl.records.filter(function (record) { return record.status === 'pending_reply'; }).sort(function (a, b) { return b.createdAt - a.createdAt; })[0] || null;
+    }
+    function replyStateData(c) {
+      var provider = c.replyControl.operations.find(function (op) { return op.phase === 'pending'; }), pending = provider || pendingReply(c);
+      return { conversationKey: c.key, owner: clone(c.replyControl.owner), revision: c.replyControl.revision,
+        records: clone(c.replyControl.records), operations: clone(c.replyControl.operations),
+        pending: pending ? Object.assign({}, clone(pending), { stage: provider ? 'provider' : 'first_reply' }) : null };
+    }
+    function replyCan(c, action) {
+      if (!c || c.kind !== 'group' || !validReplyControl(c.replyControl) || !permitted(c, 'view') || !permitted(c, 'work')) return false;
+      var owner = c.replyControl.owner;
+      if (action === 'takeover') return owner.kind === 'ai' && actor.roles.some(function (role) { return role === 'doctor' || role === 'assistant'; }) && permitted(c, 'takeoverAI');
+      if (action === 'reply') return owner.kind !== 'ai' && owner.id === actor.id && actor.roles.indexOf(owner.kind) >= 0;
+      return action === 'transfer' && owner.id === actor.id && actor.roles.indexOf(owner.kind) >= 0 && (owner.kind !== 'ai' || permitted(c, 'manageAI'));
+    }
+    function routeReplyOwner(state, c, owner, evidenceId, routeSubjects) {
+      c.replyControl.owner = clone(owner); c.replyControl.revision += 1;
+      c.aiService = Object.assign({}, c.aiService || {}, { receiving: owner.kind === 'ai', evidenceId: evidenceId });
+      c.aiRevision = (c.aiRevision || 1) + 1;
+      if (routeSubjects) state.subjects.filter(function (s) { return s.conversationKey === c.key && s.status !== 'done'; }).forEach(function (s) {
+        if (!equal(s.assignee, owner) || s.targetRole) { s.assignee = clone(owner); s.targetRole = null; touch(s, 'group_reply_routed', { receiptId: evidenceId, to: owner }); }
+      });
+    }
+    function beginReplyOperation(input) {
+      return mutable(function (state) {
+        input = input || {};
+        var c = conversation(state, input.conversationKey), to = assignee(input.to), mode = input.mode || 'manual';
+        if (!c || c.kind !== 'group' || !id(input.id) || !id(input.requestId) || !id(input.attemptId) || ['transfer', 'takeover'].indexOf(input.kind) < 0 || ['manual', 'ai'].indexOf(mode) < 0 || !to) return failure('invalid_reply_operation');
+        if (!permitted(c, 'view')) return failure('permission_denied');
+        var control = c.replyControl, minutes = input.responseWindowMinutes === undefined ? 5 : input.responseWindowMinutes;
+        if (!Number.isSafeInteger(minutes) || minutes < 1 || minutes > Math.floor(Number.MAX_SAFE_INTEGER / 60000)) return failure('invalid_window');
+        var reason = typeof input.reason === 'string' ? input.reason.trim() : '', detail = typeof input.reasonDetail === 'string' ? input.reasonDetail.trim() : '';
+        function sameRequest(op) { return op.actorId === actor.id && op.kind === input.kind && op.mode === mode && equal(op.to, to) && op.reason === reason && op.reasonDetail === detail && op.responseWindowMinutes === minutes && op.expectedRevision === input.expectedRevision; }
+        var previous = control.operations.find(function (op) { return op.id === input.id; });
+        if (previous) return previous.requestId === input.requestId && previous.attemptId === input.attemptId && sameRequest(previous) ? { ok: true, unchanged: true, idempotent: true, operation: clone(previous) } : failure('operation_identity_conflict');
+        var attempts = control.operations.filter(function (op) { return op.requestId === input.requestId; });
+        if (attempts.some(function (op) { return op.actorId !== actor.id || op.kind !== input.kind || op.mode !== mode || op.expectedRevision !== input.expectedRevision; })) return failure('request_identity_conflict');
+        var reusable = attempts.find(function (op) { return op.phase === 'pending' || op.phase === 'succeeded'; });
+        if (reusable) return { ok: true, unchanged: true, idempotent: true, operation: clone(reusable) };
+        if (attempts.some(function (op) { return op.attemptId === input.attemptId; })) return failure('duplicate_attempt');
+        if (control.operations.some(function (op) { return op.phase === 'pending'; })) return failure('operation_pending');
+        var automatic = mode === 'ai' && input.kind === 'transfer' && control.owner.kind === 'ai' && permitted(c, 'ingest') && permitted(c, 'manageAI');
+        if (mode === 'ai' && !automatic) return failure('permission_denied');
+        if (!automatic && !replyCan(c, input.kind)) return failure('permission_denied');
+        if (input.expectedRevision !== control.revision) return failure('stale_reply_control');
+        if (input.kind === 'takeover') {
+          if (mode !== 'manual' || to.id !== actor.id || to.kind === 'ai' || actor.roles.indexOf(to.kind) < 0) return failure('permission_denied');
+        } else {
+          if (control.owner.kind === 'ai' && to.kind !== 'assistant') return failure('ai_assistant_only');
+          if (control.owner.id === to.id && control.owner.kind === to.kind) return failure('same_assignee');
+          if (!matching(c).some(function (g) { return g.work === true && (to.kind === 'ai' ? g.routeAI === true : Array.isArray(g.routeTo) && g.routeTo.indexOf(to.id) >= 0); })) return failure('route_denied');
+          if (pendingReply(c) && to.kind !== 'ai') return failure('handoff_pending');
+          if (to.kind !== 'ai' && !reason) return failure('invalid_reason');
+          if (to.kind !== 'ai' && !detail) return failure('missing_reason_detail');
+        }
+        var at = attempts.length ? attempts[0].startedAt : clock(), deadline = to.kind === 'ai' || input.kind === 'takeover' ? null : at + minutes * 60000;
+        if (deadline !== null && !Number.isSafeInteger(deadline)) return failure('invalid_window');
+        var op = { id: input.id, conversationKey: c.key, kind: input.kind, mode: mode, requestId: input.requestId, attemptId: input.attemptId,
+          expectedRevision: control.revision, actorId: actor.id, from: clone(control.owner), to: clone(to), reason: reason, reasonDetail: detail,
+          responseWindowMinutes: minutes, startedAt: at, deadline: deadline, phase: 'pending', receiptId: null };
+        control.operations.push(op); return { ok: true, operation: clone(op), event: 'reply_operation_started' };
+      });
+    }
+    function settleReplyOperation(input) {
+      return mutable(function (state) {
+        input = input || {};
+        var c = conversation(state, input.conversationKey), control = c && c.replyControl, op = control && control.operations.find(function (item) { return item.id === input.id; });
+        if (!c || c.kind !== 'group' || !op || op.requestId !== input.requestId || op.attemptId !== input.attemptId) return failure('stale_operation');
+        if (!permitted(c, 'ingest')) return failure('permission_denied');
+        if (!id(input.receiptId) || typeof input.success !== 'boolean') return failure('receipt_required');
+        if (op.phase !== 'pending') return op.receiptId === input.receiptId ? { ok: true, unchanged: true, idempotent: true, applied: op.phase === 'succeeded', operation: clone(op), state: replyStateData(c) } : failure('stale_operation');
+        if (op.expectedRevision !== control.revision || !equal(op.from, control.owner)) {
+          op.phase = 'stale'; op.receiptId = input.receiptId; op.finishedAt = clock();
+          return { ok: true, applied: false, code: 'stale_reply_control', operation: clone(op), state: replyStateData(c), event: 'reply_operation_stale' };
+        }
+        op.receiptId = input.receiptId; op.finishedAt = clock();
+        if (!input.success) {
+          op.phase = 'failed'; op.error = typeof input.error === 'string' ? input.error : 'provider_failed';
+          return { ok: true, applied: false, operation: clone(op), state: replyStateData(c), event: 'reply_operation_failed' };
+        }
+        op.phase = 'succeeded';
+        var at = clock(), former = pendingReply(c);
+        if (former) { former.status = 'superseded'; former.supersededAt = at; former.supersededBy = op.id; }
+        var record = { id: 'reply-handoff-' + op.id, requestId: op.requestId, operationId: op.id, conversationKey: c.key,
+          eventType: op.kind === 'takeover' ? 'human_takeover' : op.from.kind + '_to_' + op.to.kind, mode: op.mode,
+          from: clone(op.from), to: clone(op.to), createdAt: op.startedAt, deadline: op.deadline, responseWindowMinutes: op.responseWindowMinutes,
+          reason: op.reason, reasonDetail: op.reasonDetail, receiptId: op.receiptId,
+          status: op.kind === 'takeover' ? 'succeeded' : op.to.kind === 'ai' ? 'transferred_ai' : 'pending_reply' };
+        if (record.status !== 'pending_reply') record.completedAt = at;
+        control.records.push(record); routeReplyOwner(state, c, op.to, op.receiptId, true);
+        return { ok: true, applied: true, operation: clone(op), record: clone(record), state: replyStateData(c), event: 'reply_routing_confirmed' };
+      });
+    }
+    function expireReplyControls(at) {
+      at = at === undefined ? clock() : at;
+      if (!finite(at)) return failure('invalid_time');
+      return mutable(function (state) {
+        var expired = [];
+        state.conversations.forEach(function (c) {
+          if (c.kind !== 'group' || !permitted(c, 'ingest')) return;
+          var record = pendingReply(c);
+          if (!record || !finite(record.deadline) || at <= record.deadline || !equal(c.replyControl.owner, record.to)) return;
+          record.status = 'timed_out'; record.completedAt = record.deadline;
+          routeReplyOwner(state, c, aiOwner(), 'timeout-' + record.id, false);
+          expired.push({ conversationKey: c.key, record: clone(record), owner: clone(c.replyControl.owner) });
+        });
+        return { ok: true, unchanged: expired.length === 0, expired: expired, event: 'reply_controls_expired' };
+      });
+    }
     function registerConversation(meta) {
       return mutable(function (state) {
         var key = keyOf(meta);
         if (!key) return failure('invalid_conversation');
         var accounts = Array.from(new Set([meta.accountId].concat(Array.isArray(meta.accountIds) ? meta.accountIds : []).filter(id)));
         if (meta.kind === 'private' && accounts.length !== 1) return failure('private_account_conflict');
+        if (meta.kind === 'group' && accounts.length !== 1) return failure('group_account_conflict');
+        var replyOwner = meta.replyOwner === undefined ? aiOwner() : assignee(meta.replyOwner);
+        if (meta.kind === 'group' && !replyOwner) return failure('invalid_reply_owner');
         if (!accounts.every(function (account) { return permitted(Object.assign({}, meta, { accountId: account, accountIds: [account] }), 'ingest'); })) return failure('permission_denied');
         if (meta.aiService !== undefined && (!aiEvidence(meta.aiService) || !permitted(Object.assign({}, meta, { accountIds: accounts }), 'manageAI'))) return failure('invalid_ai_evidence');
         var existing = conversation(state, key);
@@ -149,6 +307,10 @@
           accountId: meta.accountId, accountIds: accounts, title: typeof meta.title === 'string' ? meta.title : '',
           patientId: id(meta.patientId), patientName: typeof meta.patientName === 'string' ? meta.patientName : '',
           seq: 0, aiRevision: 1, createdAt: clock(), aiService: meta.aiService ? clone(meta.aiService) : null };
+        if (meta.kind === 'group') {
+          c.patientId = null; c.patientName = ''; c.replyControl = replyControl(replyOwner);
+          if (c.aiService) c.aiService.receiving = replyOwner.kind === 'ai';
+        }
         state.conversations.push(c);
         return { ok: true, conversation: clone(c), event: 'conversation_created' };
       });
@@ -159,6 +321,7 @@
         var c = conversation(state, input.conversationKey);
         if (!c || !id(input.id) || !id(input.speakerId) || ['patient', 'human', 'ai'].indexOf(input.kind) < 0 || typeof input.text !== 'string') return failure('invalid_message');
         if (!permitted(c, 'ingest')) return failure('permission_denied');
+        if (c.kind === 'group' && input.kind === 'human' && input.deliveryStatus !== undefined && input.deliveryStatus !== 'sent') return failure('invalid_delivery');
         var previous = state.messages.find(function (m) { return m.conversationKey === c.key && m.id === input.id; });
         var related = Array.from(new Set(Array.isArray(input.relatedSubjectIds) ? input.relatedSubjectIds : []));
         var shape = { conversationKey: c.key, id: input.id, speakerId: input.speakerId, patientId: id(input.patientId), kind: input.kind, text: input.text, relatedSubjectIds: related,
@@ -174,6 +337,14 @@
         })) return failure('invalid_subject_correlation');
         var m = Object.assign(shape, { seq: ++c.seq, sentAt: finite(input.sentAt) ? input.sentAt : clock() });
         state.messages.push(m);
+        if (c.kind === 'group' && m.kind === 'human' && m.text.trim()) {
+          var first = pendingReply(c);
+          if (first && first.to.id === m.speakerId && c.replyControl.owner.kind !== 'ai' && c.replyControl.owner.id === m.speakerId && m.sentAt >= first.createdAt && m.sentAt <= first.deadline && m.sentAt <= clock() && input.isPublic !== false) {
+            first.status = 'succeeded'; first.firstReplyAt = m.sentAt; first.firstReplyId = m.id; first.completedAt = m.sentAt;
+            c.replyControl.revision += 1;
+            c.replyControl.operations.filter(function (op) { return op.phase === 'pending'; }).forEach(function (op) { op.phase = 'stale'; op.error = 'superseded_by_reply'; op.finishedAt = clock(); });
+          }
+        }
         related.forEach(function (value) {
           var s = subject(state, value);
           if (s.status === 'done') return;
@@ -192,6 +363,7 @@
         if (!permitted(c, 'ingest')) return failure('permission_denied');
         var assigned = assignee(input.assignee === undefined ? null : input.assignee);
         if (assigned === undefined || !assigned && !id(input.targetRole)) return failure('invalid_assignee');
+        if (c.kind === 'group' && c.replyControl.owner.kind !== 'ai') assigned = clone(c.replyControl.owner);
         var origin = input.originMessageId ? state.messages.find(function (m) { return m.conversationKey === c.key && m.id === input.originMessageId; }) : null;
         if (input.originMessageId && (!origin || origin.kind !== 'patient' || origin.speakerId !== input.speakerId || origin.patientId && origin.patientId !== id(input.patientId))) return failure('invalid_origin');
         if (!origin && (input.originUnavailable !== true || !id(input.requestText))) return failure('origin_required');
@@ -206,6 +378,7 @@
           lastPatientSeq: origin ? origin.seq : c.seq, waitingAt: null, completedAt: null,
           priority: finite(input.priority) ? input.priority : 0, deadline: finite(input.deadline) ? input.deadline : null,
           legacyRef: input.legacyRef ? clone(input.legacyRef) : null, events: [] };
+        if (c.kind === 'group' && c.replyControl.owner.kind !== 'ai') s.targetRole = null;
         event(s, 'created', { sourceId: trigger.sourceId }); state.subjects.push(s);
         return { ok: true, subject: clone(s), event: 'subject_created' };
       });
@@ -216,7 +389,7 @@
         if (!c || !aiEvidence(evidence)) return failure('invalid_ai_evidence');
         if (!permitted(c, 'manageAI')) return failure('permission_denied');
         if (equal(c.aiService, evidence)) return { ok: true, unchanged: true, conversation: clone(c) };
-        c.aiService = clone(evidence); c.aiRevision = (c.aiRevision || 1) + 1;
+        c.aiService = clone(evidence); if (c.kind === 'group') c.aiService.receiving = c.replyControl.owner.kind === 'ai'; c.aiRevision = (c.aiRevision || 1) + 1;
         return { ok: true, conversation: clone(c), event: 'ai_service_updated' };
       });
     }
@@ -236,6 +409,7 @@
       if (!c || !e || !e.enabled || !e.available || !e.receiving) return false;
       var s = input.subjectId && subject(state, input.subjectId);
       if (input.subjectId && (!s || s.conversationKey !== c.key || input.speakerId && input.speakerId !== s.speakerId)) return false;
+      if (c.kind === 'group') return !!c.replyControl && c.replyControl.owner.kind === 'ai';
       if (input.purpose === 'acknowledgement') return true;
       if (s && s.status !== 'done' && (!s.assignee && s.targetRole || s.assignee && s.assignee.kind !== 'ai')) return false;
       return !state.subjects.some(function (item) {
@@ -249,6 +423,7 @@
         var s = subject(state, input.subjectId), c = conversation(state, s ? s.conversationKey : input.conversationKey);
         if (!c || !s && input.kind !== 'ai_send' || !id(input.id) || !id(input.requestId) || !id(input.attemptId) || ['transfer', 'takeover', 'ai_send'].indexOf(input.kind) < 0) return failure('invalid_operation');
         if (!permitted(c, 'view')) return failure('permission_denied');
+        if (c.kind === 'group' && input.kind !== 'ai_send') return failure('group_reply_control_required');
         var previous = state.operations.find(function (o) { return o.id === input.id; });
         if (previous) return previous.actorId === actor.id && previous.subjectId === (s ? s.id : null) && previous.conversationKey === c.key && previous.speakerId === (s ? s.speakerId : id(input.speakerId)) && previous.purpose === (input.purpose || 'answer') && previous.requestId === input.requestId && previous.attemptId === input.attemptId && previous.kind === input.kind && previous.expectedRevision === input.expectedRevision && previous.throughPatientSeq === input.throughPatientSeq && equal(previous.to, input.to ? assignee(input.to) : null) ?
           { ok: true, unchanged: true, operation: clone(previous) } : failure('operation_identity_conflict');
@@ -299,6 +474,7 @@
         if (!op || !c || op.requestId !== input.requestId || op.attemptId !== input.attemptId) return failure('stale_operation');
         // Receiving a provider callback is trusted ingestion, not a UI permission.
         if (!permitted(c, 'ingest')) return failure('permission_denied');
+        if (c.kind === 'group' && op.kind !== 'ai_send') return failure('group_reply_control_required');
         if (op.phase !== 'pending') return op.receiptId === input.receiptId && !!input.receiptId ? { ok: true, unchanged: true, operation: clone(op), subject: clone(s) } : failure('stale_operation');
         if (!id(input.receiptId) || typeof input.success !== 'boolean') return failure('receipt_required');
         if (op.expectedRevision !== (s ? s.revision : c.aiRevision || 1) || op.throughPatientSeq !== (s ? s.lastPatientSeq : lastPatientSequence(state, c.key, op.speakerId)) || s && s.status === 'done' || op.kind === 'ai_send' && !aiCanReply(state, { conversationKey: c.key, subjectId: s && s.id, speakerId: op.speakerId, purpose: op.purpose })) {
@@ -353,6 +529,7 @@
     function isAIReception(state, c) {
       var e = c.aiService;
       if (!e || !e.enabled || !e.available || !e.receiving || !e.evidenceId) return false;
+      if (c.kind === 'group') return c.replyControl.owner.kind === 'ai';
       return !state.subjects.some(function (s) { return s.conversationKey === c.key && s.status !== 'done' && (!s.assignee && s.targetRole || s.assignee && s.assignee.kind !== 'ai'); });
     }
     function project(query) {
@@ -365,7 +542,8 @@
         var active = permittedSubjects.filter(function (s) { return s.status === 'active' && (owns(c, s) || canClaim(c, s)); });
         var attention = active.map(function (s) { return summary(s, at); }).sort(attentionCompare);
         if (search && [c.title, c.patientName].concat(permittedSubjects.map(function (s) { return s.requestText; })).join(' ').toLocaleLowerCase().indexOf(search) < 0) return;
-        var human = active.length > 0, ai = !human && permitted(c, 'viewAI') && isAIReception(data, c), all = permitted(c, 'viewAll');
+        var human = c.kind === 'group' ? replyCan(c, 'reply') || c.replyControl.owner.kind === 'ai' && active.length > 0 : active.length > 0;
+        var ai = !human && permitted(c, 'viewAI') && isAIReception(data, c), all = permitted(c, 'viewAll');
         if (human) {
           counts.human += 1;
           badges.projects[c.projectId] = (badges.projects[c.projectId] || 0) + 1;
@@ -386,7 +564,8 @@
           waitingPatientCount: permittedSubjects.filter(function (s) { return s.status === 'waiting_patient' && owns(c, s); }).length,
           unread: c.seq > (r ? r.throughSeq : 0), readThroughSeq: r ? r.throughSeq : 0,
           lastMessage: clone(last || null), lastPatientMessage: clone(latestPatient || null),
-          permissions: { view: true, work: human, viewAI: permitted(c, 'viewAI'), viewAll: all } });
+          replyState: c.kind === 'group' ? replyStateData(c) : null,
+          permissions: { view: true, work: c.kind === 'group' ? replyCan(c, 'reply') : human, viewAI: permitted(c, 'viewAI'), viewAll: all } });
       });
       rows.sort(function (a, b) {
         if (a.summary && b.summary) return attentionCompare(a.summary, b.summary);
@@ -415,8 +594,12 @@
       setAIService: setAIService, project: project, getConversation: getConversation, listConversations: listConversations,
       getSubject: getSubject, listSubjects: listSubjects, listMessages: listMessages, snapshot: snapshot,
       markRead: markRead, markUnread: markUnread,
-      canOperate: function (value, command) { refresh(); var s = subject(data, value), c = s && conversation(data, s.conversationKey); return !!c && canAct(c, s, command && command.action || 'complete'); },
-      canAIReply: function (input) { refresh(); var c = conversation(data, input && input.conversationKey); return !!c && permitted(c, 'view') && aiCanReply(data, input || {}); },
+      replyState: function (key) { refresh(); var c = conversation(data, key); return !loadError && c && c.kind === 'group' && permitted(c, 'view') ? replyStateData(c) : null; },
+      canReply: function (key) { refresh(); return !loadError && replyCan(conversation(data, key), 'reply'); },
+      canControlReply: function (key, action) { refresh(); return !loadError && replyCan(conversation(data, key), action); },
+      beginReplyOperation: beginReplyOperation, settleReplyOperation: settleReplyOperation, expireReplyControls: expireReplyControls,
+      canOperate: function (value, command) { refresh(); var s = subject(data, value), c = s && conversation(data, s.conversationKey); return !loadError && !!c && canAct(c, s, command && command.action || 'complete'); },
+      canAIReply: function (input) { refresh(); var c = conversation(data, input && input.conversationKey); return !loadError && !!c && permitted(c, 'view') && aiCanReply(data, input || {}); },
       complete: function (value, command) { return changeStatus(value, command, 'done'); },
       waitForPatient: function (value, command) { return changeStatus(value, command, 'waiting_patient'); },
       claim: function (value, command) {

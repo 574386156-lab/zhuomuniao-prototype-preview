@@ -1354,7 +1354,7 @@
         function getChatConversationData(){return conversationInbox?conversationInbox.rows(state.chatDoctorSelected):getChatSourceData();}
         function inboxBasicDefaults(row){var known=getChatSourceData().some(function(source){return source.patientId&&source.patientId===row.patientId;});return {name:row.name,gender:row.gender||'',phone:known?'138****5605':'',birthDate:known&&row.patientId==='patient-demo-1'?'1968-06-15':'',height:'',diagnosis:known?'2型糖尿病':''};}
         function bindInboxBasic(row){if(!row||!row.inboxKey||state.chatBasicScope===row.inboxKey)return;if(state.chatBasicScope)chatPatientBasics[state.chatBasicScope]=state.chatPatientBasic;state.chatPatientBasic=chatPatientBasics[row.inboxKey]||inboxBasicDefaults(row);state.chatBasicScope=row.inboxKey;}
-        function bindInboxDraft(c,subject){var key=c?c.key+'|'+(subject?subject.id:'readonly'):null;if(state.chatDraftScope===key)return;if(state.chatDraftScope)inboxDrafts[state.chatDraftScope]=state.chatDraft;state.chatDraftScope=key;state.chatDraft=key&&inboxDrafts[key]||'';}
+        function bindInboxDraft(c,subject){var key=c?c.key+'|'+(c.kind==='group'?'reply':subject?subject.id:'readonly'):null;if(state.chatDraftScope===key)return;if(state.chatDraftScope)inboxDrafts[state.chatDraftScope]=state.chatDraft;state.chatDraftScope=key;state.chatDraft=key&&inboxDrafts[key]||'';}
         function chatInboxConversation(row,doctor){return conversationInbox&&conversationInbox.find(row,doctor||state.chatDoctorSelected);}
         function selectedChatConversation(){var rows=getChatConversationData();return state.chatConversationSelectedKey?rows.find(function(item){return item.inboxKey===state.chatConversationSelectedKey;}):rows.find(function(item){return item.name===state.chatSelected;});}
         function chatInboxSelected(){var row=selectedChatConversation(),c=chatInboxConversation(row);return c||null;}
@@ -1379,7 +1379,7 @@
         function chatInboxIsHistory(){return state.chatReadOnlyContext===chatOutboxScope(getHandoffContext());}
         function chatInboxCanOperate(){
           if(!conversationInbox||chatInboxIsHistory()||!conversationInbox.store.refresh().ok)return false;
-          var c=chatInboxSelected(),s=chatInboxSubject();if(!c||!s||!conversationInbox.store.canOperate(s.id,{action:'complete'}))return false;
+          var c=chatInboxSelected(),s=chatInboxSubject();if(c&&c.kind==='group')return conversationInbox.store.canReply(c.key);if(!c||!s||!conversationInbox.store.canOperate(s.id,{action:'complete'}))return false;
           return true;
         }
         function chatInboxChange(){if(inboxRenderQueued)return;inboxRenderQueued=true;window.requestAnimationFrame(function(){inboxRenderQueued=false;if(shell&&currentRoute()==='aggregate-chat')render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});});}
@@ -1405,15 +1405,21 @@
           return {subjectId:subject.id,exactRef:ref.taskId===task.id,deadline:task.deadline,overdue:overdue,label:overdue?'超时':'剩余',value:value,title:'首次回复截止：'+new Date(task.deadline).toLocaleString('zh-CN',{hour12:false})};
         }
         function chatInboxTimeIcon(overdue){return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2"></circle><path d="'+(overdue?'M10 5.6v5.1M10 13v1':'M10 5.5V10l3 1.8')+'"></path></svg>';}
+        function chatGroupTimeInfo(key,at){
+          var reply=conversationInbox&&conversationInbox.store.replyState(key);if(!reply)return null;
+          var record=reply.records.slice().reverse()[0];if(!record||['pending_reply','timed_out'].indexOf(record.status)<0||!Number.isFinite(record.deadline))return null;
+          var overdue=at>=record.deadline,seconds=overdue?Math.floor((at-record.deadline)/1000):Math.ceil((record.deadline-at)/1000),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
+          return {conversationKey:key,deadline:record.deadline,overdue:overdue,label:overdue?'超时':'剩余',value:(hours?String(hours).padStart(2,'0')+':':'')+String(minutes).padStart(2,'0')+':'+String(rest).padStart(2,'0'),title:'首次回复截止：'+new Date(record.deadline).toLocaleString('zh-CN',{hour12:false})};
+        }
         function renderChatInboxTime(view){
-          var at=Date.now(),info=view&&(view.subjects||[]).map(function(s){return chatInboxTimeInfo(s.id,at);}).filter(Boolean).sort(function(a,b){return a.deadline-b.deadline||Number(b.exactRef)-Number(a.exactRef);})[0];if(!info)return '';
-          return '<span class="ops-inbox-time '+(info.overdue?'is-overdue':'is-countdown')+'" data-inbox-time data-inbox-time-subject="'+escapeHtml(info.subjectId)+'" title="'+escapeHtml(info.title)+'" aria-label="'+info.label+' '+info.value+'">'+chatInboxTimeIcon(info.overdue)+'<span data-inbox-time-label>'+info.label+'</span><strong data-inbox-time-value>'+info.value+'</strong></span>';
+          var at=Date.now(),info=view&&(view.conversation.kind==='group'?chatGroupTimeInfo(view.key,at):(view.subjects||[]).map(function(s){return chatInboxTimeInfo(s.id,at);}).filter(Boolean).sort(function(a,b){return a.deadline-b.deadline||Number(b.exactRef)-Number(a.exactRef);})[0]);if(!info)return '';
+          return '<span class="ops-inbox-time '+(info.overdue?'is-overdue':'is-countdown')+'" data-inbox-time '+(info.conversationKey?'data-inbox-time-conversation="'+escapeHtml(info.conversationKey)+'"':'data-inbox-time-subject="'+escapeHtml(info.subjectId)+'"')+' title="'+escapeHtml(info.title)+'" aria-label="'+info.label+' '+info.value+'">'+chatInboxTimeIcon(info.overdue)+'<span data-inbox-time-label>'+info.label+'</span><strong data-inbox-time-value>'+info.value+'</strong></span>';
         }
         function stopChatInboxTimeClock(){if(inboxTimeTimer!==null){window.clearInterval(inboxTimeTimer);inboxTimeTimer=null;}}
         function updateChatInboxTimes(){
           if(!shell||currentRoute()!=='aggregate-chat'||document.hidden){stopChatInboxTimeClock();return;}
           shell.querySelectorAll('[data-inbox-time]').forEach(function(node){
-            var info=chatInboxTimeInfo(node.getAttribute('data-inbox-time-subject'),Date.now());
+            var groupKey=node.getAttribute('data-inbox-time-conversation'),info=groupKey?chatGroupTimeInfo(groupKey,Date.now()):chatInboxTimeInfo(node.getAttribute('data-inbox-time-subject'),Date.now());
             if(!info){var meta=node.parentElement;node.remove();if(meta&&meta.classList.contains('ops-inbox-row-meta')&&!meta.childElementCount)meta.remove();return;}
             var label=node.querySelector('[data-inbox-time-label]'),value=node.querySelector('[data-inbox-time-value]'),wasOverdue=node.classList.contains('is-overdue');
             if(label.textContent!==info.label)label.textContent=info.label;
@@ -1448,6 +1454,48 @@
           return conversationInbox.store.beginOperation({id:'inbox-route-'+request+'-'+(++inboxOperationCounter),requestId:request,attemptId:'attempt-'+inboxOperationCounter,subjectId:subject.id,kind:'transfer',expectedRevision:subject.revision,throughPatientSeq:subject.lastPatientSeq,to:to});
         }
         function chatInboxSettle(op,result){if(!op||!op.operation)return;return conversationInbox.store.settleOperation({id:op.operation.id,requestId:op.operation.requestId,attemptId:op.operation.attemptId,success:!!result.ok,receiptId:'receipt-'+op.operation.id,error:result.message||result.code});}
+        var groupReplyFlights=Object.create(null);
+        function dispatchGroupReply(ctx,command,modal){
+          if(!conversationInbox||!ctx||!ctx.group)return Promise.resolve({ok:false,code:'invalid_context'});
+          var key=ctx.inboxConversationKey,current=conversationInbox.store.getConversation(key);
+          if(!current||current.kind!=='group'||current.accountId!==ctx.hostAccountId||current.id!==ctx.groupId||current.tenantId!==ctx.tenantId||current.projectId!==ctx.projectId)return Promise.resolve({ok:false,code:'invalid_context'});
+          if(groupReplyFlights[key])return groupReplyFlights[key];
+          var started,original=command.resumeOperation;
+          if(original){var live=conversationInbox.store.replyState(key),pending=live&&live.operations.find(function(item){return item.id===original.id&&item.requestId===original.requestId&&item.attemptId===original.attemptId&&item.phase==='pending';});started=pending?{ok:true,operation:pending}:{ok:false,code:'stale_operation'};}
+          else{var attempt='attempt-'+(++inboxOperationCounter);started=conversationInbox.store.beginReplyOperation({conversationKey:key,id:command.requestId+'-'+attempt,requestId:command.requestId,attemptId:attempt,kind:command.kind||'transfer',mode:command.mode||'manual',expectedRevision:command.expectedRevision,to:command.to,reason:command.reason||'',reasonDetail:command.reasonDetail||'',responseWindowMinutes:window.PatientHandoffs.getConfig().responseWindowMinutes});}
+          if(!started.ok)return Promise.resolve(started);
+          var op=started.operation,captured=Object.assign({},ctx),transport=window.PrototypeGroupHandoffHost;
+          if(modal){modal.busy=true;modal.unconfirmed=true;modal.pendingOperation=JSON.parse(JSON.stringify(op));modal.error='';render();}
+          var work=Promise.resolve().then(function(){return transport.dispatch({conversationKey:key,operationId:op.id,requestId:op.requestId,attemptId:op.attemptId,context:captured,operation:JSON.parse(JSON.stringify(op))});}).then(function(receipt){
+            if(!receipt||receipt.conversationKey!==key||receipt.operationId!==op.id||receipt.requestId!==op.requestId||receipt.attemptId!==op.attemptId||typeof receipt.success!=='boolean'||!receipt.receiptId)return {ok:false,code:'receipt_mismatch'};
+            return conversationInbox.store.settleReplyOperation({conversationKey:key,id:op.id,requestId:op.requestId,attemptId:op.attemptId,receiptId:receipt.receiptId,success:receipt.success,error:receipt.error});
+          },function(){return {ok:false,code:'result_unknown'};}).then(function(result){
+            delete groupReplyFlights[key];
+            if(modal){modal.busy=false;modal.unconfirmed=result.code==='receipt_mismatch'||result.code==='result_unknown';}
+            if(result.ok&&result.applied){
+              if(command.kind==='takeover'){if(chatOutboxScope(getHandoffContext())===chatOutboxScope(captured))state.chatReadOnlyContext=null;chatWasDispatched(captured);}
+              else recordChatDispatch(captured,op.requestId);
+              if(modal&&state.modal===modal)state.modal=null;
+              render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});
+            }else if(modal&&state.modal===modal){modal.error=result.code==='receipt_mismatch'||result.code==='result_unknown'?'转接结果尚未确认，请重试':result.code==='stale_reply_control'?'接待归属已变化，请重新查看':'转接未完成，请重试';render({preserveChatInput:true});}
+            return result;
+          });
+          groupReplyFlights[key]=work;return work;
+        }
+        function resumeGroupReplyOperations(){
+          if(!conversationInbox||!window.PrototypeGroupHandoffHost)return Promise.resolve([]);
+          var jobs=[];
+          conversationInbox.store.listConversations().filter(function(c){return c.kind==='group';}).forEach(function(c){
+            var reply=conversationInbox.store.replyState(c.key),pending=reply&&reply.pending;if(!pending||pending.stage!=='provider')return;
+            var account=conversationInbox.accounts.find(function(item){return item.id===c.accountId&&item.projectId===c.projectId;}),ctx={group:true,tenantId:c.tenantId,projectId:c.projectId,groupId:c.id,groupName:c.title,hostAccountId:c.accountId,inboxConversationKey:c.key,operatorId:pending.actorId,doctorId:c.accountId,doctorName:account&&account.name||'',patientId:null,patientName:'',conversationId:c.id};
+            jobs.push(dispatchGroupReply(ctx,{kind:pending.kind,mode:pending.mode,requestId:pending.requestId,resumeOperation:pending}));
+          });return Promise.all(jobs);
+        }
+        function groupReplyAction(kind){
+          var ctx=getHandoffContext(),c=conversationInbox&&chatInboxSelected();if(!ctx.group||!c)return false;if(chatInboxIsHistory())return true;
+          var reply=conversationInbox.store.replyState(c.key),action=kind==='takeover'?'takeover':'transfer';if(!reply||!conversationInbox.store.canControlReply(c.key,action))return true;
+          dispatchGroupReply(ctx,{kind:action,requestId:'group-'+action+'-'+Date.now()+'-'+(++handoffRequestSequence),expectedRevision:reply.revision,to:kind==='takeover'?{id:conversationInbox.actor.id,name:conversationInbox.actor.name,kind:'doctor'}:{id:'ai-demo',name:'AI',kind:'ai'}}).then(function(result){toast(result.ok&&result.applied?(kind==='takeover'?'人工已接手，AI 自动回复已暂停':'已转交 AI'):'转接未完成，请重试');});return true;
+        }
 
         function conversationContentMatches(item, keyword) {
           if (!keyword) return [];
@@ -1775,6 +1823,7 @@
           return [];
         }
         function chatOutboxScope(ctx) {
+          if(ctx&&ctx.group)return ctx.inboxConversationKey&&ctx.hostAccountId?JSON.stringify(['group-reply',ctx.operatorId||conversationInbox&&conversationInbox.actor.id,ctx.tenantId,ctx.projectId,ctx.hostAccountId,ctx.groupId,ctx.inboxConversationKey]):'';
           return ctx && ctx.patientId ? JSON.stringify(['operator-demo-admin',ctx.tenantId,ctx.projectId,ctx.doctorId,ctx.patientId]) : '';
         }
         function persistChatOutbox() {
@@ -1783,6 +1832,7 @@
         function chatWasDispatched(ctx) {
           var key=chatOutboxScope(ctx),entry=chatOutbox.find(function(item){return item.key===key;});
           if(!entry)return false;
+          if(ctx.group){var current=conversationInbox&&conversationInbox.store.replyState(ctx.inboxConversationKey);if(current&&current.revision>entry.replyRevision&&current.owner.id===conversationInbox.actor.id&&current.owner.kind!=='ai'){chatOutbox=chatOutbox.filter(function(item){return item.key!==key;});persistChatOutbox();return false;}return true;}
           var queue=window.DoctorReception,task=queue&&queue.latestAssignment({patientId:ctx.patientId,sceneCode:ctx.sceneCode});
           // Only a later incoming assignment or explicit takeover by this doctor
           // can bring it back. An old assignment, first reply or timeout cannot.
@@ -1793,7 +1843,7 @@
           return true;
         }
         function chatNeedsHumanAttention(ctx) {
-          if(conversationInbox){chatWasDispatched(ctx);var row=conversationInbox.rows(ctx.doctorName||state.chatDoctorSelected).find(function(item){return item.patientId===ctx.patientId;});return !!row&&chatInboxProjection('human',ctx.doctorName).rows.some(function(item){return item.key===row.inboxKey;});}
+          if(conversationInbox){chatWasDispatched(ctx);var row=conversationInbox.rows(ctx.doctorName||state.chatDoctorSelected).find(function(item){return ctx.group?item.inboxKey===ctx.inboxConversationKey:!!ctx.patientId&&item.patientId===ctx.patientId;});return !!row&&chatInboxProjection('human',ctx.doctorName).rows.some(function(item){return item.key===row.inboxKey;});}
           return window.PatientHandoffs.needsHumanAttention(ctx)!==false&&!chatWasDispatched(ctx);
         }
         function chatVisibleConversations() {return conversationInbox?chatInboxRows(state.chatWorkQueue):getChatConversationData().filter(function(conversation){var ctx=window.ChatPatientArchive.context(conversation,state.chatDoctorSelected,state.chatArchiveScene);ctx.sceneCode=window.PatientHandoffs.sceneCode(ctx.projectId,ctx.sceneName);return chatNeedsHumanAttention(ctx);});}
@@ -1801,10 +1851,10 @@
           var key=chatOutboxScope(ctx);if(!key)return;
           if(!chatOutbox.some(function(item){return item.key===key&&item.requestId===requestId;})){
             chatOutbox=chatOutbox.filter(function(item){return item.key!==key;});
-            chatOutbox.push({key:key,requestId:requestId,dispatchedAt:Date.now(),takeoverIds:window.PatientHandoffs.getRecords(ctx).filter(function(item){return item.eventType==='human_takeover';}).map(function(item){return item.id;})});persistChatOutbox();
+            var replyState=ctx.group&&conversationInbox.store.replyState(ctx.inboxConversationKey);chatOutbox.push({key:key,requestId:requestId,dispatchedAt:Date.now(),replyRevision:replyState?replyState.revision:null,takeoverIds:ctx.group?[]:window.PatientHandoffs.getRecords(ctx).filter(function(item){return item.eventType==='human_takeover';}).map(function(item){return item.id;})});persistChatOutbox();
           }
           if(state.modal&&state.modal.type==='transfer'&&chatOutboxScope(state.modal.context)===key)state.modal=null;
-          if(ctx.patientName===state.chatSelected&&ctx.doctorId===getHandoffContext().doctorId){
+          if(ctx.group?chatOutboxScope(getHandoffContext())===key:ctx.patientName===state.chatSelected&&ctx.doctorId===getHandoffContext().doctorId){
             var keyword=String(state.chatConversationSearch||'').trim().toLowerCase();
             var visible=queryChatConversations(chatVisibleConversations(),state.chatQueryApplied).filter(function(item){return (state.chatConversationTab==='全部'||item.type===state.chatConversationTab)&&(!keyword||item.name.toLowerCase().indexOf(keyword)>=0||conversationContentMatches(item,keyword).length>0);});
             if(!state.chatConversationNewestFirst)visible.reverse();
@@ -1815,6 +1865,7 @@
           var conversation=selectedChatConversation();
           var ctx=window.ChatPatientArchive.context(conversation,state.chatDoctorSelected,state.chatArchiveScene);
           ctx.sceneCode=window.PatientHandoffs.sceneCode(ctx.projectId,ctx.sceneName);if(conversation&&conversation.inboxKey)ctx.inboxConversationKey=conversation.inboxKey;
+          var current=conversationInbox&&chatInboxConversation(conversation);if(current&&current.kind==='group'){ctx.group=true;ctx.groupId=current.id;ctx.groupName=current.title;ctx.hostAccountId=current.accountId;ctx.operatorId=conversationInbox.actor.id;ctx.operator={id:conversationInbox.actor.id,name:conversationInbox.actor.name,kind:'doctor'};ctx.patientId=null;ctx.patientName='';ctx.conversationId=current.id;}
           return ctx;
         }
         function handoffSummary(ctx) {
@@ -1825,14 +1876,17 @@
         }
         function openHandoff(mode,trigger) {
           var ctx=getHandoffContext();
+          var groupConversation=conversationInbox&&chatInboxSelected();
+          if(groupConversation&&groupConversation.kind==='group'){var reply=conversationInbox.store.replyState(groupConversation.key);if(!reply||!conversationInbox.store.canControlReply(groupConversation.key,'transfer'))return;var pending=reply.pending&&reply.pending.stage==='provider'?reply.pending:null;openModal({type:'transfer',groupReply:true,mode:pending?pending.mode:mode,context:ctx,replyState:reply,replyRevision:pending?pending.expectedRevision:reply.revision,requestId:pending?pending.requestId:'group-handoff-'+Date.now()+'-'+(++handoffRequestSequence),reason:pending?pending.reason:'',reasonDetail:pending?pending.reasonDetail:'',summary:'',toId:pending?pending.to.id:'',recipientType:pending?pending.to.kind:'assistant',unconfirmed:!!pending,pendingOperation:pending},trigger);return;}
           if(conversationInbox&&!chatInboxCanOperate()){state.modal=null;render();return;}
           var subject=conversationInbox&&chatInboxSubject(),c=conversationInbox&&chatInboxSelected();
-          if(c&&(c.kind==='group'||!subject.legacyRef||window.PatientHandoffs.getOwner(ctx)&&window.PatientHandoffs.getOwner(ctx).kind==='ai')){openModal({type:'transfer',mode:mode,context:Object.assign({},ctx,{group:true}),group:true,scopeOnly:true,currentAssigneeId:subject.assignee&&subject.assignee.id,subjectId:subject.id,subjectRevision:subject.revision,subjectCutoff:subject.lastPatientSeq,requestId:'handoff-request-'+Date.now()+'-'+(++handoffRequestSequence),reason:'',reasonDetail:'',summary:subject.requestText,toId:'',recipientType:'assistant'},trigger);return;}
+          if(c&&subject&&(!subject.legacyRef||window.PatientHandoffs.getOwner(ctx)&&window.PatientHandoffs.getOwner(ctx).kind==='ai')){openModal({type:'transfer',mode:mode,context:Object.assign({},ctx,{group:true}),group:true,scopeOnly:true,currentAssigneeId:subject.assignee&&subject.assignee.id,subjectId:subject.id,subjectRevision:subject.revision,subjectCutoff:subject.lastPatientSeq,requestId:'handoff-request-'+Date.now()+'-'+(++handoffRequestSequence),reason:'',reasonDetail:'',summary:subject.requestText,toId:'',recipientType:'assistant'},trigger);return;}
           if(!ctx.patientId||!ctx.sceneCode){toast('请先选择明确的患者和场景码');return;}
           openModal({type:'transfer',mode:mode,context:ctx,requestId:'handoff-request-'+Date.now()+'-'+(++handoffRequestSequence),reason:'',reasonDetail:'',summary:handoffSummary(ctx),toId:'',recipientType:'assistant',subjectId:subject&&subject.id,subjectRevision:subject&&subject.revision,subjectCutoff:subject&&subject.lastPatientSeq},trigger);
         }
         function captureHandoffInput(target) {
           if(!state.modal||state.modal.type!=='transfer')return false;
+          if(state.modal.busy||state.modal.unconfirmed)return true;
           var field=target.getAttribute('data-modal'),mapping={transferTo:'toId',transferReason:'reason',transferReasonDetail:'reasonDetail',transferSummary:'summary'};
           if(!mapping[field])return false;
           state.modal[mapping[field]]=target.value;state.modal.error='';
@@ -1939,9 +1993,9 @@
             return '<section class="ops-chat-page">'+toolbar(['首页','会话管理','聚合聊天'],renderIconActions('',''))+'<div class="ops-chat-layout '+(state.chatDoctorPanelCollapsed?'is-doctor-panel-collapsed':'')+'"><aside class="ops-chat-column"><div class="ops-chat-column-header"><span>项目/托管账号</span>'+doctorFilter+'</div>'+doctorSearch+doctorHtml+'</aside><aside class="ops-chat-column">'+conversationTabs+conversationToolbar+renderChatInboxTabs()+conversationSearch+conversationHtml+'</aside><main class="ops-chat-column ops-chat-main"><div class="ops-chat-empty">请选择会话</div></main><div class="ops-chat-resize-handle" aria-hidden="true"></div><aside class="ops-chat-column ops-chat-workbench"></aside></div></section>';
           }
           var workbenchPanelToggle = '<button class="ops-icon-button ops-workbench-panel-toggle ' + (state.chatWorkbenchCollapsed ? "is-collapsed" : "") + '" type="button" data-action="chat-workbench-panel-toggle" aria-label="' + (state.chatWorkbenchCollapsed ? "展开右侧工作台" : "收起右侧工作台") + '" title="' + (state.chatWorkbenchCollapsed ? (state.chatHistoryOpen ? "展开聊天记录" : "展开右侧工作台") : (state.chatHistoryOpen ? "收起聊天记录" : "收起右侧工作台")) + '">' + icon(state.chatWorkbenchCollapsed ? "fa-angles-left" : "fa-angles-right") + "</button>";
-          var selectedInbox=conversationInbox&&chatInboxSelected(),selectedSubject=conversationInbox&&chatInboxSubject(),canOperate=conversationInbox?chatInboxCanOperate():!historicalConversation;
+          var selectedInbox=conversationInbox&&chatInboxSelected(),selectedSubject=conversationInbox&&chatInboxSubject(),canOperate=conversationInbox?chatInboxCanOperate():!historicalConversation,groupReplyState=selectedInbox&&selectedInbox.kind==='group'?conversationInbox.store.replyState(selectedInbox.key):null,canGroupTakeover=!historicalConversation&&!!groupReplyState&&conversationInbox.store.canControlReply(selectedInbox.key,'takeover');
           if(conversationInbox)bindInboxDraft(selectedInbox,selectedSubject);
-          var chatHeader = '<div class="ops-chat-heading ops-chat-heading-compact"><div class="ops-chat-person"><div class="ops-chat-identity"><h2>' + escapeHtml(selectedConversation.name) + '</h2><span class="ops-chat-demographics">· ' + (historicalConversation?'历史对话':escapeHtml(selectedConversation.type)) + ' · 来源医生：' + escapeHtml(state.chatDoctorSelected) + '</span></div></div><div class="ops-inline-actions">'+(!selectedInbox||historicalConversation?'':'<button class="ops-link" type="button" data-action="chat-unread">' + icon("fa-envelope") + '标记未读</button>'+(canOperate?'<button class="ops-link" type="button" data-action="chat-transfer">'+icon("fa-arrow-right-arrow-left")+'转接</button>':selectedSubject&&conversationInbox.store.canOperate(selectedSubject.id,{action:'takeover'})?'<button class="ops-link" type="button" data-action="inbox-takeover">人工接手</button>':'')) + workbenchPanelToggle + '</div></div>';
+          var chatHeader = '<div class="ops-chat-heading ops-chat-heading-compact"><div class="ops-chat-person"><div class="ops-chat-identity"><h2>' + escapeHtml(selectedConversation.name) + '</h2><span class="ops-chat-demographics">· ' + (historicalConversation?'历史对话':escapeHtml(selectedConversation.type)) + ' · 来源医生：' + escapeHtml(state.chatDoctorSelected) + '</span></div></div><div class="ops-inline-actions">'+(!selectedInbox||historicalConversation?'':'<button class="ops-link" type="button" data-action="chat-unread">' + icon("fa-envelope") + '标记未读</button>'+(canOperate?'<button class="ops-link" type="button" data-action="chat-transfer">'+icon("fa-arrow-right-arrow-left")+'转接</button>':canGroupTakeover||selectedSubject&&conversationInbox.store.canOperate(selectedSubject.id,{action:'takeover'})?'<button class="ops-link" type="button" data-action="inbox-takeover">人工接手</button>':'')) + workbenchPanelToggle + '</div></div>';
           var composer = '<div class="ops-composer"><div class="ops-composer-tools">' + icon("fa-face-smile", "表情") + icon("fa-image", "图片") + icon("fa-paperclip", "文件") + '<button class="ops-chat-history-toggle ' + (state.chatHistoryOpen ? "is-active" : "") + '" type="button" data-action="chat-history-toggle" aria-label="' + (state.chatHistoryOpen ? "隐藏聊天记录" : "查看聊天记录") + '" aria-pressed="' + (state.chatHistoryOpen ? "true" : "false") + '" title="聊天记录">' + icon("fa-clock-rotate-left") + '</button><button class="ops-chat-ai-summary-entry" type="button" data-action="chat-ai-summary-open" aria-label="打开AI小结" title="打开AI小结">AI小结</button></div><div class="ops-composer-row"><textarea id="ops-chat-input" data-bind="chat.draft" maxlength="500" placeholder="请输入消息，Enter 发送">' + escapeHtml(state.chatDraft) + '</textarea>' + button("发送", "primary", "chat-send") + "</div></div>";
           if(inboxSending[state.chatDraftScope])composer=composer.replace('data-action="chat-send"','data-action="chat-send" disabled').replace('>发送</button>','>发送中…</button>');
           if(!canOperate)composer='';
@@ -1955,7 +2009,7 @@
           var workbenchTabs='<div class="ops-workbench-tabs" role="tablist" aria-label="会话工作台，可拖动调整标签顺序" data-chat-workbench-tabs data-chat-workbench-scope="'+escapeHtml(workbenchScope)+'">'+configuredTabs.map(function(tab){return '<button class="'+(state.chatWorkbenchTab===tab.value?'is-active':'')+'" type="button" role="tab" aria-selected="'+(state.chatWorkbenchTab===tab.value?'true':'false')+'" draggable="true" data-chat-workbench-tab-id="'+escapeHtml(tab.id)+'" data-action="chat-workbench-tab" data-value="'+escapeHtml(tab.value)+'" title="拖动调整顺序">'+escapeHtml(tab.name)+'</button>';}).join('')+'</div>';
           var quickReplyPanel = renderQuickReplyPage(true);
           var followupPanel = renderPatientFollowupsPanel();
-          var workbenchContent = state.chatWorkbenchTab === "我的待办" ? '<iframe class="sbc-custom-frame ops-my-todos-frame" title="我的待办" src="'+escapeHtml(todoEntryURL.href)+'" referrerpolicy="same-origin"></iframe>' : state.chatWorkbenchTab === "患者交接" ? window.PatientHandoffs.render(getHandoffContext(),{readOnly:!canOperate}) : state.chatWorkbenchTab === "患者档案" ? renderPatientArchivePage(selectedConversation, true) : state.chatWorkbenchTab === "AI小结" ? renderPatientAiSummaryPage(selectedConversation, true) : state.chatWorkbenchTab === "患者跟进" ? followupPanel : quickReplyPanel;
+          var workbenchContent = state.chatWorkbenchTab === "我的待办" ? '<iframe class="sbc-custom-frame ops-my-todos-frame" title="我的待办" src="'+escapeHtml(todoEntryURL.href)+'" referrerpolicy="same-origin"></iframe>' : state.chatWorkbenchTab === "患者交接" ? window.PatientHandoffs.render(getHandoffContext(),{readOnly:!canOperate,replyState:groupReplyState,canTakeover:canGroupTakeover}) : state.chatWorkbenchTab === "患者档案" ? renderPatientArchivePage(selectedConversation, true) : state.chatWorkbenchTab === "AI小结" ? renderPatientAiSummaryPage(selectedConversation, true) : state.chatWorkbenchTab === "患者跟进" ? followupPanel : quickReplyPanel;
           if(!activeConfiguredTab)workbenchContent='<div class="ops-workbench-empty">当前环境、项目和医生下暂无可用Tab</div>';
           else if(activeConfiguredTab.value.indexOf('config:')===0){
             var configuredURL=window.SidebarConfig.urlFor(activeConfiguredTab,sidebarEnvironment,sidebarContext);
@@ -2136,7 +2190,8 @@
           }
           if (modal.type === "transfer") {
             var context=modal.context||getHandoffContext();
-            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',(modal.group?'<p class="ops-inbox-transfer-scope">仅转交 '+escapeHtml(chatInboxSpeaker(chatInboxSelected(),conversationInbox.store.getSubject(modal.subjectId).speakerId))+' 的当前事项</p>':'')+window.PatientHandoffs.form(context,modal,handoffSummary(context)),cancel+button('确认转接','primary','modal-save'),'sm');
+            var transferForm=window.PatientHandoffs.form(context,modal,handoffSummary(context));if(modal.groupReply&&(modal.busy||modal.unconfirmed))transferForm=transferForm.replace(/<(input|select|textarea|button)\b/g,'<$1 disabled');
+            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',(modal.group&&!modal.groupReply?'<p class="ops-inbox-transfer-scope">仅转交 '+escapeHtml(chatInboxSpeaker(chatInboxSelected(),conversationInbox.store.getSubject(modal.subjectId).speakerId))+' 的当前事项</p>':'')+transferForm,cancel+button(modal.busy?'转交中…':'确认转接','primary','modal-save',modal.busy?'disabled':''),'sm');
           }
           if (modal.type === "member-view") {
             var row = memberRows.filter(function (item) { return item.id === modal.id; })[0] || memberRows[0];
@@ -2743,6 +2798,16 @@
             return;
           }
           if (modal.type === "transfer") {
+            if(modal.groupReply){
+              if(modal.busy)return;
+              if(modal.unconfirmed&&modal.pendingOperation){var pendingGroup=modal.pendingOperation;dispatchGroupReply(modal.context,{kind:pendingGroup.kind,mode:pendingGroup.mode,requestId:pendingGroup.requestId,expectedRevision:pendingGroup.expectedRevision,to:pendingGroup.to,reason:pendingGroup.reason,reasonDetail:pendingGroup.reasonDetail},modal);return;}
+              var groupReason=readModalValue('transferReason'),groupDetail=readModalValue('transferReasonDetail'),groupSelected=shell.querySelector('[data-modal="transferTo"]:checked'),groupKind=modal.recipientType||'assistant';
+              var groupTo={kind:groupKind,id:groupKind==='ai'?'ai-demo':groupSelected?groupSelected.value:'',name:groupKind==='ai'?'AI':groupSelected&&groupSelected.closest('label').querySelector('strong').textContent||''};
+              modal.reason=groupReason;modal.reasonDetail=groupDetail;
+              if(groupKind!=='ai'&&(!groupTo.id||!groupReason||!groupDetail.trim())){modal.error=!groupTo.id?'请选择转接对象':!groupReason?'请选择转出理由':'请填写理由详情';render();return;}
+              if(groupKind!=='ai'&&!window.PatientHandoffs.subjectCandidates(modal.context,groupKind,modal.replyState.owner.id).some(function(member){return member.id===groupTo.id;})){modal.error='当前接收人不可接待，请重新选择';render();return;}
+              dispatchGroupReply(modal.context,{requestId:modal.requestId,expectedRevision:modal.replyRevision,to:groupTo,reason:groupReason,reasonDetail:groupDetail,mode:modal.mode||'manual'},modal).then(function(result){if(result.ok&&result.applied)toast('已转交当前会话');else if(state.modal===modal&&!modal.error){modal.error=result.code==='handoff_pending'?'已有转接等待回复，请勿重复转接':'当前无法转交，请重新查看会话';render();}});return;
+            }
             if(conversationInbox&&!chatInboxCanOperate()){state.modal=null;render();return;}
             var s=conversationInbox&&conversationInbox.store.getSubject(modal.subjectId);
             if(s&&(s.revision!==modal.subjectRevision||s.lastPatientSeq!==modal.subjectCutoff)){modal.error='事项已有新消息，请重新查看后转接';render();return;}
@@ -2835,6 +2900,18 @@
             return;
           }
           if(conversationInbox){
+            var groupConversation=chatInboxSelected();
+            if(groupConversation&&groupConversation.kind==='group'){
+              var groupState=conversationInbox.store.replyState(groupConversation.key),capturedGroup={key:groupConversation.key,revision:groupState.revision,draftKey:state.chatDraftScope},groupMessageId='human-group-message-'+Date.now()+'-'+(++inboxOperationCounter);
+              inboxSending[capturedGroup.draftKey]=true;render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});
+              window.setTimeout(function(){
+                var latestGroup=conversationInbox.store.replyState(capturedGroup.key);delete inboxSending[capturedGroup.draftKey];
+                if(!latestGroup||latestGroup.revision!==capturedGroup.revision||!conversationInbox.store.canReply(capturedGroup.key)){toast('接待归属已变化，消息未发送');render();return;}
+                var sentGroup=conversationInbox.store.recordMessage({id:groupMessageId,conversationKey:capturedGroup.key,speakerId:conversationInbox.actor.id,kind:'human',text:textValue,speakerName:conversationInbox.actor.name,sentAt:Date.now(),deliveryStatus:'sent',isPublic:true});
+                if(sentGroup.ok){inboxDrafts[capturedGroup.draftKey]='';if(state.chatDraftScope===capturedGroup.draftKey)state.chatDraft='';}else toast('发送失败，请重试');
+                render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});
+              },180);return;
+            }
             var c=chatInboxSelected(),s=chatInboxSubject(),captured={id:s.id,revision:s.revision,seq:s.lastPatientSeq,key:c.key,name:state.chatSelected,legacy:s.legacyRef,draftKey:state.chatDraftScope},messageId='human-message-'+Date.now()+'-'+(++inboxOperationCounter);
             inboxSending[captured.draftKey]=true;render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});
             window.setTimeout(function(){
@@ -3845,22 +3922,26 @@
             openHandoff("manual",actionTarget);
           } else if (action === "handoff-recipient-type") {
             if (!state.modal || state.modal.type !== "transfer") return;
+            if(state.modal.busy||state.modal.unconfirmed)return;
             state.modal.recipientType = actionTarget.getAttribute("data-value") || "assistant";
             state.modal.toId = "";
             render();
           } else if(action==='inbox-takeover'){
+            if(groupReplyAction('takeover'))return;
             var current=chatInboxSelected(),s=chatInboxSubject();if(!s||chatInboxIsHistory()||!conversationInbox.store.canOperate(s.id,{action:'takeover'}))return;
             var request='takeover-'+Date.now()+'-'+(++inboxOperationCounter),op=conversationInbox.store.beginOperation({id:request,requestId:request,attemptId:'attempt-1',subjectId:s.id,kind:'takeover',expectedRevision:s.revision,throughPatientSeq:s.lastPatientSeq,to:{id:conversationInbox.actor.id,name:conversationInbox.actor.name,kind:'doctor'}});
             if(!op.ok){toast('当前无法接手，请重新查看事项');return;}
             var actual=current.kind==='group'?{ok:true}:window.PatientHandoffs.takeOver(getHandoffContext()),result=chatInboxSettle(op,actual);
             if(actual.ok&&result&&result.applied){render({preserveArchiveScroll:true});toast('已接手当前事项');}else toast('接手未完成，请重试');
           } else if (action === "chat-takeover") {
+            if(groupReplyAction('takeover'))return;
             if(conversationInbox&&!chatInboxCanOperate()){render();return;}
             if(state.chatReadOnlyContext===chatOutboxScope(getHandoffContext())){render();return;}
             var takeoverResult=window.PatientHandoffs.takeOver(getHandoffContext());
             if(takeoverResult.ok){render({preserveArchiveScroll:true});toast("人工已接手，AI 自动回复已暂停");}
             else toast(takeoverResult.message||"接手失败，请重试");
           } else if (action === "chat-transfer-ai") {
+            if(groupReplyAction('ai'))return;
             var returningContext=getHandoffContext(),returningRequest='return-view-'+Date.now()+'-'+(++handoffRequestSequence);
             if(conversationInbox&&!chatInboxCanOperate()){render();return;}
             var returningSubject=conversationInbox&&chatInboxSubject(),returningOp=returningSubject&&chatInboxBeginTransfer({kind:'ai',id:'ai-demo',name:'AI'},returningSubject,returningRequest);
@@ -4533,7 +4614,24 @@
           window.PatientHandoffs.mount(function(){render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});});
           window.DoctorReception.subscribe(function(){if(conversationInbox)conversationInbox.sync();if(shell&&(shell.querySelector('.ops-chat-page')||shell.querySelector('.ho-panel')||state.modal&&state.modal.type==='transfer'))render({preserveArchiveScroll:true,preserveChatScroll:true,preserveChatInput:true});});
           window.addEventListener('storage',function(event){if(conversationInbox&&event.key===window.ConversationInbox.KEY){conversationInbox.store.refresh();chatInboxChange();}if(event.key===chatOutboxKey){chatOutbox=readChatOutbox();if(shell&&shell.querySelector('.ops-chat-page'))render();}});
+          window.PrototypeGroupHandoffHost=window.PrototypeGroupHandoffHost||{};
+          if(typeof window.PrototypeGroupHandoffHost.dispatch!=='function')window.PrototypeGroupHandoffHost.dispatch=function(input){return new Promise(function(resolve){window.setTimeout(function(){resolve({conversationKey:input.conversationKey,operationId:input.operationId,requestId:input.requestId,attemptId:input.attemptId,receiptId:'group-receipt-'+input.operationId,success:true});},180);});};
+          window.PrototypeGroupHandoffHost.context=getHandoffContext;
+          window.PrototypeGroupHandoffHost.resumePending=resumeGroupReplyOperations;
+          window.PrototypeGroupHandoffHost.state=function(ctx){return conversationInbox&&ctx&&ctx.group?conversationInbox.store.replyState(ctx.inboxConversationKey):null;};
+          window.PrototypeGroupHandoffHost.transferToAssistant=function(ctx,args){
+            args=args||{};var reply=window.PrototypeGroupHandoffHost.state(ctx),list=window.PatientHandoffs.subjectCandidates(ctx,'assistant',reply&&reply.owner.id);
+            if(!reply||reply.owner.kind!=='ai'||!list.length)return Promise.resolve({ok:false,code:!list.length?'no_candidate':'ai_not_owner'});
+            return dispatchGroupReply(ctx,{kind:'transfer',mode:'ai',requestId:args.requestId,expectedRevision:reply.revision,to:{id:list[0].id,name:list[0].name,kind:'assistant'},reason:args.reason,reasonDetail:args.reasonDetail||args.summary||args.reason});
+          };
           window.PrototypeHandoffHost={context:getHandoffContext,receiveAssistantReply:function(ctx,receipt){
+            if(ctx&&ctx.group){
+              var current=conversationInbox&&conversationInbox.store.getConversation(ctx.inboxConversationKey);receipt=receipt||{};
+              if(!current||current.kind!=='group'||current.accountId!==ctx.hostAccountId||current.id!==ctx.groupId||current.tenantId!==ctx.tenantId||current.projectId!==ctx.projectId||['doctor','assistant'].indexOf(receipt.kind)<0||receipt.deliveryStatus&&receipt.deliveryStatus!=='sent'||receipt.isPublic===false||!String(receipt.messageId||'').trim()||!String(receipt.authorId||'').trim()||!String(receipt.text||'').trim())return {ok:false,code:'invalid_reply'};
+              var groupReply=conversationInbox.store.recordMessage({id:receipt.messageId,conversationKey:current.key,speakerId:receipt.authorId,kind:'human',speakerName:receipt.authorName||receipt.authorId,text:receipt.text,sentAt:receipt.sentAt===undefined?Date.now():receipt.sentAt,deliveryStatus:receipt.deliveryStatus||'sent',isPublic:receipt.isPublic});
+              if(groupReply.ok)groupReply.record=conversationInbox.store.replyState(current.key).records.find(function(record){return record.firstReplyId===receipt.messageId;})||null;
+              return groupReply;
+            }
             var result=window.PatientHandoffs.receiveReply(ctx,receipt);
             if(result.ok&&!result.idempotent&&conversationInbox){var row=conversationInbox.rows(ctx.doctorName).find(function(item){return ctx.inboxConversationKey?item.inboxKey===ctx.inboxConversationKey:item.patientId===ctx.patientId&&item.conversationId===ctx.patientId;}),c=row&&conversationInbox.find(row,ctx.doctorName);if(c)conversationInbox.store.recordMessage({id:receipt.messageId,conversationKey:c.key,speakerId:receipt.authorId,kind:'human',speakerName:result.record.to.name,text:receipt.text,sentAt:receipt.sentAt||Date.now()});}
             if(result.ok&&!result.idempotent&&JSON.stringify(ctx)===JSON.stringify(getHandoffContext())){
@@ -4544,6 +4642,11 @@
             return result;
           }};
           window.PrototypeHandoffHost.receiveDoctorReply=window.PrototypeHandoffHost.receiveAssistantReply;
+          window.PrototypeGroupHandoffHost.receiveReply=window.PrototypeHandoffHost.receiveAssistantReply;
+          resumeGroupReplyOperations();
+          window.addEventListener('pageshow',resumeGroupReplyOperations);
+          window.addEventListener('focus',resumeGroupReplyOperations);
+          document.addEventListener('visibilitychange',function(){if(!document.hidden)resumeGroupReplyOperations();});
           window.addEventListener('message',function(event){
             if(event.origin!==window.location.origin||!event.data||event.data.type!=='my-todos-open-conversation'||!shell)return;
             var knownFrame=Array.prototype.some.call(shell.querySelectorAll('iframe.ops-my-todos-frame'),function(frame){return frame.contentWindow===event.source;});

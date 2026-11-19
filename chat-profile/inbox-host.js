@@ -13,12 +13,12 @@
     var groupIds={'慢病管理群':'group-demo-chronic','糖尿病患者群':'group-demo-diabetes'};
     function account(name){return accounts.find(function(item){return item.name===name||item.id===name;})||null;}
     function key(row,accountName){var a=account(accountName);if(!row||!a)return '';return root.ConversationInbox.keyOf?root.ConversationInbox.keyOf({id:row.groupId||groupIds[row.name]||row.conversationId||row.patientId,kind:row.type==='群聊'?'group':'private',tenantId:'tenant-demo',projectId:a.projectId,accountId:a.id}):'';}
-    function find(row,accountName){var a=account(accountName);if(!a||!row)return null;var id=row.groupId||groupIds[row.name]||row.conversationId||row.patientId;return store.listConversations().find(function(c){return c.id===id&&c.projectId===a.projectId&&(c.kind==='group'||c.accountId===a.id);})||null;}
+    function find(row,accountName){var a=account(accountName);if(!a||!row)return null;var id=row.groupId||groupIds[row.name]||row.conversationId||row.patientId;return store.listConversations().find(function(c){return c.id===id&&c.projectId===a.projectId&&c.accountId===a.id;})||null;}
     function register(row,a){
       var kind=row.type==='群聊'?'group':'private',id=row.groupId||groupIds[row.name]||row.conversationId||row.patientId;
       if(!id)return null;
       var old=find(row,a.id);if(old)return old;
-      var result=store.registerConversation({id:id,kind:kind,tenantId:'tenant-demo',projectId:a.projectId,accountId:a.id,accountIds:kind==='group'?accounts.filter(function(item){return item.projectId===a.projectId;}).map(function(item){return item.id;}):[a.id],title:row.name,patientId:row.patientId||null,aiService:{enabled:true,available:true,receiving:kind==='group',evidenceId:'fixture-service-'+a.projectId+'-'+id}});
+      var result=store.registerConversation({id:id,kind:kind,tenantId:'tenant-demo',projectId:a.projectId,accountId:a.id,accountIds:[a.id],title:row.name,patientId:kind==='private'?row.patientId||null:null,replyOwner:kind==='group'&&a.id===actor.id&&id==='group-demo-chronic'?{id:actor.id,name:actor.name,kind:'doctor'}:undefined,aiService:{enabled:true,available:true,receiving:kind==='group',evidenceId:'fixture-service-'+a.projectId+'-'+a.id+'-'+id}});
       var c=store.getConversation(result.key||result.conversation&&result.conversation.key);if(!c)return null;
       options.messages(row).forEach(function(m,index){store.recordMessage({id:'fixture-'+encodeURIComponent(c.key)+'-'+index,conversationKey:c.key,speakerId:m.side==='self'?'fixture-staff-'+a.id:row.patientId||'fixture-speaker-'+index,patientId:kind==='private'?row.patientId:null,kind:/AI/.test(m.name)?'ai':m.side==='self'?'human':'patient',text:m.text,displayName:m.name,displayTime:m.time,sentAt:Date.parse(String(m.time).replace(' ','T')+'+08:00')||Date.parse(row.date+'T09:00:00+08:00')+index*60000});});
       return c;
@@ -63,11 +63,32 @@
     }
     function rows(accountName){
       var a=account(accountName);if(!a)return [];
-      return store.listConversations().filter(function(c){return c.projectId===a.projectId&&(c.accountId===a.id||(c.accountIds||[]).indexOf(a.id)>=0);}).map(function(c){var fixture=options.sources().find(function(row){return (row.groupId||groupIds[row.name]||row.conversationId||row.patientId)===c.id;});return Object.assign({},fixture||{date:'2026-08-24',time:'',tags:[]},{conversationId:c.id,inboxKey:c.key,name:c.title,type:c.kind==='group'?'群聊':'私聊',patientId:c.kind==='private'?c.patientId||fixture&&fixture.patientId||'':'',messageRecords:store.listMessages(c.key),messages:store.listMessages(c.key).map(function(m){return (m.speakerName||m.displayName||m.speakerId)+'：'+m.text;}),searchText:store.listMessages(c.key).map(function(m){return m.text;}).join(' ')});});
+      return store.listConversations().filter(function(c){return c.projectId===a.projectId&&c.accountId===a.id;}).map(function(c){var fixture=options.sources().find(function(row){return (row.groupId||groupIds[row.name]||row.conversationId||row.patientId)===c.id;});return Object.assign({},fixture||{date:'2026-08-24',time:'',tags:[]},{conversationId:c.id,inboxKey:c.key,name:c.title,type:c.kind==='group'?'群聊':'私聊',patientId:c.kind==='private'?c.patientId||fixture&&fixture.patientId||'':'',messageRecords:store.listMessages(c.key),messages:store.listMessages(c.key).map(function(m){return (m.speakerName||m.displayName||m.speakerId)+'：'+m.text;}),searchText:store.listMessages(c.key).map(function(m){return m.text;}).join(' ')});});
     }
     function emit(){var result=store[arguments[0]].apply(store,Array.prototype.slice.call(arguments,1));if(options.onChange)options.onChange();return result;}
     seed();syncLegacy();
-    return {store:store,actor:actor,accounts:accounts,rows:rows,find:find,sync:syncLegacy,emit:emit,account:account,changed:function(){if(options.onChange)options.onChange();}};
+    var expiryTimer=null,expiryRetryAt=0,disposed=false,suspended=false,expiring=false;
+    function stopExpiry(){if(expiryTimer!==null){root.clearTimeout(expiryTimer);expiryTimer=null;}}
+    function scheduleExpiry(){
+      stopExpiry();if(disposed||suspended||root.document&&root.document.hidden)return;
+      var deadline=null;
+      store.listConversations().filter(function(c){return c.kind==='group';}).forEach(function(c){var state=store.replyState(c.key);(state&&state.records||[]).forEach(function(record){if(record.status==='pending_reply'&&Number.isFinite(record.deadline)&&(deadline===null||record.deadline<deadline))deadline=record.deadline;});});
+      if(deadline!==null)expiryTimer=root.setTimeout(expireNow,Math.min(2147483647,Math.max(1,Math.max(deadline+1,expiryRetryAt)-root.Date.now())));
+    }
+    function expireNow(){
+      if(disposed||expiring)return;stopExpiry();expiring=true;
+      try{var result=store.expireReplyControls(root.Date.now());expiryRetryAt=result.ok?0:root.Date.now()+5000;if(result.ok&&result.expired.length&&options.onChange)options.onChange();}
+      finally{expiring=false;scheduleExpiry();}
+    }
+    var unsubscribe=store.subscribe(function(){if(!expiring)scheduleExpiry();});
+    function resumeExpiry(){suspended=false;expireNow();}
+    function hideExpiry(){suspended=true;stopExpiry();}
+    function visibilityExpiry(){if(root.document.hidden)stopExpiry();else resumeExpiry();}
+    if(root.addEventListener){root.addEventListener('pagehide',hideExpiry);root.addEventListener('pageshow',resumeExpiry);root.addEventListener('focus',resumeExpiry);}
+    if(root.document&&root.document.addEventListener)root.document.addEventListener('visibilitychange',visibilityExpiry);
+    expireNow();
+    function dispose(){disposed=true;stopExpiry();unsubscribe();if(root.removeEventListener){root.removeEventListener('pagehide',hideExpiry);root.removeEventListener('pageshow',resumeExpiry);root.removeEventListener('focus',resumeExpiry);}if(root.document&&root.document.removeEventListener)root.document.removeEventListener('visibilitychange',visibilityExpiry);store.dispose();}
+    return {store:store,actor:actor,accounts:accounts,rows:rows,find:find,sync:syncLegacy,emit:emit,account:account,dispose:dispose,changed:function(){if(options.onChange)options.onChange();}};
   }
   root.ConversationInboxHost={create:create};
 })(window);
