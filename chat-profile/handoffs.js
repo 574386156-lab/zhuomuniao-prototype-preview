@@ -47,6 +47,18 @@
   }
   function hasNewerLocal(store,task){return store.items.some(function(item){return !item.receptionTaskId&&item.requestId&&item.createdAt>task.assignedAt;});}
   function currentReceptionTask(store,ctx){var task=receptionTask(ctx);return task&&!hasNewerLocal(store,task)?task:null;}
+  function needsHumanAttention(ctx){
+    var store=get(ctx);if(!store)return null;
+    if(store.owner.kind==='ai')return false;
+    var task=currentReceptionTask(store,ctx);
+    // The recipient needs the conversation before their first reply, even
+    // while the ledger still names the sending human as the previous owner.
+    if(task&&!task.result)return task.doctorId===ctx.doctorId;
+    if(store.owner.kind==='doctor')return store.owner.id===ctx.doctorId;
+    // Assistant membership is not a doctor identity. Local dispatch exclusion
+    // is maintained by the sender view rather than guessed from these IDs.
+    return true;
+  }
   function controlRecords(task){
     if(!task)return [];
     var items=copy(task.ownerEvents||[]),last=task.lastReturn;
@@ -166,11 +178,12 @@
     var patient=ctx&&ctx.patientName||'',scene=ctx&&ctx.sceneName||'';
     return patient||scene?'<div class="ho-context" aria-label="患者及场景">'+(patient?'<strong>'+esc(patient)+'</strong>':'')+(scene?'<span>'+esc(scene)+'</span>':'')+'</div>':'';
   }
-  function render(ctx){
+  function render(ctx,options){
     var store=get(ctx);if(!store)return '<section class="ho-panel"><div class="ho-empty">请先选择患者，再查看患者交接</div></section>';
     var task=currentReceptionTask(store,ctx),isAi=store.owner.kind==='ai',pending=store.items.some(function(item){return item.status==='pending_reply';}),returning=task&&task.phase==='returning_ai',disabled=returning||(!task&&!isAi&&pending),tip=isAi?'停止 AI 自动回复，由当前医生接手':returning?'正在转交 AI':'转交给 AI 接待',actionLabel=returning?'转交中…':isAi?'人工接手':task&&task.phase==='return_failed'?'重试回接':'转AI';
     var personIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="3.5"></circle><path d="M5 21v-2a7 7 0 0 1 14 0v2"></path></svg>';
-    return '<section class="ho-panel" aria-label="患者交接" data-handoff-scope="'+esc(scope(ctx))+'">'+renderContext(ctx)+'<header class="ho-toolbar"><div class="ho-owner"><span class="ho-owner-avatar" aria-hidden="true">'+(isAi?'✦':personIcon)+'</span><div><span class="ho-owner-label">当前接待</span><strong class="ho-owner-name">'+esc(store.owner.name)+'</strong></div></div><div class="ho-actions"><button type="button" data-action="'+(isAi?'chat-takeover':'chat-transfer-ai')+'" data-handoff-operation="'+(isAi?'takeover':'return-ai')+'" title="'+tip+'" '+(disabled?'disabled':'')+'>'+actionLabel+(isAi||returning?'':'<span aria-hidden="true"> →</span>')+'</button></div></header>'+(store.items.length?renderTimeline(store.items):'<div class="ho-empty">暂无转接记录</div>')+'</section>';
+    var actions='<div class="ho-actions"><button type="button" data-action="'+(isAi?'chat-takeover':'chat-transfer-ai')+'" data-handoff-operation="'+(isAi?'takeover':'return-ai')+'" title="'+tip+'" '+(disabled?'disabled':'')+'>'+actionLabel+(isAi||returning?'':'<span aria-hidden="true"> →</span>')+'</button></div>';
+    return '<section class="ho-panel" aria-label="患者交接" data-handoff-scope="'+esc(scope(ctx))+'">'+renderContext(ctx)+'<header class="ho-toolbar"><div class="ho-owner"><span class="ho-owner-avatar" aria-hidden="true">'+(isAi?'✦':personIcon)+'</span><div><span class="ho-owner-label">当前接待</span><strong class="ho-owner-name">'+esc(store.owner.name)+'</strong></div></div>'+(options&&options.readOnly?'':actions)+'</header>'+(store.items.length?renderTimeline(store.items):'<div class="ho-empty">暂无转接记录</div>')+'</section>';
   }
   function form(ctx,modal,summary){
     var store=get(ctx),aiCurrent=store&&store.owner.kind==='ai',automated=modal.mode==='ai',recipientType=aiCurrent?'assistant':modal.recipientType||'assistant',list=recipientType==='doctor'?doctorCandidates(ctx):recipientType==='assistant'?candidates(ctx):[];
@@ -183,6 +196,6 @@
   function invoke(name,args,ctx){if(name!==action.name)return error('unknown_action','未注册的AI动作');if(!args||typeof args!=='object'||Array.isArray(args)||Object.keys(args).some(function(k){return ['requestId','reason','reasonDetail','summary'].indexOf(k)<0;})||!['requestId','reason','summary'].every(function(k){return typeof args[k]==='string';})||('reasonDetail' in args&&typeof args.reasonDetail!=='string'))return error('invalid_arguments','AI动作参数不允许指定患者、场景或接收人');return transfer(ctx,args,'ai');}
   root.addEventListener('focus',function(){expire();});
   if(root.document)root.document.addEventListener('visibilitychange',function(){if(!root.document.hidden)expire();});
-  root.PatientHandoffs={render:render,renderContext:renderContext,renderTimeline:renderTimeline,previewHistory:previewHistory,controlRecords:controlRecords,takeOver:takeOver,returnToAi:returnToAi,form:form,transfer:transfer,invoke:invoke,action:copy(action),receiveReply:receiveReply,expire:expire,configure:configure,getConfig:function(){return copy(config);},getRecords:function(ctx){var store=get(ctx);return store?copy(store.items):[];},getOwner:function(ctx){var store=get(ctx);return store?copy(store.owner):null;},canAutoReply:function(ctx){var store=get(ctx),task=store&&currentReceptionTask(store,ctx);return !!store&&store.owner.kind==='ai'&&(!task||task.phase!=='returning_ai');},candidates:candidates,syncMembers:syncMembers,sceneCode:function(projectId,name){return sceneCodes[projectId+'|'+name]||'';},mount:function(callback){onChange=callback;},reasons:reasons.slice()};
+  root.PatientHandoffs={needsHumanAttention:needsHumanAttention,render:render,renderContext:renderContext,renderTimeline:renderTimeline,previewHistory:previewHistory,controlRecords:controlRecords,takeOver:takeOver,returnToAi:returnToAi,form:form,transfer:transfer,invoke:invoke,action:copy(action),receiveReply:receiveReply,expire:expire,configure:configure,getConfig:function(){return copy(config);},getRecords:function(ctx){var store=get(ctx);return store?copy(store.items):[];},getOwner:function(ctx){var store=get(ctx);return store?copy(store.owner):null;},canAutoReply:function(ctx){var store=get(ctx),task=store&&currentReceptionTask(store,ctx);return !!store&&store.owner.kind==='ai'&&(!task||task.phase!=='returning_ai');},candidates:candidates,syncMembers:syncMembers,sceneCode:function(projectId,name){return sceneCodes[projectId+'|'+name]||'';},mount:function(callback){onChange=callback;},reasons:reasons.slice()};
   root.PrototypeAiActions=root.PrototypeAiActions||{};root.PrototypeAiActions.transfer_to_assistant={definition:copy(action),invoke:function(args,hostContext){return invoke(action.name,args,hostContext);}};
 })(window);
