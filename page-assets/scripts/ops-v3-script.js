@@ -1387,17 +1387,26 @@
           if(!conversationInbox||!conversationInbox.store.refresh().ok)return null;
           var subject=conversationInbox.store.getSubject(subjectId),ref=subject&&subject.legacyRef;
           if(!subject||subject.status!=='active'||!subject.assignee||subject.assignee.id!==conversationInbox.actor.id||!conversationInbox.store.canOperate(subject.id,{action:'complete'})||!ref||!ref.taskId)return null;
-          var c=conversationInbox.store.getConversation(subject.conversationKey),task=window.DoctorReception.assignment(ref.taskId);
-          if(!c||c.kind!=='private'||!task||task.tenantId!==c.tenantId||task.projectId!==c.projectId||task.patientId!==c.patientId||task.patientId!==subject.patientId||task.sceneCode!==ref.sceneCode||task.doctorId!==subject.assignee.id||task.assignedAt!==ref.assignedAt)return null;
-          var latest=window.DoctorReception.latestAssignment({patientId:task.patientId,sceneCode:task.sceneCode});
-          if(!latest||latest.id!==task.id||task.result!==null||task.phase!=='waiting'||task.firstReplyId||Number.isFinite(task.firstReplyAt)||!Number.isFinite(task.deadline))return null;
+          var c=conversationInbox.store.getConversation(subject.conversationKey),origin=window.DoctorReception.assignment(ref.taskId);
+          if(!c||c.kind!=='private'||!origin||origin.tenantId!==c.tenantId||origin.projectId!==c.projectId||origin.patientId!==c.patientId||origin.patientId!==subject.patientId||origin.sceneCode!==ref.sceneCode||origin.conversationId!==[c.tenantId,c.projectId,c.patientId,ref.sceneCode].join('|')||origin.assignedAt!==ref.assignedAt)return null;
+          // Business subjects survive an intake timeout. Read the current scoped
+          // intake instead of requiring the subject's original intake to stay open.
+          var task=window.DoctorReception.latestAssignment({patientId:origin.patientId,sceneCode:origin.sceneCode});
+          if(!task||task.tenantId!==c.tenantId||task.projectId!==c.projectId||task.patientId!==c.patientId||task.sceneCode!==ref.sceneCode||task.conversationId!==origin.conversationId||task.doctorId!==subject.assignee.id||task.assignedAt<origin.assignedAt||task.firstReplyId||Number.isFinite(task.firstReplyAt)||!Number.isFinite(task.deadline))return null;
+          var last=task.lastReturn,ownerEvents=task.ownerEvents||[],lastOwner=ownerEvents[ownerEvents.length-1];
+          if(last&&last.mode==='manual'&&last.status==='succeeded'||lastOwner&&lastOwner.to&&lastOwner.to.kind==='ai'&&(lastOwner.mode==='manual'||lastOwner.returnMode==='manual')&&['transferred_ai','succeeded'].indexOf(lastOwner.status)>=0)return null;
+          var waiting=task.result===null&&(task.phase==='waiting'||last&&(task.phase==='returning_ai'&&last.status==='processing'||task.phase==='return_failed'&&last.status==='failed')),timedOut=at>=task.deadline&&task.result==='timeout_returned';
+          if(!waiting&&!timedOut)return null;
+          // A real private-chat reply after a timeout is still a first response;
+          // leave the closed intake's historical result and deadline untouched.
+          if(conversationInbox.store.listMessages(c.key).some(function(message){return message.kind==='human'&&message.speakerId===task.doctorId&&Number.isFinite(message.sentAt)&&message.sentAt>=task.assignedAt;}))return null;
           var overdue=at>=task.deadline,seconds=overdue?Math.floor((at-task.deadline)/1000):Math.ceil((task.deadline-at)/1000),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
           var value=(hours?String(hours).padStart(2,'0')+':':'')+String(minutes).padStart(2,'0')+':'+String(rest).padStart(2,'0');
-          return {subjectId:subject.id,deadline:task.deadline,overdue:overdue,label:overdue?'首答超时':'首答剩余',value:value,title:'首次回复截止：'+new Date(task.deadline).toLocaleString('zh-CN',{hour12:false})};
+          return {subjectId:subject.id,exactRef:ref.taskId===task.id,deadline:task.deadline,overdue:overdue,label:overdue?'首答超时':'首答剩余',value:value,title:'首次回复截止：'+new Date(task.deadline).toLocaleString('zh-CN',{hour12:false})};
         }
         function chatInboxTimeIcon(overdue){return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2"></circle><path d="'+(overdue?'M10 5.6v5.1M10 13v1':'M10 5.5V10l3 1.8')+'"></path></svg>';}
         function renderChatInboxTime(view){
-          var at=Date.now(),info=view&&(view.subjects||[]).map(function(s){return chatInboxTimeInfo(s.id,at);}).filter(Boolean).sort(function(a,b){return a.deadline-b.deadline;})[0];if(!info)return '';
+          var at=Date.now(),info=view&&(view.subjects||[]).map(function(s){return chatInboxTimeInfo(s.id,at);}).filter(Boolean).sort(function(a,b){return a.deadline-b.deadline||Number(b.exactRef)-Number(a.exactRef);})[0];if(!info)return '';
           return '<span class="ops-inbox-time '+(info.overdue?'is-overdue':'is-countdown')+'" data-inbox-time data-inbox-time-subject="'+escapeHtml(info.subjectId)+'" title="'+escapeHtml(info.title)+'" aria-label="'+info.label+' '+info.value+'">'+chatInboxTimeIcon(info.overdue)+'<span data-inbox-time-label>'+info.label+'</span><strong data-inbox-time-value>'+info.value+'</strong></span>';
         }
         function stopChatInboxTimeClock(){if(inboxTimeTimer!==null){window.clearInterval(inboxTimeTimer);inboxTimeTimer=null;}}
