@@ -1402,7 +1402,7 @@
           if(conversationInbox.store.listMessages(c.key).some(function(message){return message.kind==='human'&&message.speakerId===task.doctorId&&Number.isFinite(message.sentAt)&&message.sentAt>=task.assignedAt;}))return null;
           var overdue=at>=task.deadline,seconds=overdue?Math.floor((at-task.deadline)/1000):Math.ceil((task.deadline-at)/1000),hours=Math.floor(seconds/3600),minutes=Math.floor(seconds%3600/60),rest=seconds%60;
           var value=(hours?String(hours).padStart(2,'0')+':':'')+String(minutes).padStart(2,'0')+':'+String(rest).padStart(2,'0');
-          return {subjectId:subject.id,exactRef:ref.taskId===task.id,deadline:task.deadline,overdue:overdue,label:overdue?'首答超时':'首答剩余',value:value,title:'首次回复截止：'+new Date(task.deadline).toLocaleString('zh-CN',{hour12:false})};
+          return {subjectId:subject.id,exactRef:ref.taskId===task.id,deadline:task.deadline,overdue:overdue,label:overdue?'超时':'剩余',value:value,title:'首次回复截止：'+new Date(task.deadline).toLocaleString('zh-CN',{hour12:false})};
         }
         function chatInboxTimeIcon(overdue){return '<svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="7.2"></circle><path d="'+(overdue?'M10 5.6v5.1M10 13v1':'M10 5.5V10l3 1.8')+'"></path></svg>';}
         function renderChatInboxTime(view){
@@ -1432,7 +1432,6 @@
           if(!view)return '';
           var parts=[];
           if(state.chatWorkQueue==='all')parts.push('<span>'+escapeHtml(chatInboxState(view))+'</span>');
-          if(view.humanSubjectCount>1)parts.push('<span data-inbox-matter-count title="'+view.humanSubjectCount+'项待处理事项">'+view.humanSubjectCount+' 项</span>');
           var time=renderChatInboxTime(view);if(time)parts.push(time);
           return parts.length?'<small class="ops-inbox-row-meta">'+parts.join('')+'</small>':'';
         }
