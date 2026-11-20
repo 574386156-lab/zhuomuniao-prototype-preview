@@ -2195,7 +2195,7 @@
           if (modal.type === "transfer") {
             var context=modal.context||getHandoffContext();
             var transferForm=window.PatientHandoffs.form(context,modal,handoffSummary(context));if(modal.groupReply&&(modal.busy||modal.unconfirmed))transferForm=transferForm.replace(/<(input|select|textarea|button)\b/g,'<$1 disabled');
-            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',(modal.group&&!modal.groupReply?'<p class="ops-inbox-transfer-scope">仅转交 '+escapeHtml(chatInboxSpeaker(chatInboxSelected(),conversationInbox.store.getSubject(modal.subjectId).speakerId))+' 的当前事项</p>':'')+transferForm,cancel+button(modal.busy?'转交中…':'确认转接','primary','modal-save',modal.busy?'disabled':''),'sm');
+            return modalFrame(modal.mode==='ai'?'AI转医助':'转接',transferForm,cancel+button(modal.busy?'转交中…':'确认转接','primary','modal-save',modal.busy?'disabled':''),'sm');
           }
           if (modal.type === "member-view") {
             var row = memberRows.filter(function (item) { return item.id === modal.id; })[0] || memberRows[0];
