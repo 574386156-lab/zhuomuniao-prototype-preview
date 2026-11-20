@@ -165,7 +165,6 @@
 .wc-todo-countdown{color:#b06f20;font-size:10px;white-space:nowrap}.wc-todo-countdown.is-expired{color:#bf4f4f}.wc-todo-countdown.is-processed{color:#218365}.wc-todo-action button:disabled{border-color:#d9e1e8;background:#f3f5f7;color:#9aa8b5;cursor:default}
 .wc-todo-countdown.is-replied{background:#eaf1f8;color:#5e7690}.wc-todo-replied{padding:2px 6px;border-radius:4px;background:#eaf1f8;color:#5e7690;font-size:10px;font-style:normal;font-weight:500}
 .wc-todo-tabs{display:flex;gap:6px;margin:0 12px 8px;padding:3px;border:1px solid #dce7f1;border-radius:9px;background:#f6f9fc}.wc-todo-tabs button{flex:1;min-height:32px;border:0;border-radius:7px;background:transparent;color:#63798e;font-size:11px}.wc-todo-tabs button.is-active{background:#fff;color:#0767c3;font-weight:600;box-shadow:0 1px 4px rgba(39,87,132,.12)}.wc-todo-tabs i{font-style:normal;color:#a0afbc}.wc-todo-tabs button.is-active i{color:#0767c3}
-.wc-todo-reason{position:relative}.wc-todo-reason.is-collapsed{max-height:3.1em;overflow:hidden}.wc-todo-reason.is-collapsed .wc-todo-expand{position:absolute;right:0;bottom:0;padding-left:8px;background:#fff}.wc-todo-expand{display:inline;border:0;padding:0 0 0 5px;background:transparent;color:#0767c3;font:inherit;font-size:12px;cursor:pointer;white-space:nowrap}.wc-todo-expand:hover{text-decoration:underline}
 .wc-handoff-page.ho-panel{height:100%;min-width:0;overflow:auto;overscroll-behavior:contain;padding:14px 14px 26px;background:#f7f9fc;color:#24415e;font-size:15px;line-height:1.65}
 .wc-handoff-patient.ho-toolbar{margin-bottom:22px;padding:12px;gap:10px;border-color:#dfe8f1;border-radius:10px}
 .wc-handoff-patient .ho-owner-label{font-size:12px;line-height:18px;font-weight:400;color:#7b8da0}
@@ -293,8 +292,6 @@
 .wc-my-todo-card .wc-my-todo-type,.wc-followup-task .wc-my-todo-type{margin:7px 0 9px;color:#8a9cad;font-size:11px;line-height:1.5}
 .wc-my-todo-card h3{margin:0 0 7px;color:#344e68;font-size:1rem;font-weight:500;line-height:1.5;overflow-wrap:anywhere}
 .wc-my-todo-card>.wc-todo-reason{margin:0;color:#405972;font-size:1rem;line-height:1.6;overflow-wrap:anywhere}
-.wc-my-todo-card>.wc-todo-reason.is-collapsed{max-height:4.8em;overflow:hidden}
-.wc-my-todo-card>.wc-todo-expand{display:flex;align-items:center;min-width:44px;min-height:44px;margin:2px 0 0;padding:0 2px;border:0;background:none;color:#0767c3;font-size:.9375rem;line-height:1.5;font-weight:500}
 .wc-my-todo-card>.wc-my-todo-error{margin:8px 0 0;color:#99472e;font-size:.875rem;line-height:1.6}
 .wc-my-todo-footer{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:10px;padding-top:12px;border-top:1px solid #edf1f5}
 .wc-my-todo-footer>div{display:flex;flex:1 1 9rem;flex-direction:column;gap:5px;min-width:0;color:#5f738a;font-size:.875rem;line-height:1.5;overflow-wrap:anywhere}
@@ -303,6 +300,11 @@
 .wc-my-todo-footer .wc-todo-action{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px;flex:none}
 .wc-my-todo-footer .wc-todo-action button,.wc-followup-title-row .wc-todo-action button{min-height:44px;padding:0 12px;border:1px solid #bbd4ed;border-radius:8px;background:#fff;color:#1768b4;font-size:.9375rem;font-weight:500}
 .wc-my-todo-footer .wc-todo-action .wc-todo-retry{border-color:#e1d5be;color:#a5793e}
+.wc-my-todo-card>.wc-todo-reason{margin:12px 0 0;white-space:pre-wrap}
+.wc-my-todo-footer .wc-my-todo-due{font-weight:500;font-variant-numeric:tabular-nums}
+.wc-my-todo-footer .wc-my-todo-due.is-overdue{color:#bd4d3f}
+.wc-my-todo-footer .wc-todo-created-at{color:#7c8fa4}
+.wc-my-todo-footer .wc-todo-action button{min-width:80px}
 .wc-my-todo-history{display:grid;gap:10px}
 .wc-my-todo-list .wc-history-day{margin-bottom:16px}
 .wc-followup-detail{flex:1;min-height:0;overflow:auto;padding:14px 14px 24px;background:#f5f7fa;color:#314961}
@@ -388,7 +390,7 @@
 .wc-filter-applied{display:flex;flex-wrap:wrap;gap:2px 8px;margin-top:4px}
 .wc-filter-applied>button{display:flex;align-items:center;gap:8px;min-height:44px;max-width:100%;padding:8px 10px;border:0;border-radius:6px;background:transparent;color:#2465a8;font-size:.875rem;line-height:1.5;text-align:left;overflow-wrap:anywhere}
 .wc-filter-applied>button>span{display:grid;place-items:center;width:18px;height:18px;border-radius:50%;background:#e2ebf7;color:#54728f;font-size:1rem}
-.wc-filter-applied>.wc-patient-scope{color:#344e68;font-weight:500}
+.wc-filter-applied>.wc-patient-scope{display:flex;align-items:center;min-height:32px;padding:4px 10px;color:#344e68;font-size:.875rem;line-height:1.5;font-weight:500;overflow-wrap:anywhere}
 .wc-filter-applied>.wc-patient-scope>span:first-child{display:inline;width:auto;height:auto;background:transparent;color:inherit;font-size:.875rem}
 .wc-filter-backdrop{position:absolute;inset:0;z-index:41;display:flex;align-items:flex-end;padding-top:24px;background:#14283e59}
 .wc-filter-dialog{display:flex;flex-direction:column;width:100%;min-width:0;max-height:100%;overflow:hidden;border-radius:20px 20px 0 0;background:#fff;box-shadow:0 -6px 28px #17314d1a;color:#344e68}

@@ -2005,7 +2005,8 @@
           if(!canOperate)composer='';
           var sidebarContext=window.ChatPatientArchive.context(selectedConversation,state.chatDoctorSelected,state.chatArchiveScene),sidebarEnvironment=window.SidebarConfig.environment();
           sidebarContext.patientId=selectedConversation.patientId||'';
-          var todoEntryURL=new URL('my-todos.html?embedded=1&host=web',location.href);if(sidebarContext.patientId){todoEntryURL.searchParams.set('patientId',sidebarContext.patientId);todoEntryURL.searchParams.set('patientName',sidebarContext.patientName||'');}
+          var todoPatient=window.MyTodos.patientContext(selectedInbox&&selectedInbox.kind==='group'?{tenantId:selectedInbox.tenantId,projectId:selectedInbox.projectId,accountId:selectedInbox.accountId,groupId:selectedInbox.id}:{patientId:sidebarContext.patientId,patientName:sidebarContext.patientName});
+          var todoEntryURL=new URL('my-todos.html?embedded=1&host=web&patientScoped=1',location.href);if(todoPatient){todoEntryURL.searchParams.set('patientId',todoPatient.patientId);todoEntryURL.searchParams.set('patientName',todoPatient.name);}
           var configuredTabs=window.SidebarConfig.orderFor(sidebarContext,sidebarEnvironment,window.SidebarConfig.visible(sidebarContext,sidebarEnvironment,'web')).map(function(tab){tab.value=window.SidebarConfig.inlineBuiltin(tab,sidebarEnvironment)||'config:'+tab.id;return tab;});
           var activeConfiguredTab=configuredTabs.filter(function(tab){return tab.value===state.chatWorkbenchTab;})[0]||configuredTabs[0];
           if(activeConfiguredTab)state.chatWorkbenchTab=activeConfiguredTab.value;

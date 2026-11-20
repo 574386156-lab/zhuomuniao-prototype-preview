@@ -10,6 +10,12 @@
   ];
   var FOLLOWUP_STATUSES=STATUSES.filter(function(status){return status.value==='pending'||status.value==='completed';});
   var TYPES=[{id:'conversation',value:'conversation',label:'转接待办',description:'需要当前医生回复或转交的患者会话。'},{id:'followup',value:'followup',label:'随访跟进',description:'由随访规则或安排产生，需要核实并记录跟进结果的事项。'}];
+  // Explicit synthetic group/patient relations for todo entry context only.
+  // Group reply ownership and the reception ledger remain independent.
+  var GROUP_PATIENTS=[
+    {tenantId:'tenant-demo',projectId:'project-demo-1',accounts:['doctor-demo-1','doctor-demo-2'],groupId:'group-demo-chronic',patientId:'patient-demo-1',name:'王德华'},
+    {tenantId:'tenant-demo',projectId:'project-demo-1',accounts:['doctor-demo-1','doctor-demo-2'],groupId:'group-demo-diabetes',patientId:'patient-demo-3',name:'刘德华'}
+  ];
   function copy(value){return JSON.parse(JSON.stringify(value));}
   function dateAt(value){var parts={};new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Shanghai',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(value)).forEach(function(p){parts[p.type]=p.value;});return parts.year+'-'+parts.month+'-'+parts.day;}
   function shiftDay(day,amount){var d=new Date(day+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+amount);return d.toISOString().slice(0,10);}
@@ -20,6 +26,11 @@
     var storage=options.storage===undefined?root.localStorage:options.storage,now=options.now||function(){return root.Date.now();};
     var key=PREFIX+'|'+[actor.tenantId,actor.projectId,actor.doctorId].map(encodeURIComponent).join('|');
     var listeners=[],disposed=false,serial=0,unsubscribe=null,localToken={};
+    function patientContext(context){
+      context=context||{};
+      if(context.groupId){var group=GROUP_PATIENTS.find(function(row){return row.tenantId===(context.tenantId||actor.tenantId)&&row.projectId===(context.projectId||actor.projectId)&&row.accounts.indexOf(context.accountId||actor.doctorId)>=0&&row.groupId===context.groupId;});return group?{patientId:group.patientId,name:group.name}:null;}
+      return context.patientId?{patientId:String(context.patientId),name:String(context.patientName||'')}:null;
+    }
     function owned(task){return task.tenantId===actor.tenantId&&task.projectId===actor.projectId&&task.doctorId===actor.doctorId;}
     function valid(snapshot){return snapshot&&snapshot.version===1&&Array.isArray(snapshot.tasks)&&snapshot.tasks.every(function(task){return task&&owned(task)&&task.type==='followup'&&typeof task.id==='string'&&typeof task.patient==='string'&&typeof task.title==='string'&&['pending','in_progress','completed','closed'].indexOf(task.status)>=0&&Number.isFinite(task.createdAt)&&(task.deadline===undefined||task.deadline===null||Number.isFinite(task.deadline))&&Array.isArray(task.notes)&&task.notes.every(function(n){return n&&typeof n.id==='string'&&typeof n.content==='string'&&Number.isFinite(n.createdAt);})&&(['completed','closed'].indexOf(task.status)<0||Number.isFinite(task.finishedAt));});}
     function normalizeFollowup(task){
@@ -78,7 +89,7 @@
     function onLocal(event){var detail=event.detail;if(!detail||detail.key!==key||detail.source===localToken)return;refresh();notify(detail.type||'snapshot_updated',detail.taskId,true);}
     if(root.addEventListener){root.addEventListener('storage',onStorage);root.addEventListener('my-todos-changed',onLocal);}
     if(reception&&reception.subscribe)unsubscribe=reception.subscribe(function(event){notify('reception_'+event.type,event.taskId?'conversation:'+event.taskId:null,true);});
-    return {actor:function(){return copy(actor);},list:list,get:get,start:start,completeFollowup:completeFollowup,closeTask:closeTask,subscribe:function(fn){listeners.push(fn);return function(){listeners=listeners.filter(function(f){return f!==fn;});};},dispose:function(){if(disposed)return;disposed=true;if(unsubscribe)unsubscribe();listeners=[];if(root.removeEventListener){root.removeEventListener('storage',onStorage);root.removeEventListener('my-todos-changed',onLocal);}},storageKey:key,followupStatuses:copy(FOLLOWUP_STATUSES),statusesFor:function(type){return copy(type==='followup'?FOLLOWUP_STATUSES:STATUSES);},statusDefinitions:copy(STATUSES),typeDefinitions:copy(TYPES),statuses:copy(STATUSES),types:copy(TYPES)};
+    return {actor:function(){return copy(actor);},patientContext:patientContext,list:list,get:get,start:start,completeFollowup:completeFollowup,closeTask:closeTask,subscribe:function(fn){listeners.push(fn);return function(){listeners=listeners.filter(function(f){return f!==fn;});};},dispose:function(){if(disposed)return;disposed=true;if(unsubscribe)unsubscribe();listeners=[];if(root.removeEventListener){root.removeEventListener('storage',onStorage);root.removeEventListener('my-todos-changed',onLocal);}},storageKey:key,followupStatuses:copy(FOLLOWUP_STATUSES),statusesFor:function(type){return copy(type==='followup'?FOLLOWUP_STATUSES:STATUSES);},statusDefinitions:copy(STATUSES),typeDefinitions:copy(TYPES),statuses:copy(STATUSES),types:copy(TYPES)};
   }
   root.MyTodos=create();root.MyTodos.create=create;
 })(typeof window!=='undefined'?window:globalThis);
